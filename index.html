@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Zeiterfassung</title>
+
+  <!-- Schriftart -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+
+  <!-- QR Code Reader -->
+  <div id="qr-reader" class="card" style="width:320px;"></div>
+
+  <!-- Login-Formular -->
+  <div id="login-form" class="card hidden">
+    <h2>Login</h2>
+    <input type="email" id="login-email" placeholder="E-Mail">
+    <input type="password" id="login-passwort" placeholder="Passwort">
+    <button onclick="login()">Login</button>
+    <div class="link">
+      Noch keinen Account? <a href="#" onclick="zeigeRegistrierung()">Jetzt registrieren</a>
+    </div>
+  </div>
+
+  <!-- Registrierungs-Formular -->
+  <div id="register-form" class="card hidden">
+    <h2>Registrieren</h2>
+    <input type="text" id="register-vorname" placeholder="Vorname" />
+    <input type="text" id="register-nachname" placeholder="Nachname" />
+    <input type="email" id="register-email" placeholder="E-Mail" />
+    <input type="password" id="register-passwort" placeholder="Passwort" />
+    <input type="password" id="register-passwort2" placeholder="Passwort bestätigen" />
+    <button onclick="registrieren()">Registrieren</button>
+    <button class="secondary" onclick="zeigeLogin()">Abbrechen</button>
+  </div>
+
+  <!-- QR Code Scanner Script -->
+  <script src="https://unpkg.com/html5-qrcode"></script>
+
+  <!-- Dein JavaScript -->
+  <script src="./script.js"></script>
+
+</body>
+</html>
