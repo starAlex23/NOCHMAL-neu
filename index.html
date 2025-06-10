@@ -5,13 +5,167 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Zeiterfassung - SIR Services</title>
   <style>
-    /* Hier kannst du CSS ergänzen */
+   body {
+  font-family: 'Inter', sans-serif;
+  margin: 0; padding: 0;
+  background: var(--bg, #fff);
+  color: var(--fg, #000);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+[data-theme="dark"] {
+  --bg: #121212;
+  --fg: #eee;
+}
+
+header {
+  background: #4CAF50;
+  color: white;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-size: 1.2rem;
+}
+
+main {
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 1rem;
+  box-sizing: border-box;
+}
+
+.card {
+  background: var(--card-bg, #f9f9f9);
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.15);
+}
+
+[data-theme="dark"] .card {
+  --card-bg: #222;
+}
+
+.hidden {
+  display: none !important;
+}
+
+label {
+  display: block;
+  margin-top: 1rem;
+  font-weight: 500;
+}
+
+input[type="email"],
+input[type="password"],
+input[type="text"] {
+  width: 100%;
+  padding: 0.8rem;
+  margin-top: 0.4rem;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 1rem;
+  box-sizing: border-box;
+}
+
+button {
+  display: block;
+  width: 100%;
+  margin-top: 1.2rem;
+  padding: 0.9rem;
+  font-size: 1.05rem;
+  border-radius: 6px;
+  background: #4CAF50;
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+button:hover {
+  background: #45a049;
+}
+
+button:disabled {
+  background: #999;
+  cursor: not-allowed;
+}
+
+.link {
+  text-align: center;
+  margin-top: 1rem;
+}
+
+.link button {
+  background: none;
+  border: none;
+  color: #4CAF50;
+  text-decoration: underline;
+  font-size: 1rem;
+  padding: 0.4rem;
+}
+
+#theme-switcher {
+  position: fixed;
+  bottom: 1rem;
+  right: 1rem;
+  font-size: 2rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+#popup-message {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: var(--color-bg-popup, #222);
+  color: var(--color-text-popup, #eee);
+  padding: 1.5rem 2rem;
+  border-radius: 10px;
+  box-shadow: 0 0 15px rgba(0,0,0,0.7);
+  font-size: 1.2rem;
+  z-index: 10000;
+  opacity: 0.95;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  max-width: 90%;
+  text-align: center;
+}
+
+#popup-message.hidden {
+  display: none;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Optional: Media-Query für sehr kleine Geräte */
+@media (max-width: 360px) {
+  header h1 {
+    font-size: 1.1rem;
+  }
+
+  button {
+    font-size: 0.95rem;
+    padding: 0.75rem;
+  }
+
+  label {
+    font-size: 0.95rem;
+  }
+
+  input {
+    font-size: 0.95rem;
+  }
+}
   </style>
 </head>
 <body>
 
-<header role="banner">
-  <img src="/assets/logo.svg" alt="SIR Logo" width="48" height="48" />
+<header role="banner"> 
   <h1>Zeiterfassung</h1>
 </header>
 
