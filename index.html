@@ -1,49 +1,105 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="de" data-theme="light">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Zeiterfassung</title>
-
-  <!-- Schriftart -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
-
-  <!-- CSS -->
-  <link rel="stylesheet" href="./style.css">
+  <title>Zeiterfassung - SIR Services</title>
+  <style>
+    /* Hier kannst du CSS ergänzen */
+  </style>
 </head>
 <body>
 
-  <!-- QR Code Reader -->
-  <div id="qr-reader" class="card" style="width:320px;"></div>
+<header role="banner">
+  <img src="/assets/logo.svg" alt="SIR Logo" width="48" height="48" />
+  <h1>Zeiterfassung</h1>
+</header>
 
-  <!-- Login-Formular -->
-  <div id="login-form" class="card hidden">
+<main role="main" aria-live="polite">
+
+  <!-- 1. QR Code Scanner -->
+  <section id="qr-section" class="card" aria-label="QR Code Scanner">
+    <h2>QR-Code scannen</h2>
+    <div id="qr-reader" style="width:100%"></div>
+    <p id="qr-message"></p>
+  </section>
+
+  <!-- 2. Login -->
+  <section id="login-section" class="card hidden" aria-label="Login Formular">
     <h2>Login</h2>
-    <input type="email" id="login-email" placeholder="E-Mail">
-    <input type="password" id="login-passwort" placeholder="Passwort">
-    <button onclick="login()">Login</button>
+    <form id="login-form" novalidate>
+      <label for="login-email">E-Mail</label>
+      <input type="email" id="login-email" name="email" required autocomplete="email" />
+
+      <label for="login-password">Passwort</label>
+      <input type="password" id="login-password" name="password" required autocomplete="current-password" />
+
+      <button id="activate-biometric" type="button">🔐 Biometrie aktivieren</button>
+
+      <button type="submit">Einloggen</button>
+    </form>
     <div class="link">
-      Noch keinen Account? <a href="#" onclick="zeigeRegistrierung()">Jetzt registrieren</a>
+      Noch keinen Account? <button id="show-register-btn" type="button">Jetzt registrieren</button>
     </div>
-  </div>
+    
+    <p id="login-error" class="error-message"></p>
+  </section>
 
-  <!-- Registrierungs-Formular -->
-  <div id="register-form" class="card hidden">
+  <!-- 3. Registrierung -->
+  <section id="register-section" class="card hidden" aria-label="Registrierung Formular">
     <h2>Registrieren</h2>
-    <input type="text" id="register-vorname" placeholder="Vorname" />
-    <input type="text" id="register-nachname" placeholder="Nachname" />
-    <input type="email" id="register-email" placeholder="E-Mail" />
-    <input type="password" id="register-passwort" placeholder="Passwort" />
-    <input type="password" id="register-passwort2" placeholder="Passwort bestätigen" />
-    <button onclick="registrieren()">Registrieren</button>
-    <button class="secondary" onclick="zeigeLogin()">Abbrechen</button>
-  </div>
+    <form id="register-form" novalidate>
+      <label for="register-firstname">Vorname</label>
+      <input type="text" id="register-firstname" name="firstname" required autocomplete="given-name" />
+      
+      <label for="register-lastname">Nachname</label>
+      <input type="text" id="register-lastname" name="lastname" required autocomplete="family-name" />
 
-  <!-- QR Code Scanner Script -->
-  <script src="https://unpkg.com/html5-qrcode"></script>
+      <label for="register-email">E-Mail</label>
+      <input type="email" id="register-email" name="email" required autocomplete="email" />
 
-  <!-- Dein JavaScript -->
-  <script src="./script.js"></script>
+      <label for="register-password">Passwort</label>
+      <input type="password" id="register-password" name="password" required autocomplete="new-password" />
 
+      <button type="submit">Registrieren</button>
+    </form>
+    <div class="link">
+      Schon einen Account? <button id="show-login-btn" type="button">Jetzt einloggen</button>
+    </div>
+    
+    <button id="registerWebAuthn" type="button">WebAuthn registrieren</button>
+    <button id="loginWebAuthn" type="button">Mit WebAuthn anmelden</button>
+  </section>
+
+  <!-- 4. Zeiterfassung -->
+  <section id="time-tracking-section" class="card hidden" aria-label="Zeiterfassung">
+    <h2>Willkommen, <span id="user-name"></span></h2>
+    
+    <button id="clock-in-btn" type="button">Einstechen (Start)</button>
+    <button id="clock-out-btn" type="button" disabled>Ausstechen (Stop)</button>
+
+    <p id="time-message"></p>
+
+    <button id="logout-btn" type="button" style="margin-top:2rem; background:#e74c3c; color:#fff;">Ausloggen</button>
+  </section>
+
+</main>
+
+<button id="theme-switcher" aria-label="Theme wechseln" type="button">🌙</button>
+
+<script src="https://unpkg.com/html5-qrcode"></script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    if (typeof startWebAuthnRegistration === 'function') {
+      document.getElementById('registerWebAuthn').onclick = startWebAuthnRegistration;
+    }
+    if (typeof startWebAuthnLogin === 'function') {
+      document.getElementById('loginWebAuthn').onclick = startWebAuthnLogin;
+    }
+  });
+</script>
+
+<script src="main.js"></script>
 </body>
 </html>
