@@ -22,6 +22,9 @@ const qrMessage = document.getElementById('qr-message');
 const loginEmail = document.getElementById('login-email');
 const loginPassword = document.getElementById('login-password');
 const loginError = document.getElementById('login-error');
+// API-Endpunkt (Render-Backend)
+const API_BASE = 'https://zeiterfassung-backend.onrender.com';
+
 
 let html5QrCode = null;
 let scannedVehicleId = null;
@@ -46,12 +49,12 @@ async function apiFetch(url, options = {}, useAuthHeaderToken = false, authToken
     options.headers['Authorization'] = 'Bearer ' + authToken;
   }
 
-  let res = await fetch(BASE + url, options);
+  let res = await fetch(API_BASE + url, options);
 
   if (res.status === 401 && url !== '/token/refresh') {
     const refreshed = await tryTokenRefresh();
     if (refreshed) {
-      res = await fetch(BASE + url, options);
+      res = await fetch(API_BASE + url, options);
       if (res.status === 401) {
         handleLogoutCleanup();
         throw new Error('Nicht eingeloggt (nach Refresh)');
@@ -65,9 +68,10 @@ async function apiFetch(url, options = {}, useAuthHeaderToken = false, authToken
   return res;
 }
 
+
 async function tryTokenRefresh() {
   try {
-    const res = await fetch(BASE + '/token/refresh', {
+    const res = await fetch(API_BASE + '/token/refresh', {
       method: 'POST',
       credentials: 'include',
       headers: {
@@ -295,7 +299,7 @@ async function loginViaWebAuthn(email) {
 
 async function checkBiometricStatus() {
   try {
-    const response = await fetch('/api/user/biometric-status', {
+   const response = await fetch(API_BASE + '/api/user/biometric-status', {
       method: 'GET',
       credentials: 'include', // sendet Cookies mit
       headers: {
@@ -538,7 +542,7 @@ clockOutBtn.addEventListener('click', async () => {
 //schon eingestempelt?
 async function getLetzterStatus() {
   try {
-    const response = await fetch('/api/zeit/letzter-status', {
+    const response = await fetch(API_BASE + '/api/zeit/letzter-status', {
       method: 'GET',
       credentials: 'include',
       headers: {
