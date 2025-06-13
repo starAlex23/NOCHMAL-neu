@@ -411,27 +411,15 @@ async function stopQrScanner() {
 
 // QR-Code Validierung gegen Backend
 async function validateQrCode(qr) {
- const res = await apiFetch('/api/validate-qr', { // << korrekter Pfad
-  method: 'POST',
-  body: JSON.stringify({ qr }),
-  headers: { 'Content-Type': 'application/json' },
-});
-
+  const res = await fetch('/api/validate-qr', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ qr }),
+  });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err.error || 'Ungültiger QR-Code');
   }
-}
-
-
-async function getQrPassword() {
-    const result = await pool.query(`SELECT value FROM settings WHERE key = 'qr_password'`);
-    if (result.rows.length === 0) {
-        throw new Error('QR-Passwort nicht in der Datenbank gefunden!');
-    }
-    const pw = result.rows[0].value;
-    console.log('QR-Passwort aus DB (mit Länge):', `"${pw}"`, pw.length);
-    return pw;
 }
 
 
