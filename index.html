@@ -380,14 +380,17 @@ async function startQrScanner() {
       { facingMode: "environment" },
       { fps: 10, qrbox: 250 },
       async (text) => {
-     console.log('Gescannter QR:', `"${qrCode}"`, 'Länge:', qrCode.length);
+        const qrCode = text.trim();
+        console.log('📦 Gescannter QR:', `"${qrCode}"`, 'Länge:', qrCode.length, 'Codes:', [...qrCode].map(c => c.charCodeAt(0)]);
+
+        // Wichtig: Sofort stoppen, um Mehrfach-Scan zu verhindern
+        await stopQrScanner();
 
         qrMessage.textContent = "QR-Code erkannt: " + qrCode;
+
         try {
           await validateQrCode(qrCode);
           scannedVehicleId = qrCode;
-          await stopQrScanner();
-          // Versuche automatischen Login
           const autoLoggedIn = await tryAutoLogin();
           if (!autoLoggedIn) showSection(loginSection);
         } catch (err) {
@@ -401,14 +404,19 @@ async function startQrScanner() {
     console.error(err);
   }
 }
+
 async function stopQrScanner() {
-  try {
-    await html5QrCode?.stop();
-  } catch (e) {
-    console.warn("Fehler beim Stoppen des QR-Scanners:", e);
+  if (html5QrCode) {
+    try {
+      await html5QrCode.stop();
+    } catch (e) {
+      console.warn("Fehler beim Stoppen des QR-Scanners:", e);
+    }
+    html5QrCode.clear();
   }
   qrReaderElem.innerHTML = "";
 }
+
 
 // QR-Code Validierung gegen Backend
 async function validateQrCode(qr) {
