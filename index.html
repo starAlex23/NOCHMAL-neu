@@ -380,7 +380,8 @@ async function startQrScanner() {
       { facingMode: "environment" },
       { fps: 10, qrbox: 250 },
       async (text) => {
-        const qrCode = text.trim();
+     console.log('Gescannter QR:', `"${qrCode}"`, 'Länge:', qrCode.length);
+
         qrMessage.textContent = "QR-Code erkannt: " + qrCode;
         try {
           await validateQrCode(qrCode);
