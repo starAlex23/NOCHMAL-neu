@@ -412,10 +412,13 @@ async function stopQrScanner() {
     } catch (e) {
       console.warn("Fehler beim Stoppen des QR-Scanners:", e);
     }
-    html5QrCode.clear();
+
+    // NICHT html5QrCode.clear() aufrufen – das zerstört das Scanner-Element
+    // KEIN innerHTML leeren, sonst ist die Kamera weg
+    // qrReaderElem.innerHTML = ""; ← DAS entfernen!
   }
-  qrReaderElem.innerHTML = "";
 }
+
 
 
 // QR-Code Validierung gegen Backend
