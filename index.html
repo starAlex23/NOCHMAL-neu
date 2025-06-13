@@ -423,6 +423,19 @@ async function validateQrCode(qr) {
   }
 }
 
+
+async function getQrPassword() {
+    const result = await pool.query(`SELECT value FROM settings WHERE key = 'qr_password'`);
+    if (result.rows.length === 0) {
+        throw new Error('QR-Passwort nicht in der Datenbank gefunden!');
+    }
+    const pw = result.rows[0].value;
+    console.log('QR-Passwort aus DB (mit Länge):', `"${pw}"`, pw.length);
+    return pw;
+}
+
+
+
 // === Auth ===
 
 // Login mit Email/Passwort
