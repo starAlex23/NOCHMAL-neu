@@ -13,6 +13,7 @@
   font-size: 16px;
   line-height: 1.5;
 }
+  
 
 [data-theme="dark"] {
   --bg: #121212;
@@ -410,11 +411,12 @@ async function stopQrScanner() {
 
 // QR-Code Validierung gegen Backend
 async function validateQrCode(qr) {
-  const res = await apiFetch('/validate-qr', {
-    method: 'POST',
-    body: JSON.stringify({ qr }),
-    headers: { 'Content-Type': 'application/json' },
-  });
+ const res = await apiFetch('/api/validate-qr', { // << korrekter Pfad
+  method: 'POST',
+  body: JSON.stringify({ qr }),
+  headers: { 'Content-Type': 'application/json' },
+});
+
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err.error || 'Ungültiger QR-Code');
