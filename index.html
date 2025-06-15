@@ -381,7 +381,7 @@ async function startQrScanner() {
       { fps: 10, qrbox: 250 },
       async (text) => {
         const qrCode = text.trim();
-        console.log('📦 Gescannter QR:', `"${qrCode}"`, 'Länge:', qrCode.length, 'Codes:', [...qrCode].map(c => c.charCodeAt(0)]);
+        console.log('📦 Gescannter QR:', `"${qrCode}"`, 'Länge:', qrCode.length, 'Codes:', [...qrCode].map(c => c.charCodeAt(0)));
 
         // Wichtig: Sofort stoppen, um Mehrfach-Scan zu verhindern
         await stopQrScanner();
