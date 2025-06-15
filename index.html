@@ -381,18 +381,18 @@ async function startQrScanner() {
       { fps: 10, qrbox: 250 },
       async (text) => {
         const qrCode = text.trim();
-        console.log('📦 Gescannter QR:', `"${qrCode}"`, 'Länge:', qrCode.length, 'Codes:', [...qrCode].map(c => c.charCodeAt(0)));
+        console.log('📦 Gescannter QR:', `"${qrCode}"`, 'Länge:', qrCode.length);
 
-        // Wichtig: Sofort stoppen, um Mehrfach-Scan zu verhindern
-        await stopQrScanner();
+        await stopQrScanner(); // Sofort stoppen nach Scan
 
         qrMessage.textContent = "QR-Code erkannt: " + qrCode;
 
+        // === Hier ist der Codeblock korrekt platziert ===
         try {
-          await validateQrCode(qrCode);
-          scannedVehicleId = qrCode;
-          const autoLoggedIn = await tryAutoLogin();
-          if (!autoLoggedIn) showSection(loginSection);
+          await validateQrCode(qrCode);               // → prüft gegen Backend
+          scannedVehicleId = qrCode;                  // → speichert ID
+          const autoLoggedIn = await tryAutoLogin();  // → versucht automatischen Login
+          if (!autoLoggedIn) showSection(loginSection); // → sonst Login anzeigen
         } catch (err) {
           qrMessage.textContent = "Ungültiger QR-Code";
           console.error(err);
