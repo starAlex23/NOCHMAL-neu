@@ -426,7 +426,8 @@ async function stopQrScanner() {
 
 // QR-Code Validierung gegen Backend
 async function validateQrCode(qr) {
-  const res = await fetch('/api/validate-qr', {
+  const res = await fetch(`${API_BASE}/api/validate-qr`,)
+ {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ qr }),
