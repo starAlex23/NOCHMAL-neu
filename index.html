@@ -310,7 +310,7 @@ async function apiFetch(url, options = {}, useAuthHeaderToken = false, authToken
 
   let res = await fetch(API_BASE + url, options);
 
-  if (res.status === 401 && url !== '/token/refresh') {
+if (res.status === 401 && url !== '/refresh') {
     const refreshed = await tryTokenRefresh();
     if (refreshed) {
       res = await fetch(API_BASE + url, options);
