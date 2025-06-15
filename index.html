@@ -330,18 +330,18 @@ if (res.status === 401 && url !== '/refresh') {
 
 async function tryTokenRefresh() {
   try {
-    const res = await fetch(API_BASE + '/token/refresh', {
+    const res = await fetch(API_BASE + '/refresh', {
       method: 'POST',
-      credentials: 'include',
-      headers: {
-        'X-CSRF-Token': getCsrfTokenFromCookie() || '',
-      },
+      credentials: 'include'
     });
-    return res.ok;
-  } catch {
+    if (!res.ok) return false;
+    return true;
+  } catch (err) {
+    console.error('Fehler beim Token-Refresh:', err);
     return false;
   }
 }
+
 
 // === Theme Handling ===
 function setTheme(theme) {
