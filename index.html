@@ -302,35 +302,48 @@ function getCsrfTokenFromCookie() {
 }
 
 // === Fetch Wrapper mit CSRF und Auto-Refresh ===
-async function apiFetch(url, options = {}, useAuthHeaderToken = false, authToken = null) {
-  const csrfToken = getCsrfTokenFromCookie();
+async function apiFetch(url, options = {}, useAuthHeaderToken = false) {
   if (!options.headers) options.headers = {};
-  if (csrfToken) options.headers['X-CSRF-Token'] = csrfToken;
+  options.credentials = 'include'; // falls Cookies genutzt werden
 
-  options.credentials = 'include';
-
-  if (useAuthHeaderToken && authToken) {
-    options.headers['Authorization'] = 'Bearer ' + authToken;
+  if (useAuthHeaderToken) {
+    const token = sessionStorage.getItem('accessToken');
+    if (!token) throw new Error('Kein Access-Token gefunden. Bitte einloggen.');
+    options.headers['Authorization'] = `Bearer ${token}`;
   }
 
-  let res = await fetch(API_BASE + url, options);
+  let res = await fetch(url, options);
 
-if (res.status === 401 && url !== '/refresh') {
-    const refreshed = await tryTokenRefresh();
-    if (refreshed) {
-      res = await fetch(API_BASE + url, options);
+  if (res.status === 401 && useAuthHeaderToken) {
+    // Versuche Token zu refreshen
+    const refreshRes = await fetch('/api/refresh', {
+      method: 'POST',
+      credentials: 'include',
+    });
+
+    if (refreshRes.ok) {
+      const refreshData = await refreshRes.json();
+      sessionStorage.setItem('accessToken', refreshData.accessToken);
+
+      // Erneut mit neuem Token requesten
+      options.headers['Authorization'] = `Bearer ${refreshData.accessToken}`;
+      res = await fetch(url, options);
+
       if (res.status === 401) {
-        handleLogoutCleanup();
-        throw new Error('Nicht eingeloggt (nach Refresh)');
+        // Refresh hat nichts gebracht
+        sessionStorage.removeItem('accessToken');
+        throw new Error('Token-Refresh fehlgeschlagen. Bitte neu einloggen.');
       }
     } else {
-      handleLogoutCleanup();
-      throw new Error('Nicht eingeloggt (kein Refresh möglich)');
+      // Kein Refresh möglich, rauswerfen und Token löschen
+      sessionStorage.removeItem('accessToken');
+      throw new Error('Session abgelaufen. Bitte neu einloggen.');
     }
   }
 
   return res;
 }
+
 
 
 async function tryTokenRefresh() {
@@ -656,9 +669,16 @@ function toBase64Url(buffer) {
 
 // === Automatischer Login (z.B. nach QR-Scan) ===
 async function tryAutoLogin() {
+  const token = sessionStorage.getItem('accessToken');
+  if (!token) {
+    // Kein Token, kein Auto-Login möglich
+    return false;
+  }
+
   try {
-    // Prüfe, ob bereits eingeloggt (Session oder Token)
-    const res = await apiFetch('/me');
+    // Token mitgeben
+    const res = await apiFetch('/me', {}, true); // true = Authorization-Header mit Token
+
     if (res.ok) {
       loggedInUser = await res.json();
       biometricEnabled = loggedInUser.biometricEnabled || false;
@@ -666,19 +686,19 @@ async function tryAutoLogin() {
       return true;
     }
 
-    // Wenn nicht, prüfe, ob WebAuthn aktiviert ist und starte WebAuthn Login (z.B. durch gespeicherte Credentials)
-    if (biometricEnabled && loginEmail.value) {
-      loggedInUser = await loginViaWebAuthn(loginEmail.value);
-      updateUIAfterLogin();
-      return true;
-    }
-
+    // Token ungültig? Entfernen
+    sessionStorage.removeItem('accessToken');
+    loggedInUser = null;
     return false;
+
   } catch (err) {
     console.warn('AutoLogin fehlgeschlagen:', err);
+    sessionStorage.removeItem('accessToken');
+    loggedInUser = null;
     return false;
   }
 }
+
 
 // === UI Aktualisierung nach Login ===
 function updateUIAfterLogin() {
@@ -736,7 +756,7 @@ loginForm.addEventListener('submit', async (ev) => {
   ev.preventDefault();
 
   const email = loginForm['email'].value.trim();
-  const passwort = loginForm['passwort'].value.trim(); // ✅ Korrekt!
+  const passwort = loginForm['passwort'].value.trim();
 
   try {
     const res = await apiFetch('/login', {
@@ -751,16 +771,21 @@ loginForm.addEventListener('submit', async (ev) => {
     }
 
     const data = await res.json();
+
+    sessionStorage.setItem('accessToken', data.accessToken);
     sessionStorage.setItem('csrfToken', data.csrfToken);
 
+    loggedInUser = data.user; // Userobjekt aus Backend speichern
+
     alert('Login erfolgreich!');
-    showSection(timeTrackingSection); // oder `showSection(timeTrackingSection)`?
+    showSection(timeTrackingSection);
     await updateProfile();
   } catch (err) {
     console.error(err);
     alert(err.message);
   }
 });
+
 
 
 // === Register-Link im Login-Form ===
@@ -830,7 +855,7 @@ clockInBtn.addEventListener('click', async () => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ aktion: 'start' }),
-    });
+    }, true); // true = Token im Header mitschicken
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
@@ -859,7 +884,7 @@ clockOutBtn.addEventListener('click', async () => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ aktion: 'stop' }),
-    });
+    }, true);
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
@@ -874,7 +899,6 @@ clockOutBtn.addEventListener('click', async () => {
     clockOutBtn.disabled = false;
   }
 });
-
 
 //schon eingestempelt?
 async function getLetzterStatus() {
