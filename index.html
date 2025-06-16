@@ -289,7 +289,16 @@ const loginError = document.getElementById('login-error');
 // API-Endpunkt (Render-Backend)
 const API_BASE = 'https://backend-869x.onrender.com/api';
 
+const status = await getLetzterStatus();
+if (status?.aktion === 'start') {
+  clockInBtn.disabled = true;
+  clockOutBtn.disabled = false;
+} else {
+  clockInBtn.disabled = false;
+  clockOutBtn.disabled = true;
+}
 
+  
 let html5QrCode = null;
 let scannedVehicleId = null;
 let loggedInUser = null;
@@ -479,7 +488,7 @@ async function login(email, passwort) {
   const res = await apiFetch('/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, passwort }), // <== HIER: passwort statt password
+    body: JSON.stringify({ email, passwort }),
   });
 
   if (!res.ok) {
@@ -487,10 +496,16 @@ async function login(email, passwort) {
     throw new Error(err.error || 'Login fehlgeschlagen');
   }
 
-  const userRes = await apiFetch('/me');
-  if (!userRes.ok) throw new Error('Fehler beim Abrufen der Benutzerdaten nach Login');
-  return userRes.json();
+  const data = await res.json();
+  sessionStorage.setItem('accessToken', data.accessToken);
+  sessionStorage.setItem('csrfToken', data.csrfToken);
+  loggedInUser = data.user;
+
+  updateUIAfterLogin();  // Wichtig: UI aktualisieren!
+
+  return loggedInUser;
 }
+
 
 
 // WebAuthn Registrierung starten
@@ -670,34 +685,26 @@ function toBase64Url(buffer) {
 // === Automatischer Login (z.B. nach QR-Scan) ===
 async function tryAutoLogin() {
   const token = sessionStorage.getItem('accessToken');
-  if (!token) {
-    // Kein Token, kein Auto-Login möglich
-    return false;
-  }
+  if (!token) return false;
 
   try {
-    // Token mitgeben
-    const res = await apiFetch('/me', {}, true); // true = Authorization-Header mit Token
-
-    if (res.ok) {
-      loggedInUser = await res.json();
-      biometricEnabled = loggedInUser.biometricEnabled || false;
-      updateUIAfterLogin();
-      return true;
+    const res = await apiFetch('/me', {}, true); // true = Token-Header mitschicken
+    if (!res.ok) {
+      sessionStorage.removeItem('accessToken');
+      return false;
     }
 
-    // Token ungültig? Entfernen
-    sessionStorage.removeItem('accessToken');
-    loggedInUser = null;
-    return false;
-
+    loggedInUser = await res.json();
+    biometricEnabled = loggedInUser.biometricEnabled || false;
+    updateUIAfterLogin();
+    return true;
   } catch (err) {
     console.warn('AutoLogin fehlgeschlagen:', err);
     sessionStorage.removeItem('accessToken');
-    loggedInUser = null;
     return false;
   }
 }
+
 
 
 // === UI Aktualisierung nach Login ===
@@ -759,24 +766,7 @@ loginForm.addEventListener('submit', async (ev) => {
   const passwort = loginForm['passwort'].value.trim();
 
   try {
-    const res = await apiFetch('/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, passwort }),
-    });
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.error || 'Login fehlgeschlagen');
-    }
-
-    const data = await res.json();
-
-    sessionStorage.setItem('accessToken', data.accessToken);
-    sessionStorage.setItem('csrfToken', data.csrfToken);
-
-    loggedInUser = data.user; // Userobjekt aus Backend speichern
-
+    await login(email, passwort);
     alert('Login erfolgreich!');
     showSection(timeTrackingSection);
     await updateProfile();
@@ -903,18 +893,16 @@ clockOutBtn.addEventListener('click', async () => {
 //schon eingestempelt?
 async function getLetzterStatus() {
   try {
-    const response = await fetch(API_BASE + '/api/zeit/letzter-status', {
+    const response = await apiFetch('/zeit/letzter-status', {
       method: 'GET',
-      credentials: 'include',
       headers: {
         'Accept': 'application/json',
-        // 'Authorization': 'Bearer ' + deinToken,
-        // 'X-CSRF-Token': deinCSRFToken
-      }
-    });
+      },
+    }, true); // <-- wichtig: Authentifizierung aktivieren
 
     if (!response.ok) {
-      throw new Error(`Fehler: ${response.status}`);
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.error || `Fehler: ${response.status}`);
     }
 
     const data = await response.json();
@@ -925,6 +913,7 @@ async function getLetzterStatus() {
     return null;
   }
 }
+
 
 
 // === Initial Setup ===
