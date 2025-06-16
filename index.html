@@ -165,6 +165,7 @@ button:disabled {
   </style>
 </head>
   
+  
 
 </body>
 
@@ -331,21 +332,30 @@ function getCsrfTokenFromCookie() {
   return match ? decodeURIComponent(match[2]) : null;
 }
 
-// === Fetch Wrapper mit CSRF und Auto-Refresh ===
 async function apiFetch(url, options = {}, useAuthHeaderToken = false) {
   if (!options.headers) options.headers = {};
-  options.credentials = 'include'; // falls Cookies genutzt werden
+  options.credentials = 'include'; // Cookies mitschicken (wichtig für Refresh-Token)
 
+  // Token als Bearer im Header (falls gewünscht)
   if (useAuthHeaderToken) {
     const token = sessionStorage.getItem('accessToken');
     if (!token) throw new Error('Kein Access-Token gefunden. Bitte einloggen.');
     options.headers['Authorization'] = `Bearer ${token}`;
   }
 
+  // CSRF-Token aus Cookie auslesen und bei state-ändernden Methoden als Header mitschicken
+  const method = options.method ? options.method.toUpperCase() : 'GET';
+  if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(method)) {
+    const csrfToken = getCsrfTokenFromCookie();
+    if (csrfToken) {
+      options.headers['X-CSRF-Token'] = csrfToken;
+    }
+  }
+
   let res = await fetch(url, options);
 
+  // Token abgelaufen? Versuche Token-Refresh
   if (res.status === 401 && useAuthHeaderToken) {
-    // Versuche Token zu refreshen
     const refreshRes = await fetch('/api/refresh', {
       method: 'POST',
       credentials: 'include',
@@ -355,17 +365,14 @@ async function apiFetch(url, options = {}, useAuthHeaderToken = false) {
       const refreshData = await refreshRes.json();
       sessionStorage.setItem('accessToken', refreshData.accessToken);
 
-      // Erneut mit neuem Token requesten
       options.headers['Authorization'] = `Bearer ${refreshData.accessToken}`;
       res = await fetch(url, options);
 
       if (res.status === 401) {
-        // Refresh hat nichts gebracht
         sessionStorage.removeItem('accessToken');
         throw new Error('Token-Refresh fehlgeschlagen. Bitte neu einloggen.');
       }
     } else {
-      // Kein Refresh möglich, rauswerfen und Token löschen
       sessionStorage.removeItem('accessToken');
       throw new Error('Session abgelaufen. Bitte neu einloggen.');
     }
@@ -373,7 +380,6 @@ async function apiFetch(url, options = {}, useAuthHeaderToken = false) {
 
   return res;
 }
-
 
 
 async function tryTokenRefresh() {
