@@ -520,20 +520,28 @@ async function login(email, passwort) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, passwort }),
   });
-  
+
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err.error || 'Login fehlgeschlagen');
   }
 
   const data = await res.json();
+  console.log('Login response:', data);
+
+  if (!data.user) {
+    throw new Error('Keine Benutzerdaten im Login-Antwort erhalten');
+  }
+
   sessionStorage.setItem('accessToken', data.accessToken);
   sessionStorage.setItem('csrfToken', data.csrfToken);
   loggedInUser = data.user;
 
   updateUIAfterLogin();
+
   return loggedInUser;
 }
+
 
 
 
