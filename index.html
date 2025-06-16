@@ -736,24 +736,31 @@ showLoginBtn.addEventListener('click', () => {
 // === Registrierung ===
 registerForm.addEventListener('submit', async (ev) => {
   ev.preventDefault();
+
+  const vorname = registerForm['firstname'].value.trim();
+  const nachname = registerForm['lastname'].value.trim();
   const email = registerForm['email'].value.trim();
-  const password = registerForm['password'].value.trim();
+  const passwort = registerForm['password'].value.trim(); // wichtig: Backend erwartet "passwort"
+
   try {
     const res = await apiFetch('/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ vorname, nachname, email, passwort }),
     });
+
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       throw new Error(err.error || 'Registrierung fehlgeschlagen');
     }
+
     alert('Registrierung erfolgreich! Bitte einloggen.');
     showSection(loginSection);
   } catch (err) {
     alert(err.message);
   }
 });
+
 
 // === WebAuthn Aktivierung Button ===
 activateBiometricBtn.addEventListener('click', async () => {
