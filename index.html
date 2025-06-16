@@ -180,25 +180,26 @@ button:disabled {
   </section>
 
   <!-- 2. Login -->
-  <section id="login-section" class="card hidden" aria-label="Login Formular">
-    <h2>Login</h2>
-    <form id="login-form" novalidate>
-      <label for="login-email">E-Mail</label>
-      <input type="email" id="login-email" name="email" required autocomplete="email" />
+<section id="login-section" class="card hidden" aria-label="Login Formular">
+  <h2>Login</h2>
+  <form id="login-form" novalidate>
+    <label for="login-email">E-Mail</label>
+    <input type="email" id="login-email" name="email" required autocomplete="email" />
 
-      <label for="login-password">Passwort</label>
-      <input type="password" id="login-password" name="password" required autocomplete="current-password" />
+    <label for="login-password">Passwort</label>
+    <input type="password" id="login-password" name="passwort" required autocomplete="current-password" />
 
-      <button id="activate-biometric" type="button">🔐 Biometrie aktivieren</button>
+    <button id="activate-biometric" type="button">🔐 Biometrie aktivieren</button>
 
-      <button type="submit">Einloggen</button>
-    </form>
-    <div class="link">
-      Noch keinen Account? <button id="show-register-btn" type="button">Jetzt registrieren</button>
-    </div>
-    
-    <p id="login-error" class="error-message"></p>
-  </section>
+    <button type="submit">Einloggen</button>
+  </form>
+  <div class="link">
+    Noch keinen Account? <button id="show-register-btn" type="button">Jetzt registrieren</button>
+  </div>
+  
+  <p id="login-error" class="error-message"></p>
+</section>
+
 
   <!-- 3. Registrierung -->
   <section id="register-section" class="card hidden" aria-label="Registrierung Formular">
@@ -710,18 +711,41 @@ logoutBtn.addEventListener('click', async () => {
   }
 });
 
+
+
 // === Login-Formular ===
-loginForm.addEventListener('submit', async (ev) => {
-  ev.preventDefault();
-  loginError.textContent = '';
-  try {
-    loggedInUser = await login(loginEmail.value.trim(), loginPassword.value);
-    biometricEnabled = loggedInUser.biometricEnabled || false;
-    updateUIAfterLogin();
-  } catch (err) {
-    loginError.textContent = err.message;
-  }
-});
+  loginForm.addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+
+    const email = loginForm['email'].value.trim();
+    const passwort = loginForm['passwort'].value;
+
+    if (!email || !passwort) {
+      alert('Alle Felder sind Pflicht.');
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, passwort })
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Login fehlgeschlagen');
+      }
+
+      const data = await res.json();
+      alert('Login erfolgreich!');
+
+      // Weiterleitung, Token speichern o. Ä.
+      console.log(data);
+    } catch (err) {
+      alert(err.message);
+    }
+  });
 
 // === Register-Link im Login-Form ===
 showRegisterBtn.addEventListener('click', () => {
