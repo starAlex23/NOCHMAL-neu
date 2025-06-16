@@ -164,7 +164,10 @@ button:disabled {
 }
   </style>
 </head>
-<body>
+  
+<script src="main.js"></script>
+</body>
+
 
 <header role="banner"> 
   <h1>Zeiterfassung</h1>
@@ -715,11 +718,11 @@ logoutBtn.addEventListener('click', async () => {
 
 
 // === Login-Formular ===
-  loginForm.addEventListener('submit', async (ev) => {
+loginForm.addEventListener('submit', async (ev) => {
   ev.preventDefault();
 
   const email = loginForm['email'].value.trim();
-  const passwort = loginForm['password'].value.trim(); // Backend erwartet explizit "passwort"
+  const passwort = loginForm['passwort'].value.trim(); // ✅ Korrekt!
 
   try {
     const res = await apiFetch('/login', {
@@ -734,18 +737,17 @@ logoutBtn.addEventListener('click', async () => {
     }
 
     const data = await res.json();
-
-    // CSRF-Token ggf. speichern, falls du es brauchst
     sessionStorage.setItem('csrfToken', data.csrfToken);
 
     alert('Login erfolgreich!');
-    showSection(mainSection); // Passe ggf. an: welche Section nach Login?
-    await updateProfile(); // Profil aktualisieren, falls vorhanden
+    showSection(mainSection); // oder `showSection(timeTrackingSection)`?
+    await updateProfile();
   } catch (err) {
     console.error(err);
     alert(err.message);
   }
 });
+
 
 // === Register-Link im Login-Form ===
 showRegisterBtn.addEventListener('click', () => {
