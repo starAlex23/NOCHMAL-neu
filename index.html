@@ -941,6 +941,16 @@ async function init() {
   showSection(qrSection);
   await startQrScanner();
   await tryAutoLogin();
+
+  // Status prüfen und Buttons entsprechend setzen
+  const status = await getLetzterStatus();
+  if (status?.aktion === 'start') {
+    clockInBtn.disabled = true;
+    clockOutBtn.disabled = false;
+  } else {
+    clockInBtn.disabled = false;
+    clockOutBtn.disabled = true;
+  }
 }
 init();
 
