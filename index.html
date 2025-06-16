@@ -426,12 +426,12 @@ async function stopQrScanner() {
 
 // QR-Code Validierung gegen Backend
 async function validateQrCode(qr) {
-  const res = await fetch(`${API_BASE}/api/validate-qr`,)
- {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ qr }),
-  });
+  const res = await fetch(`${API_BASE}/validate-qr`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ qr }),
+});
+
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err.error || 'Ungültiger QR-Code');
@@ -473,6 +473,11 @@ async function startWebAuthnRegistration() {
     }
     const options = await resp.json();
 
+if (!window.PublicKeyCredential) {
+  alert('WebAuthn wird von deinem Gerät nicht unterstützt.');
+  return;
+}
+    
     // Challenge und IDs in Uint8Array konvertieren
     options.challenge = base64urlToUint8Array(options.challenge);
     options.user.id = base64urlToUint8Array(options.user.id);
@@ -595,6 +600,17 @@ async function checkBiometricStatus() {
     console.error('Fehler beim Abrufen des Biometrie-Status:', err);
     return false;
   }
+}
+
+
+ function showPopupMessage(msg, duration = 3000) {
+  const popup = document.getElementById('popup-message');
+  popup.textContent = msg;
+  popup.classList.remove('hidden');
+
+  setTimeout(() => {
+    popup.classList.add('hidden');
+  }, duration);
 }
 
 
