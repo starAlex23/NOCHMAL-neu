@@ -348,6 +348,20 @@ async function tryTokenRefresh() {
 }
 
 
+  async function updateProfile() {
+  try {
+    const res = await apiFetch('/api/me');
+    if (!res.ok) throw new Error('Fehler beim Laden des Profils');
+    const user = await res.json();
+    const userNameElem = document.getElementById('user-name');
+    if(userNameElem) userNameElem.textContent = user.firstname || user.email || 'Benutzer';
+    showSection(timeTrackingSection);
+  } catch(err) {
+    console.error('updateProfile Fehler:', err);
+  }
+}
+
+
 // === Theme Handling ===
 function setTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme);
