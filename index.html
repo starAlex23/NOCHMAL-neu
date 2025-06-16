@@ -253,7 +253,7 @@ button:disabled {
 <script src="https://unpkg.com/html5-qrcode"></script>
 
 <script>
- document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', () => {
   // WebAuthn-Zuweisung
   if (typeof startWebAuthnRegistration === 'function') {
     document.getElementById('registerWebAuthn').onclick = startWebAuthnRegistration;
@@ -264,30 +264,31 @@ button:disabled {
 
   // Zeitstatus prüfen
   (async () => {
-  const token = localStorage.getItem('accessToken'); // oder wie du den speicherst
-  if (!token) {
-    console.warn('⛔ Kein Token gefunden, Statusprüfung übersprungen.');
-    return;
-  }
-
-  try {
-    const status = await getLetzterStatus();
-    const clockInBtn = document.getElementById('clockInBtn');
-    const clockOutBtn = document.getElementById('clockOutBtn');
-
-    if (clockInBtn && clockOutBtn) {
-      if (status?.aktion === 'start') {
-        clockInBtn.disabled = true;
-        clockOutBtn.disabled = false;
-      } else {
-        clockInBtn.disabled = false;
-        clockOutBtn.disabled = true;
-      }
+    const token = sessionStorage.getItem('accessToken'); // oder wie du den speicherst
+    if (!token) {
+      console.warn('⛔ Kein Token gefunden, Statusprüfung übersprungen.');
+      return;
     }
-  } catch (err) {
-    console.error('❌ Fehler beim Abrufen des Status:', err);
-  }
-})();
+
+    try {
+      const status = await getLetzterStatus();
+      const clockInBtn = document.getElementById('clockInBtn');
+      const clockOutBtn = document.getElementById('clockOutBtn');
+
+      if (clockInBtn && clockOutBtn) {
+        if (status?.aktion === 'start') {
+          clockInBtn.disabled = true;
+          clockOutBtn.disabled = false;
+        } else {
+          clockInBtn.disabled = false;
+          clockOutBtn.disabled = true;
+        }
+      }
+    } catch (err) {
+      console.error('❌ Fehler beim Abrufen des Status:', err);
+    }
+  })();
+});
 
 
   const BASE = '/api';
