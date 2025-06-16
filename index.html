@@ -264,6 +264,13 @@ button:disabled {
 
   // Zeitstatus prüfen
   (async () => {
+  const token = localStorage.getItem('accessToken'); // oder wie du den speicherst
+  if (!token) {
+    console.warn('⛔ Kein Token gefunden, Statusprüfung übersprungen.');
+    return;
+  }
+
+  try {
     const status = await getLetzterStatus();
     const clockInBtn = document.getElementById('clockInBtn');
     const clockOutBtn = document.getElementById('clockOutBtn');
@@ -277,8 +284,10 @@ button:disabled {
         clockOutBtn.disabled = true;
       }
     }
-  })();
-});
+  } catch (err) {
+    console.error('❌ Fehler beim Abrufen des Status:', err);
+  }
+})();
 
 
   const BASE = '/api';
