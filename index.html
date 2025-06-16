@@ -303,7 +303,6 @@ const logoutBtn = document.getElementById('logout-btn');
 const activateBiometricBtn = document.getElementById('activate-biometric');
 const themeSwitcher = document.getElementById('theme-switcher');
 const userNameSpan = document.getElementById('user-name');
-const vehicleIdSpan = document.getElementById('vehicle-id');
 const clockInBtn = document.getElementById('clock-in-btn');
 const clockOutBtn = document.getElementById('clock-out-btn');
 
@@ -747,7 +746,7 @@ async function tryAutoLogin() {
 // === UI Aktualisierung nach Login ===
 function updateUIAfterLogin() {
   userNameSpan.textContent = loggedInUser.name || loggedInUser.email || 'Benutzer';
-  vehicleIdSpan.textContent = scannedVehicleId || '-';
+
   showSection(timeTrackingSection);
   loginSection.classList.add('hidden');
   registerSection.classList.add('hidden');
