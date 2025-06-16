@@ -253,14 +253,33 @@ button:disabled {
 <script src="https://unpkg.com/html5-qrcode"></script>
 
 <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    if (typeof startWebAuthnRegistration === 'function') {
-      document.getElementById('registerWebAuthn').onclick = startWebAuthnRegistration;
+ document.addEventListener('DOMContentLoaded', () => {
+  // WebAuthn-Zuweisung
+  if (typeof startWebAuthnRegistration === 'function') {
+    document.getElementById('registerWebAuthn').onclick = startWebAuthnRegistration;
+  }
+  if (typeof startWebAuthnLogin === 'function') {
+    document.getElementById('loginWebAuthn').onclick = startWebAuthnLogin;
+  }
+
+  // Zeitstatus prüfen
+  (async () => {
+    const status = await getLetzterStatus();
+    const clockInBtn = document.getElementById('clockInBtn');
+    const clockOutBtn = document.getElementById('clockOutBtn');
+
+    if (clockInBtn && clockOutBtn) {
+      if (status?.aktion === 'start') {
+        clockInBtn.disabled = true;
+        clockOutBtn.disabled = false;
+      } else {
+        clockInBtn.disabled = false;
+        clockOutBtn.disabled = true;
+      }
     }
-    if (typeof startWebAuthnLogin === 'function') {
-      document.getElementById('loginWebAuthn').onclick = startWebAuthnLogin;
-    }
-  });
+  })();
+});
+
 
   const BASE = '/api';
 
@@ -289,14 +308,6 @@ const loginError = document.getElementById('login-error');
 // API-Endpunkt (Render-Backend)
 const API_BASE = 'https://backend-869x.onrender.com/api';
 
-const status = await getLetzterStatus();
-if (status?.aktion === 'start') {
-  clockInBtn.disabled = true;
-  clockOutBtn.disabled = false;
-} else {
-  clockInBtn.disabled = false;
-  clockOutBtn.disabled = true;
-}
 
   
 let html5QrCode = null;
