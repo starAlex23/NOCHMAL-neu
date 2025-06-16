@@ -740,7 +740,7 @@ loginForm.addEventListener('submit', async (ev) => {
     sessionStorage.setItem('csrfToken', data.csrfToken);
 
     alert('Login erfolgreich!');
-    showSection(mainSection); // oder `showSection(timeTrackingSection)`?
+    showSection(timeTrackingSection); // oder `showSection(timeTrackingSection)`?
     await updateProfile();
   } catch (err) {
     console.error(err);
