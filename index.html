@@ -514,7 +514,7 @@ async function tryAutoLogin() {
   if (!token) return false;
 
   try {
-    const userData = await apiFetch('/me', {}, true);
+    const userData = await apiFetch('/api/me', {}, true);
     loggedInUser = userData;
     biometricEnabled = userData.biometricEnabled || false;
     updateUIAfterLogin(); // optional
@@ -566,7 +566,7 @@ document.addEventListener('DOMContentLoaded', init);
 
 async function updateProfile() {
   try {
-    loggedInUser = await apiFetch('/me', {}, true);
+    loggedInUser = await apiFetch('/api/me', {}, true);
     updateUIAfterLogin();
   } catch (err) {
     console.error('Profil konnte nicht geladen werden:', err);
@@ -799,7 +799,7 @@ async function loginViaWebAuthn(email) {
       throw new Error(err.error || 'WebAuthn Login fehlgeschlagen');
     }
 
-    const userRes = await apiFetch('/me');
+    const userRes = await apiFetch('/api/me');
     if (!userRes.ok) throw new Error('Fehler beim Abrufen der Benutzerdaten nach WebAuthn Login');
     return userRes.json();
   } catch (err) {
@@ -1101,7 +1101,7 @@ async function init() {
 
 
 async function fetchUserProfile() {
-  const response = await apiFetch('/me');
+  const response = await apiFetch('/api/me');
   if (!response.ok) throw new Error('Benutzerdaten konnten nicht geladen werden');
   const user = await response.json();
   return user;
