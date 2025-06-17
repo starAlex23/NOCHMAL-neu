@@ -264,34 +264,36 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Zeitstatus prüfen
-(async () => {
-  const token = sessionStorage.getItem('accessToken');
-  if (!token) {
-    console.warn('⛔ Kein Token gefunden, Statusprüfung übersprungen.');
-    return;
-  }
-
-  try {
-    const status = await getLetzterStatus();
-    const clockInBtn = document.getElementById('clockInBtn');
-    const clockOutBtn = document.getElementById('clockOutBtn');
-
-    if (!clockInBtn || !clockOutBtn) {
-      console.warn('⚠️ Clock-In oder Clock-Out Button nicht gefunden.');
+  (async () => {
+    const token = sessionStorage.getItem('accessToken');
+    if (!token) {
+      console.warn('⛔ Kein Token gefunden, Statusprüfung übersprungen.');
       return;
     }
 
-    if (status?.aktion === 'start') {
-      clockInBtn.disabled = true;
-      clockOutBtn.disabled = false;
-    } else {
-      clockInBtn.disabled = false;
-      clockOutBtn.disabled = true;
+    try {
+      const status = await getLetzterStatus();
+      const clockInBtn = document.getElementById('clockInBtn');
+      const clockOutBtn = document.getElementById('clockOutBtn');
+
+      if (!clockInBtn || !clockOutBtn) {
+        console.warn('⚠️ Clock-In oder Clock-Out Button nicht gefunden.');
+        return;
+      }
+
+      if (status?.aktion === 'start') {
+        clockInBtn.disabled = true;
+        clockOutBtn.disabled = false;
+      } else {
+        clockInBtn.disabled = false;
+        clockOutBtn.disabled = true;
+      }
+    } catch (err) {
+      console.error('❌ Fehler beim Abrufen des Status:', err);
     }
-  } catch (err) {
-    console.error('❌ Fehler beim Abrufen des Status:', err);
-  }
-})();
+  })(); // Async IIFE schließen
+
+}); // <-- Hier fehlte die schließende Klammer und das Semikolon
 
 
 
