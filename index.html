@@ -337,6 +337,7 @@ function getCsrfToken() {
 }
 
 
+
 // Fetch mit Access-Token und Refresh-Token-Handling
 async function fetchWithRefresh(path, options = {}, useAuthHeaderToken = false) {
   const url = path.startsWith('http') ? path : `${API_BASE_URL}${path}`;
@@ -350,45 +351,56 @@ async function fetchWithRefresh(path, options = {}, useAuthHeaderToken = false) 
     options.headers['Authorization'] = `Bearer ${token}`;
   }
 
-  options.credentials = 'include'; // für Cookies
+  options.credentials = 'include'; // wichtig für Cookies
 
   let res = await fetch(url, options);
 
+  // Token abgelaufen oder ungültig
   if (res.status === 401 && useAuthHeaderToken) {
-    // Versuche Token zu refreshen
+    // Versuche Refresh
     const refreshRes = await fetch(`${API_BASE_URL}/api/refresh`, {
       method: 'POST',
       credentials: 'include',
     });
 
-    if (refreshRes.ok) {
-      const refreshData = await refreshRes.json();
-
-      if (refreshData.accessToken) {
-        sessionStorage.setItem('accessToken', refreshData.accessToken);
-        options.headers['Authorization'] = `Bearer ${refreshData.accessToken}`;
-      }
-
-      // ⬇️ NEU: CSRF-Token ggf. aus JSON übernehmen (wenn der Server es zurückgibt)
-      if (refreshData.csrfToken) {
-        localStorage.setItem('csrfToken', refreshData.csrfToken);
-        console.log('🔁 Neuer CSRF-Token nach Refresh gespeichert:', refreshData.csrfToken);
-      }
-
-      res = await fetch(url, options);
-
-      if (res.status === 401) {
-        sessionStorage.removeItem('accessToken');
-        throw new Error('Token-Refresh fehlgeschlagen. Bitte neu einloggen.');
-      }
-    } else {
+    if (!refreshRes.ok) {
+      // Refresh abgelehnt (Session abgelaufen)
       sessionStorage.removeItem('accessToken');
       throw new Error('Session abgelaufen. Bitte neu einloggen.');
     }
+
+    const refreshData = await refreshRes.json();
+
+    if (!refreshData.accessToken) {
+      sessionStorage.removeItem('accessToken');
+      throw new Error('Token-Refresh fehlgeschlagen. Bitte neu einloggen.');
+    }
+
+    // Speichere neuen Access Token
+    sessionStorage.setItem('accessToken', refreshData.accessToken);
+    options.headers['Authorization'] = `Bearer ${refreshData.accessToken}`;
+
+    // Optional CSRF-Token aktualisieren
+    if (refreshData.csrfToken) {
+      localStorage.setItem('csrfToken', refreshData.csrfToken);
+      console.log('🔁 Neuer CSRF-Token nach Refresh gespeichert:', refreshData.csrfToken);
+    }
+
+    // Erneut versuchen
+    res = await fetch(url, options);
+
+    // Wenn nochmal 401, gilt die Session als endgültig abgelaufen
+    if (res.status === 401) {
+      sessionStorage.removeItem('accessToken');
+      throw new Error('Token-Refresh fehlgeschlagen. Bitte neu einloggen.');
+    }
   }
+
+  // Bei anderen Fehlern kannst du hier noch erweitern, z.B. CSRF-Fehler abfangen
 
   return res;
 }
+
 
 // API-Fetch mit CSRF-Token (bei schreibenden Methoden) und Fehlerbehandlung
 function getCookie(name) {
