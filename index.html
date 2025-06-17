@@ -414,11 +414,21 @@ async function apiFetch(path, options = {}, useAuthHeaderToken = false) {
 
 
 async function login(email, passwort) {
+  console.log('Login-Daten:', { email, passwort });
+  if (!email || !passwort) {
+    alert('Bitte Email und Passwort ausfüllen!');
+    return;
+  }
+
   try {
     const res = await apiFetch('/api/login', {
-      method: 'POST',
-      body: { email, passwort }
-    });
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({ email, passwort })
+});
+
 
     console.log('✅ Login erfolgreich:', res);
 
@@ -432,7 +442,6 @@ async function login(email, passwort) {
       localStorage.setItem('csrfToken', res.csrfToken);
     }
 
-    // Wichtig: updateProfile mit Token-Header
     await updateProfile();
   } catch (err) {
     console.error('❌ Login fehlgeschlagen:', err.message);
@@ -440,7 +449,43 @@ async function login(email, passwort) {
   }
 }
 
+// === Login-Formular ===
+loginForm.addEventListener('submit', async (ev) => {
+  ev.preventDefault();
 
+  const email = loginForm['email'].value.trim();
+  const passwort = loginForm['passwort'].value.trim();
+
+  try {
+    await login(email, passwort);
+    alert('Login erfolgreich!');
+    showSection(timeTrackingSection);
+    await updateProfile();
+  } catch (err) {
+    console.error(err);
+    alert(err.message);
+  }
+});
+
+
+// === Automatischer Login (z.B. nach QR-Scan) ===
+async function tryAutoLogin() {
+  const token = sessionStorage.getItem('accessToken');
+  if (!token) return false;
+
+  try {
+    const userData = await apiFetch('/api/me', {}, true); // gibt JSON zurück
+
+    loggedInUser = userData;
+    biometricEnabled = loggedInUser.biometricEnabled || false;
+    updateUIAfterLogin();
+    return true;
+  } catch (err) {
+    console.warn('AutoLogin fehlgeschlagen:', err);
+    sessionStorage.removeItem('accessToken');
+    return false;
+  }
+}
 
 
 
@@ -747,28 +792,7 @@ function toBase64Url(buffer) {
   return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
-// === Automatischer Login (z.B. nach QR-Scan) ===
-async function tryAutoLogin() {
-  const token = sessionStorage.getItem('accessToken');
-  if (!token) return false;
 
-  try {
-    const res = await apiFetch('/api/me', {}, true); // true = Token-Header mitschicken
-    if (!res.ok) {
-      sessionStorage.removeItem('accessToken');
-      return false;
-    }
-
-    loggedInUser = await res.json();
-    biometricEnabled = loggedInUser.biometricEnabled || false;
-    updateUIAfterLogin();
-    return true;
-  } catch (err) {
-    console.warn('AutoLogin fehlgeschlagen:', err);
-    sessionStorage.removeItem('accessToken');
-    return false;
-  }
-}
 
 
 
@@ -824,23 +848,6 @@ logoutBtn.addEventListener('click', async () => {
 
 
 
-// === Login-Formular ===
-loginForm.addEventListener('submit', async (ev) => {
-  ev.preventDefault();
-
-  const email = loginForm['email'].value.trim();
-  const passwort = loginForm['passwort'].value.trim();
-
-  try {
-    await login(email, passwort);
-    alert('Login erfolgreich!');
-    showSection(timeTrackingSection);
-    await updateProfile();
-  } catch (err) {
-    console.error(err);
-    alert(err.message);
-  }
-});
 
 
 
