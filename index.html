@@ -391,6 +391,13 @@ async function fetchWithRefresh(path, options = {}, useAuthHeaderToken = false) 
 }
 
 // API-Fetch mit CSRF-Token (bei schreibenden Methoden) und Fehlerbehandlung
+function getCookie(name) {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(';').shift();
+  return null;
+}
+
 async function apiFetch(path, options = {}, useAuthHeaderToken = false) {
   const method = (options.method || 'GET').toUpperCase();
   const writeMethods = ['POST', 'PUT', 'DELETE', 'PATCH'];
@@ -398,18 +405,24 @@ async function apiFetch(path, options = {}, useAuthHeaderToken = false) {
   if (!options.headers) options.headers = {};
 
   if (writeMethods.includes(method)) {
-    const csrfToken = getCsrfToken();
+    // CSRF-Token aus localStorage versuchen
+    let csrfToken = localStorage.getItem('csrfToken');
+
+    // Falls nicht vorhanden, aus Cookie holen (ohne speichern)
+    if (!csrfToken) {
+      csrfToken = getCookie('csrfToken');
+      if (!csrfToken) {
+        console.warn('⚠️ Kein CSRF-Token im localStorage oder Cookie gefunden.');
+      }
+    }
+
     if (csrfToken) {
       options.headers['X-CSRF-Token'] = csrfToken;
-    } else {
-      console.warn('⚠️ Kein CSRF-Token im localStorage gefunden.');
     }
   }
 
-  // Immer Credentials mitsenden!
   options.credentials = 'include';
 
-  // Optional: Auth Header setzen
   if (useAuthHeaderToken) {
     const token = sessionStorage.getItem('accessToken');
     if (token) {
@@ -430,6 +443,7 @@ async function apiFetch(path, options = {}, useAuthHeaderToken = false) {
     return {};
   }
 }
+
 
 
 // Login-Funktion: speichert Access- und CSRF-Token
