@@ -447,6 +447,7 @@ async function login(email, passwort) {
   }
 
   try {
+    // Request zum Backend
     const res = await apiFetch('/api/login', {
       method: 'POST',
       headers: {
@@ -457,49 +458,36 @@ async function login(email, passwort) {
 
     console.log('✅ Login erfolgreich:', res);
 
-    if (res.accessToken) {
-      sessionStorage.setItem('accessToken', res.accessToken);
+    // AccessToken aus Cookie lesen und in sessionStorage speichern
+    const accessTokenFromCookie = getCookie('accessToken');
+    if (accessTokenFromCookie) {
+      sessionStorage.setItem('accessToken', accessTokenFromCookie);
     } else {
-      throw new Error('Kein Access-Token in der Login-Antwort erhalten.');
+      throw new Error('Kein Access-Token im Cookie gefunden.');
     }
-    
-if (res.csrfToken) {
-  console.log('✅ CSRF-Token erhalten:', res.csrfToken);
- 
-} else {
-  console.warn('⛔ Kein CSRF-Token in der Login-Antwort:', res);
-}
 
+    // CSRF-Token aus Antwort prüfen
+    if (res.csrfToken) {
+      console.log('✅ CSRF-Token erhalten:', res.csrfToken);
+      // Optional: csrfToken auch irgendwo speichern, falls du es brauchst
+    } else {
+      console.warn('⛔ Kein CSRF-Token in der Login-Antwort:', res);
+    }
 
-    // ⬇️ Das hier ist wichtig!
+    // Benutzer-Daten setzen
     if (res.user) {
       loggedInUser = res.user;
     }
 
+    // Profil aktualisieren (Frontend-UI)
     await updateProfile();
+
   } catch (err) {
     console.error('❌ Login fehlgeschlagen:', err.message);
     alert('Login fehlgeschlagen: ' + err.message);
   }
 }
-  
-// Login-Formular-Handler (einfach übernehmen)
-loginForm.addEventListener('submit', async (ev) => {
-  ev.preventDefault();
 
-  const email = loginForm['email'].value.trim();
-  const passwort = loginForm['passwort'].value.trim();
-
-  try {
-    await login(email, passwort);
-    alert('Login erfolgreich!');
-    showSection(timeTrackingSection);
-    await updateProfile();
-  } catch (err) {
-    alert('Login fehlgeschlagen: ' + err.message);
-  }
-});
-  
 // Automatischer Login mit gespeichertem Access-Token
 async function tryAutoLogin() {
   const token = sessionStorage.getItem('accessToken');
