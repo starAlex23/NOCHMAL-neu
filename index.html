@@ -434,12 +434,14 @@ async function login(email, passwort) {
     } else {
       throw new Error('Kein Access-Token in der Login-Antwort erhalten.');
     }
+    
+if (res.csrfToken) {
+  console.log('✅ CSRF-Token erhalten:', res.csrfToken);
+  localStorage.setItem('csrfToken', res.csrfToken);
+} else {
+  console.warn('⛔ Kein CSRF-Token in der Login-Antwort:', res);
+}
 
-    if (res.csrfToken) {
-      localStorage.setItem('csrfToken', res.csrfToken);
-    } else {
-      console.warn('⚠️ Kein CSRF-Token in der Login-Antwort erhalten.');
-    }
 
     // ⬇️ Das hier ist wichtig!
     if (res.user) {
