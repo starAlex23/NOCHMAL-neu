@@ -264,32 +264,35 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Zeitstatus prüfen
-  (async () => {
-    const token = sessionStorage.getItem('accessToken'); // oder wie du den speicherst
-    if (!token) {
-      console.warn('⛔ Kein Token gefunden, Statusprüfung übersprungen.');
+(async () => {
+  const token = sessionStorage.getItem('accessToken');
+  if (!token) {
+    console.warn('⛔ Kein Token gefunden, Statusprüfung übersprungen.');
+    return;
+  }
+
+  try {
+    const status = await getLetzterStatus();
+    const clockInBtn = document.getElementById('clockInBtn');
+    const clockOutBtn = document.getElementById('clockOutBtn');
+
+    if (!clockInBtn || !clockOutBtn) {
+      console.warn('⚠️ Clock-In oder Clock-Out Button nicht gefunden.');
       return;
     }
 
-    try {
-      const status = await getLetzterStatus();
-      const clockInBtn = document.getElementById('clockInBtn');
-      const clockOutBtn = document.getElementById('clockOutBtn');
-
-      if (clockInBtn && clockOutBtn) {
-        if (status?.aktion === 'start') {
-          clockInBtn.disabled = true;
-          clockOutBtn.disabled = false;
-        } else {
-          clockInBtn.disabled = false;
-          clockOutBtn.disabled = true;
-        }
-      }
-    } catch (err) {
-      console.error('❌ Fehler beim Abrufen des Status:', err);
+    if (status?.aktion === 'start') {
+      clockInBtn.disabled = true;
+      clockOutBtn.disabled = false;
+    } else {
+      clockInBtn.disabled = false;
+      clockOutBtn.disabled = true;
     }
-  })();
-});
+  } catch (err) {
+    console.error('❌ Fehler beim Abrufen des Status:', err);
+  }
+})();
+
 
 
   const BASE = '/api';
@@ -472,10 +475,10 @@ async function tryAutoLogin() {
   if (!token) return false;
 
   try {
-    const userData = await apiFetch('/api/me', {}, true); // gibt JSON zurück
-    loggedInUser = userData; // ⬅️ das hier ist entscheidend
+    const userData = await apiFetch('/api/me', {}, true);
+    loggedInUser = userData;
     biometricEnabled = userData.biometricEnabled || false;
-    updateUIAfterLogin();
+    updateUIAfterLogin(); // optional
     return true;
   } catch (err) {
     console.warn('AutoLogin fehlgeschlagen:', err);
@@ -484,7 +487,16 @@ async function tryAutoLogin() {
   }
 }
 
+  
 async function init() {
+  const clockInBtn = document.getElementById('clockInBtn');
+  const clockOutBtn = document.getElementById('clockOutBtn');
+
+  if (!clockInBtn || !clockOutBtn) {
+    console.warn('⚠️ ClockIn/ClockOut Button nicht gefunden.');
+    return;
+  }
+
   showSection(qrSection);
   await startQrScanner();
 
@@ -492,7 +504,7 @@ async function init() {
 
   if (!autoLoginErfolg) {
     console.warn('⛔️ Auto-Login fehlgeschlagen – keine Statusabfrage.');
-    return; // NICHT weitermachen, wenn kein Token vorhanden ist
+    return;
   }
 
   try {
@@ -509,6 +521,8 @@ async function init() {
     console.warn('⚠️ Status konnte nicht geladen werden:', err.message);
   }
 }
+
+document.addEventListener('DOMContentLoaded', init);
 
 
 
