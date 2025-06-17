@@ -588,14 +588,15 @@ async function startQrScanner() {
 
   try {
     scannerIsRunning = true;
-    await html5QrCode.start(
-      { facingMode: "environment" },
-      config,
-      async (decodedText, decodedResult) => {
-        console.log("QR-Code erkannt:", decodedText);
-        await onQrCodeDetected(decodedText);
-      }
-    );
+await html5QrCode.start(
+  { facingMode: "environment" },
+  config,
+  async (decodedText, decodedResult) => {
+    console.log("QR-Code erkannt:", decodedText);
+    await stopQrScanner();
+    await onQrCodeDetected(decodedText); // 👈 wichtig!
+  }
+);
   } catch (error) {
     console.error("Fehler beim Starten des QR-Scanners:", error);
     scannerIsRunning = false;
@@ -633,25 +634,23 @@ async function validateQrCode(qr) {
 }
 
 // Wird aufgerufen, wenn QR-Code erkannt wurde
-async function onQrCodeDetected(decodedText) {
+async function onQrCodeDetected(qrCodeText) {
   try {
-    await stopQrScanner();
+    console.log("➡️ QR-Code wird validiert...");
 
-    // QR-Code validieren
-    await validateQrCode(decodedText);
+    await validateQrCode(qrCodeText); // prüft beim Backend, ob QR gültig ist
 
-    // Nach erfolgreicher Validierung Login anzeigen
-    showSection(loginSection);
+    console.log("✅ QR-Code gültig – Loginmaske wird angezeigt.");
 
-    // Optional: QR-Code im Loginformular vorbefüllen
-    // loginForm['email'].value = decodedText; // wenn du den QR als Email nutzt
+    showSection(loginSection); // zum Login-Formular wechseln
+
   } catch (err) {
-    alert('Ungültiger QR-Code, bitte erneut scannen.');
-    console.error(err);
-    // Scanner wieder starten, damit Nutzer nochmal scannen kann
-    startQrScanner();
+    console.warn("⛔ QR ungültig:", err.message);
+    alert("Ungültiger QR-Code: " + err.message);
+    await startQrScanner(); // Scanner neu starten
   }
 }
+
 
 
 
