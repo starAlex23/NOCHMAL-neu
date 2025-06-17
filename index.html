@@ -379,6 +379,7 @@ async function apiFetch(path, options = {}, useAuthHeaderToken = false) {
 
 
   // Hier absolute URL mit Basis-URL bilden
+ async function fetchWithRefresh(path, options = {}, useAuthHeaderToken = false) {
   const url = API_BASE_URL + path;
 
   let res = await fetch(url, options);
@@ -408,6 +409,7 @@ async function apiFetch(path, options = {}, useAuthHeaderToken = false) {
 
   return res;
 }
+
 
 
 
