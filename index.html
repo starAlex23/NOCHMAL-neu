@@ -455,7 +455,7 @@ async function login(email, passwort) {
   }
 
   try {
-    const res = await apiFetch('/api/login', {
+    const res = await apiFetch('/login', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -514,7 +514,7 @@ async function tryAutoLogin() {
   if (!token) return false;
 
   try {
-    const userData = await apiFetch('/api/me', {}, true);
+    const userData = await apiFetch('/me', {}, true);
     loggedInUser = userData;
     biometricEnabled = userData.biometricEnabled || false;
     updateUIAfterLogin(); // optional
@@ -566,7 +566,7 @@ document.addEventListener('DOMContentLoaded', init);
 
 async function updateProfile() {
   try {
-    loggedInUser = await apiFetch('/api/me', {}, true);
+    loggedInUser = await apiFetch('/me', {}, true);
     updateUIAfterLogin();
   } catch (err) {
     console.error('Profil konnte nicht geladen werden:', err);
@@ -924,7 +924,7 @@ function handleLogoutCleanup() {
 logoutBtn.addEventListener('click', async () => {
   try {
     // Token beim Logout-Request mit senden!
-    const res = await apiFetch('/api/logout', { method: 'POST' }, true);
+    const res = await apiFetch('/logout', { method: 'POST' }, true);
 
     // Falls logout API ok antwortet, dann cleanup:
     handleLogoutCleanup();
@@ -1004,7 +1004,7 @@ clockInBtn.addEventListener('click', async () => {
   }
 
   try {
-    await apiFetch('/api/zeit', {
+    await apiFetch('/zeit', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ aktion: 'start' }),
@@ -1030,7 +1030,7 @@ clockOutBtn.addEventListener('click', async () => {
   clockOutBtn.disabled = true;
 
   try {
-    await apiFetch('/api/zeit', {
+    await apiFetch('/zeit', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ aktion: 'stop' }),
@@ -1049,7 +1049,7 @@ clockOutBtn.addEventListener('click', async () => {
 //schon eingestempelt?
 async function getLetzterStatus() {
   try {
-    const response = await apiFetch('/api/zeit/letzter-status', {
+    const response = await apiFetch('/zeit/letzter-status', {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
