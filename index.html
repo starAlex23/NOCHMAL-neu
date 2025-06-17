@@ -351,20 +351,12 @@ async function apiFetch(path, options = {}, useAuthHeaderToken = false) {
 
   if (!options.headers) options.headers = {};
 
-  // CSRF-Token bei schreibenden Methoden hinzufügen
+  // CSRF-Token bei schreibenden Methoden ausschließlich aus Cookie hinzufügen
   if (writeMethods.includes(method)) {
-    let csrfToken = localStorage.getItem('csrfToken');
-
+    const csrfToken = getCookie('csrf');
     if (!csrfToken) {
-      csrfToken = getCookie('csrf');
-      if (csrfToken) {
-        localStorage.setItem('csrfToken', csrfToken); // Optional: Cache aktualisieren
-      } else {
-        console.warn('⚠️ Kein CSRF-Token im localStorage oder Cookie gefunden.');
-      }
-    }
-
-    if (csrfToken) {
+      console.warn('⚠️ Kein CSRF-Token im Cookie gefunden.');
+    } else {
       options.headers['X-CSRF-Token'] = csrfToken;
     }
   }
@@ -411,11 +403,7 @@ async function apiFetch(path, options = {}, useAuthHeaderToken = false) {
     sessionStorage.setItem('accessToken', refreshData.accessToken);
     options.headers['Authorization'] = `Bearer ${refreshData.accessToken}`;
 
-    // CSRF-Token ggf. aktualisieren
-    if (refreshData.csrfToken) {
-      localStorage.setItem('csrfToken', refreshData.csrfToken);
-      console.log('🔁 Neuer CSRF-Token nach Refresh gespeichert:', refreshData.csrfToken);
-    }
+    // Hinweis: CSRF-Token nicht mehr in localStorage speichern!
 
     // Anfrage erneut senden
     response = await fetchWithToken();
@@ -449,6 +437,7 @@ async function apiFetch(path, options = {}, useAuthHeaderToken = false) {
 
 
 
+
 // Login-Funktion: speichert Access- und CSRF-Token
 async function login(email, passwort) {
   console.log('Login-Daten:', { email, passwort });
@@ -476,7 +465,7 @@ async function login(email, passwort) {
     
 if (res.csrfToken) {
   console.log('✅ CSRF-Token erhalten:', res.csrfToken);
-  localStorage.setItem('csrfToken', res.csrfToken);
+ 
 } else {
   console.warn('⛔ Kein CSRF-Token in der Login-Antwort:', res);
 }
