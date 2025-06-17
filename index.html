@@ -331,99 +331,32 @@ let biometricEnabled = false;
 
 const API_BASE_URL = 'https://backend-869x.onrender.com';
 
-// CSRF-Token aus localStorage holen
-function getCsrfToken() {
-  return localStorage.getItem('csrfToken');
-}
-
-
-
-// Fetch mit Access-Token und Refresh-Token-Handling
-async function fetchWithRefresh(path, options = {}, useAuthHeaderToken = false) {
-  const url = path.startsWith('http') ? path : `${API_BASE_URL}${path}`;
-  options = { ...options };
-
-  if (!options.headers) options.headers = {};
-
-  if (useAuthHeaderToken) {
-    const token = sessionStorage.getItem('accessToken');
-    if (!token) throw new Error('Kein Access-Token gefunden. Bitte einloggen.');
-    options.headers['Authorization'] = `Bearer ${token}`;
-  }
-
-  options.credentials = 'include'; // wichtig für Cookies
-
-  let res = await fetch(url, options);
-
-  // Token abgelaufen oder ungültig
-  if (res.status === 401 && useAuthHeaderToken) {
-    // Versuche Refresh
-    const refreshRes = await fetch(`${API_BASE_URL}/api/refresh`, {
-      method: 'POST',
-      credentials: 'include',
-    });
-
-    if (!refreshRes.ok) {
-      // Refresh abgelehnt (Session abgelaufen)
-      sessionStorage.removeItem('accessToken');
-      throw new Error('Session abgelaufen. Bitte neu einloggen.');
-    }
-
-    const refreshData = await refreshRes.json();
-
-    if (!refreshData.accessToken) {
-      sessionStorage.removeItem('accessToken');
-      throw new Error('Token-Refresh fehlgeschlagen. Bitte neu einloggen.');
-    }
-
-    // Speichere neuen Access Token
-    sessionStorage.setItem('accessToken', refreshData.accessToken);
-    options.headers['Authorization'] = `Bearer ${refreshData.accessToken}`;
-
-    // Optional CSRF-Token aktualisieren
-    if (refreshData.csrfToken) {
-      localStorage.setItem('csrfToken', refreshData.csrfToken);
-      console.log('🔁 Neuer CSRF-Token nach Refresh gespeichert:', refreshData.csrfToken);
-    }
-
-    // Erneut versuchen
-    res = await fetch(url, options);
-
-    // Wenn nochmal 401, gilt die Session als endgültig abgelaufen
-    if (res.status === 401) {
-      sessionStorage.removeItem('accessToken');
-      throw new Error('Token-Refresh fehlgeschlagen. Bitte neu einloggen.');
-    }
-  }
-
-  // Bei anderen Fehlern kannst du hier noch erweitern, z.B. CSRF-Fehler abfangen
-
-  return res;
-}
-
-
-// API-Fetch mit CSRF-Token (bei schreibenden Methoden) und Fehlerbehandlung
+// Hilfsfunktion, um Cookies auszulesen
 function getCookie(name) {
   const value = `; ${document.cookie}`;
   const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) return parts.pop().split(';').shift();
+  if (parts.length === 2) return decodeURIComponent(parts.pop().split(';').shift());
   return null;
 }
 
+// Haupt-Fetch mit automatischem Token-Refresh, CSRF-Token und Auth-Header
 async function apiFetch(path, options = {}, useAuthHeaderToken = false) {
   const method = (options.method || 'GET').toUpperCase();
   const writeMethods = ['POST', 'PUT', 'DELETE', 'PATCH'];
 
+  options = { ...options }; // Kopie, um Seiteneffekte zu vermeiden
+
   if (!options.headers) options.headers = {};
 
+  // CSRF-Token bei schreibenden Methoden hinzufügen
   if (writeMethods.includes(method)) {
-    // CSRF-Token aus localStorage versuchen
     let csrfToken = localStorage.getItem('csrfToken');
 
-    // Falls nicht vorhanden, aus Cookie holen (ohne speichern)
     if (!csrfToken) {
       csrfToken = getCookie('csrfToken');
-      if (!csrfToken) {
+      if (csrfToken) {
+        localStorage.setItem('csrfToken', csrfToken); // Optional: Cache aktualisieren
+      } else {
         console.warn('⚠️ Kein CSRF-Token im localStorage oder Cookie gefunden.');
       }
     }
@@ -433,20 +366,74 @@ async function apiFetch(path, options = {}, useAuthHeaderToken = false) {
     }
   }
 
-  options.credentials = 'include';
+  options.credentials = 'include'; // Cookies senden
 
+  // Authorization-Header nur hinzufügen, wenn gewünscht
   if (useAuthHeaderToken) {
     const token = sessionStorage.getItem('accessToken');
-    if (token) {
-      options.headers['Authorization'] = `Bearer ${token}`;
+    if (!token) throw new Error('Kein Access-Token gefunden. Bitte einloggen.');
+    options.headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  const url = path.startsWith('http') ? path : `${API_BASE_URL}${path}`;
+
+  // Interne Funktion zum Ausführen des Requests
+  async function fetchWithToken() {
+    return fetch(url, options);
+  }
+
+  let response = await fetchWithToken();
+
+  // 401 = Token evtl. abgelaufen? Versuch Refresh
+  if (response.status === 401 && useAuthHeaderToken) {
+    // Refresh-Token anfragen
+    const refreshResponse = await fetch(`${API_BASE_URL}/api/refresh`, {
+      method: 'POST',
+      credentials: 'include',
+    });
+
+    if (!refreshResponse.ok) {
+      sessionStorage.removeItem('accessToken');
+      throw new Error('Session abgelaufen. Bitte neu einloggen.');
+    }
+
+    const refreshData = await refreshResponse.json();
+
+    if (!refreshData.accessToken) {
+      sessionStorage.removeItem('accessToken');
+      throw new Error('Token-Refresh fehlgeschlagen. Bitte neu einloggen.');
+    }
+
+    // Neuen Access-Token speichern
+    sessionStorage.setItem('accessToken', refreshData.accessToken);
+    options.headers['Authorization'] = `Bearer ${refreshData.accessToken}`;
+
+    // CSRF-Token ggf. aktualisieren
+    if (refreshData.csrfToken) {
+      localStorage.setItem('csrfToken', refreshData.csrfToken);
+      console.log('🔁 Neuer CSRF-Token nach Refresh gespeichert:', refreshData.csrfToken);
+    }
+
+    // Anfrage erneut senden
+    response = await fetchWithToken();
+
+    if (response.status === 401) {
+      sessionStorage.removeItem('accessToken');
+      throw new Error('Token-Refresh fehlgeschlagen. Bitte neu einloggen.');
     }
   }
 
-  const response = await fetch(API_BASE + path, options);
-
   if (!response.ok) {
-    const errorText = await response.text().catch(() => '');
-    throw new Error(errorText || `Fehler: HTTP ${response.status}`);
+    let errorMsg = `Fehler: HTTP ${response.status}`;
+    try {
+      const errJson = await response.json();
+      if (errJson.error) errorMsg = errJson.error;
+      else if (errJson.message) errorMsg = errJson.message;
+    } catch {
+      const errText = await response.text().catch(() => '');
+      if (errText) errorMsg = errText;
+    }
+    throw new Error(errorMsg);
   }
 
   try {
@@ -455,6 +442,7 @@ async function apiFetch(path, options = {}, useAuthHeaderToken = false) {
     return {};
   }
 }
+
 
 
 
@@ -1016,11 +1004,14 @@ clockInBtn.addEventListener('click', async () => {
   }
 
   try {
-    await apiFetch('/zeit', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ aktion: 'start' }),
-    }, true); // true = mit Auth-Header
+await apiFetch('/zeit', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'X-CSRF-Token': localStorage.getItem('csrfToken') || '', // CSRF-Token hinzufügen
+  },
+  body: JSON.stringify({ aktion: 'start' }),
+}, true);
 
     alert('Arbeitszeit gestartet');
     await updateTimeButtons(); // Buttons anpassen
@@ -1044,7 +1035,10 @@ clockOutBtn.addEventListener('click', async () => {
   try {
     await apiFetch('/zeit', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': localStorage.getItem('csrfToken') || '',
+      },
       body: JSON.stringify({ aktion: 'stop' }),
     }, true);
 
@@ -1058,22 +1052,17 @@ clockOutBtn.addEventListener('click', async () => {
   }
 });
 
+
 //schon eingestempelt?
 async function getLetzterStatus() {
   try {
-    const response = await apiFetch('/zeit/letzter-status', {
+    const data = await apiFetch('/zeit/letzter-status', {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
       },
-    }, true); // <-- wichtig: Authentifizierung aktivieren
+    }, true); // Authentifizierung aktivieren
 
-    if (!response.ok) {
-      const err = await response.json().catch(() => ({}));
-      throw new Error(err.error || `Fehler: ${response.status}`);
-    }
-
-    const data = await response.json();
     console.log('Letzter Zeitstatus:', data);
     return data; // z.B. { aktion: 'start', zeit: '2025-06-09T08:00:00Z' }
   } catch (err) {
