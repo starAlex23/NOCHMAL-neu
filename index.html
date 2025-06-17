@@ -337,20 +337,21 @@ async function apiFetch(path, options = {}, useAuthHeaderToken = false) {
   const url = path.startsWith('http') ? path : `${API_BASE_URL}${path}`;
   const method = (options.method || 'GET').toUpperCase();
 
-  // Kopiere headers oder erstelle neues Objekt
   const headers = options.headers ? { ...options.headers } : {};
+  options.credentials = 'include'; // sendet Cookies wie HttpOnly
 
-  options.credentials = 'include';
-
+  // Nutze Authorization-Header nur wenn explizit gewünscht
   if (useAuthHeaderToken) {
     const token = sessionStorage.getItem('accessToken');
     if (!token) throw new Error('Kein Access-Token gefunden. Bitte einloggen.');
     headers['Authorization'] = `Bearer ${token}`;
   }
 
+  // Nur bei schreibenden Methoden CSRF hinzufügen
   if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(method)) {
-    const csrfToken = localStorage.getItem('csrfToken');  // z.B. aus localStorage holen
+    const csrfToken = localStorage.getItem('csrfToken');
     if (csrfToken) headers['X-CSRF-Token'] = csrfToken;
+    else console.warn('⚠️ Kein CSRF-Token im localStorage gefunden.');
   }
 
   if (options.body && typeof options.body !== 'string') {
@@ -364,12 +365,7 @@ async function apiFetch(path, options = {}, useAuthHeaderToken = false) {
   const response = await fetch(url, options);
 
   if (!response.ok) {
-    let errorText;
-    try {
-      errorText = await response.text();
-    } catch {
-      errorText = '';
-    }
+    const errorText = await response.text().catch(() => '');
     throw new Error(errorText || `Fehler: HTTP ${response.status}`);
   }
 
@@ -379,6 +375,7 @@ async function apiFetch(path, options = {}, useAuthHeaderToken = false) {
     return {};
   }
 }
+
 
 
 
