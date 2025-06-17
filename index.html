@@ -331,11 +331,14 @@ let biometricEnabled = false;
 
 const API_BASE_URL = 'https://backend-869x.onrender.com';
 
-// Hilfsfunktion, um Cookies auszulesen
+// Hilfsfunktion: Cookie auslesen
 function getCookie(name) {
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) return decodeURIComponent(parts.pop().split(';').shift());
+  const cookies = document.cookie.split(';').map(c => c.trim());
+  for (const cookie of cookies) {
+    if (cookie.startsWith(name + '=')) {
+      return decodeURIComponent(cookie.substring(name.length + 1));
+    }
+  }
   return null;
 }
 
@@ -353,7 +356,7 @@ async function apiFetch(path, options = {}, useAuthHeaderToken = false) {
     let csrfToken = localStorage.getItem('csrfToken');
 
     if (!csrfToken) {
-      csrfToken = getCookie('csrfToken');
+      csrfToken = getCookie('csrf');
       if (csrfToken) {
         localStorage.setItem('csrfToken', csrfToken); // Optional: Cache aktualisieren
       } else {
@@ -1003,24 +1006,28 @@ clockInBtn.addEventListener('click', async () => {
     return;
   }
 
+  clockInBtn.disabled = true;
+
   try {
-await apiFetch('/api/zeit', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'X-CSRF-Token': localStorage.getItem('csrfToken') || '', // CSRF-Token hinzufügen
-  },
-  body: JSON.stringify({ aktion: 'start' }),
-}, true);
+    const csrfToken = getCookie('csrf') || '';
+    await apiFetch('/api/zeit', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': csrfToken,
+      },
+      body: JSON.stringify({ aktion: 'start' }),
+    }, true);
 
     alert('Arbeitszeit gestartet');
-    await updateTimeButtons(); // Buttons anpassen
+    await updateTimeButtons();
   } catch (err) {
     console.error('Fehler beim Start der Arbeitszeit:', err);
     alert('Fehler beim Start der Arbeitszeit: ' + err.message);
+  } finally {
+    clockInBtn.disabled = false;
   }
 });
-
 
 
 // === Zeit erfassen (Stopp) ===
@@ -1033,25 +1040,25 @@ clockOutBtn.addEventListener('click', async () => {
   clockOutBtn.disabled = true;
 
   try {
+    const csrfToken = getCookie('csrf') || '';
     await apiFetch('/api/zeit', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-CSRF-Token': localStorage.getItem('csrfToken') || '',
+        'X-CSRF-Token': csrfToken,
       },
       body: JSON.stringify({ aktion: 'stop' }),
     }, true);
 
     alert('Arbeitszeit gestoppt');
-    await updateTimeButtons(); // Buttons anpassen
+    await updateTimeButtons();
   } catch (err) {
-    console.error('Fehler beim Stop:', err);
+    console.error('Fehler beim Stoppen der Arbeitszeit:', err);
     alert('Fehler beim Stoppen der Arbeitszeit: ' + err.message);
   } finally {
     clockOutBtn.disabled = false;
   }
 });
-
 
 //schon eingestempelt?
 async function getLetzterStatus() {
