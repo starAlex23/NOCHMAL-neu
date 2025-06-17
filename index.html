@@ -327,9 +327,10 @@ let biometricEnabled = false;
 
 // === Hilfsfunktion: CSRF aus Cookie lesen ===
 function getCsrfTokenFromCookie() {
-  const match = document.cookie.match(/(?:^|;\s*)csrfToken=([^;]+)/);
+  const match = document.cookie.match(/(?:^|;\s*)csrf=([^;]+)/);
   return match ? decodeURIComponent(match[1]) : null;
 }
+
 
 const API_BASE_URL = 'https://backend-869x.onrender.com';
 
@@ -349,9 +350,12 @@ async function apiFetch(path, options = {}, useAuthHeaderToken = false) {
 
   // Nur bei schreibenden Methoden CSRF hinzufügen
   if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(method)) {
-    const csrfToken = localStorage.getItem('csrfToken');
-    if (csrfToken) headers['X-CSRF-Token'] = csrfToken;
-    else console.warn('⚠️ Kein CSRF-Token im localStorage gefunden.');
+    const csrfToken = getCsrfTokenFromCookie();
+    if (csrfToken) {
+      headers['X-CSRF-Token'] = csrfToken;
+    } else {
+      console.warn('⚠️ Kein CSRF-Token im Cookie gefunden.');
+    }
   }
 
   if (options.body && typeof options.body !== 'string') {
@@ -375,7 +379,6 @@ async function apiFetch(path, options = {}, useAuthHeaderToken = false) {
     return {};
   }
 }
-
 
 
 
@@ -545,33 +548,28 @@ async function validateQrCode(qr) {
 
 // === Auth ===
 
-// Login mit Email/Passwort
 async function login(email, passwort) {
-  const data = await apiFetch('/api/login', {
-    method: 'POST',
-    body: { email, passwort }
-  });
+  try {
+    const res = await apiFetch('/api/login', {
+      method: 'POST',
+      body: { email, passwort }
+    });
 
-  console.log('Login response:', data);
+    console.log('✅ Login erfolgreich:', res);
 
-  if (!data.user) {
-    throw new Error('Keine Benutzerdaten in der Antwort.');
+    // Optional: CSRF-Token speichern, falls du es clientseitig brauchst
+    if (res.csrfToken) {
+      localStorage.setItem('csrfToken', res.csrfToken);
+    }
+
+    // Optional: User-Daten aus der API holen (z. B. /api/me)
+    await updateProfile();
+
+  } catch (err) {
+    console.error('❌ Login fehlgeschlagen:', err.message);
+    alert('Login fehlgeschlagen: ' + err.message);
   }
-
-  // AccessToken im sessionStorage speichern
-  sessionStorage.setItem('accessToken', data.accessToken);
-
-
-  // CSRF-Token speichern (wie bisher)
-  localStorage.setItem('csrfToken', data.csrfToken);
-
-  loggedInUser = data.user;
-  updateUIAfterLogin();
-
-  return loggedInUser;
 }
-
-
 
 
 
