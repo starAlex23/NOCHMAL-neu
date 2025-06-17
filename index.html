@@ -405,7 +405,7 @@ async function tryTokenRefresh() {
     if (!res.ok) throw new Error('Fehler beim Laden des Profils');
     const user = await res.json();
     const userNameElem = document.getElementById('user-name');
-    if(userNameElem) userNameElem.textContent = user.firstname || user.email || 'Benutzer';
+    if(userNameElem) userNameElem.textContent = user.vorname || user.email || 'Benutzer';
     showSection(timeTrackingSection);
   } catch(err) {
     console.error('updateProfile Fehler:', err);
@@ -724,7 +724,7 @@ async function tryAutoLogin() {
   if (!token) return false;
 
   try {
-    const res = await apiFetch('/me', {}, true); // true = Token-Header mitschicken
+    const res = await apiFetch('api/me', {}, true); // true = Token-Header mitschicken
     if (!res.ok) {
       sessionStorage.removeItem('accessToken');
       return false;
@@ -780,7 +780,8 @@ function handleLogoutCleanup() {
 // === Logout ===
 logoutBtn.addEventListener('click', async () => {
   try {
-    const res = await apiFetch('/logout', { method: 'POST' });
+    const res = await apiFetch('/api/logout', { method: 'POST' });
+
     if (res.ok) {
       handleLogoutCleanup();
     } else {
@@ -877,7 +878,7 @@ clockInBtn.addEventListener('click', async () => {
   }
 
   try {
-    const res = await apiFetch('/zeit', {
+    const res = await apiFetch('/api/zeit', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ aktion: 'start' }),
@@ -929,7 +930,7 @@ clockOutBtn.addEventListener('click', async () => {
 //schon eingestempelt?
 async function getLetzterStatus() {
   try {
-    const response = await apiFetch('/zeit/letzter-status', {
+    const response = await apiFetch('api/zeit/letzter-status', {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
