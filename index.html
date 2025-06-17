@@ -468,18 +468,21 @@ async function tryAutoLogin() {
   if (!token) return false;
 
   try {
-    const userData = await apiFetch('/api/me', {}, true); // gibt JSON zurück
-
+    const userData = await apiFetch('/api/me', {}, true);
     loggedInUser = userData;
-    biometricEnabled = loggedInUser.biometricEnabled || false;
-    updateUIAfterLogin();
     return true;
-  } catch (err) {
-    console.warn('AutoLogin fehlgeschlagen:', err);
+  } catch {
     sessionStorage.removeItem('accessToken');
+    loggedInUser = null;
     return false;
   }
 }
+
+async function init() {
+  await tryAutoLogin();
+}
+
+init();
 
 
 
@@ -502,13 +505,11 @@ async function tryTokenRefresh() {
 
 async function updateProfile() {
   try {
-    // Token-Header hier aktivieren, sonst kein Zugriff auf geschützte API
-    const user = await apiFetch('/api/me', {}, true);
-    const userNameElem = document.getElementById('user-name');
-    if (userNameElem) userNameElem.textContent = user.vorname || user.email || 'Benutzer';
-    showSection(timeTrackingSection);
+    loggedInUser = await apiFetch('/api/me', {}, true);
+    updateUIAfterLogin();
   } catch (err) {
-    console.error('updateProfile Fehler:', err);
+    console.error('Profil konnte nicht geladen werden:', err);
+    handleLogoutCleanup();
   }
 }
 
@@ -803,13 +804,20 @@ function updateUIAfterLogin() {
 }
 
 async function updateTimeButtons() {
-  const res = await apiFetch('/zeit/status');
-  if (!res.ok) return;
-  const data = await res.json();
-  clockInBtn.disabled = data.status === 'running';
-  clockOutBtn.disabled = data.status !== 'running';
+  try {
+    const data = await apiFetch('/zeit/status', {}, true);
+    // Annahme: data = { status: 'running' | 'stopped' | ... }
+    clockInBtn.disabled = data.status === 'running';
+    clockOutBtn.disabled = data.status !== 'running';
+  } catch (err) {
+    console.warn('Status konnte nicht geladen werden:', err);
+    // Buttons ggf. deaktivieren, da unsicher:
+    clockInBtn.disabled = true;
+    clockOutBtn.disabled = true;
+  }
 }
 
+  
 // === Logout Cleanup ===
 function handleLogoutCleanup() {
   loggedInUser = null;
@@ -835,9 +843,10 @@ function handleLogoutCleanup() {
 // === Logout ===
 logoutBtn.addEventListener('click', async () => {
   try {
-    const res = await apiFetch('/api/logout', { method: 'POST' });
+    // Token beim Logout-Request mit senden!
+    const res = await apiFetch('/api/logout', { method: 'POST' }, true);
 
-    // apiFetch wirft Fehler bei !ok, daher kann res.ok oft entfallen
+    // Falls logout API ok antwortet, dann cleanup:
     handleLogoutCleanup();
     alert('Logout erfolgreich!');
   } catch (err) {
@@ -845,6 +854,7 @@ logoutBtn.addEventListener('click', async () => {
     alert('Logout Fehler: ' + err.message);
   }
 });
+
 
 
 
@@ -918,16 +928,13 @@ clockInBtn.addEventListener('click', async () => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ aktion: 'start' }),
-    }, true); // true = Token im Header mitschicken
+    }, true);
 
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.error || 'Start der Zeitbuchung fehlgeschlagen');
-    }
-
+    // apiFetch gibt JSON zurück, also nicht nochmal res.json()
     alert('Arbeitszeit gestartet');
+    await updateTimeButtons(); // Buttons nach dem Start anpassen
   } catch (err) {
-    console.error(err);
+    console.error('Fehler beim Start der Arbeitszeit:', err);
     alert('Fehler beim Start der Arbeitszeit: ' + err.message);
   }
 });
@@ -943,7 +950,7 @@ clockOutBtn.addEventListener('click', async () => {
   clockOutBtn.disabled = true;
 
   try {
-    const res = await apiFetch('/zeit', {
+    const res = await apiFetch('/api/zeit', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ aktion: 'stop' }),
@@ -991,21 +998,38 @@ async function getLetzterStatus() {
 
 // === Initial Setup ===
 async function init() {
-  showSection(qrSection);
-  await startQrScanner();
-  await tryAutoLogin();
+  try {
+    // Erst Login prüfen, ggf. automatisch
+    const loggedIn = await tryAutoLogin();
 
-  // Status prüfen und Buttons entsprechend setzen
-  const status = await getLetzterStatus();
-  if (status?.aktion === 'start') {
-    clockInBtn.disabled = true;
-    clockOutBtn.disabled = false;
-  } else {
-    clockInBtn.disabled = false;
-    clockOutBtn.disabled = true;
+    if (loggedIn) {
+      // Wenn eingeloggt, Status abfragen und Buttons setzen
+      const status = await getLetzterStatus();
+      if (status?.aktion === 'start') {
+        clockInBtn.disabled = true;
+        clockOutBtn.disabled = false;
+      } else {
+        clockInBtn.disabled = false;
+        clockOutBtn.disabled = true;
+      }
+      // Direkt zur Zeit-Erfassung (oder Haupt-UI) wechseln
+      showSection(timeTrackingSection);
+    } else {
+      // Nicht eingeloggt: QR-Scanner starten und QR-Login anzeigen
+      showSection(qrSection);
+      await startQrScanner();
+
+      clockInBtn.disabled = true;
+      clockOutBtn.disabled = true;
+    }
+  } catch (err) {
+    console.error('Init-Fehler:', err);
+    alert('Fehler beim Initialisieren. Bitte Seite neu laden.');
   }
 }
+
 init();
+
 
 async function fetchUserProfile() {
   const response = await apiFetch('/me');
