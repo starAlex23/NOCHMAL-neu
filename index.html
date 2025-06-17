@@ -325,26 +325,20 @@ let scannedVehicleId = null;
 let loggedInUser = null;
 let biometricEnabled = false;
 
-// === Hilfsfunktion: CSRF aus Cookie lesen ===
-function getCsrfTokenFromCookie() {
-  const match = document.cookie.match(/(?:^|;\s*)csrf=([^;]+)/);
-  return match ? decodeURIComponent(match[1]) : null;
-}
-
-
 const API_BASE_URL = 'https://backend-869x.onrender.com';
 
+// CSRF-Token aus localStorage holen
+function getCsrfToken() {
+  return localStorage.getItem('csrfToken');
+}
 
-
-
-  // Hier absolute URL mit Basis-URL bilden
+// Fetch mit Access-Token und Refresh-Token-Handling
 async function fetchWithRefresh(path, options = {}, useAuthHeaderToken = false) {
   const url = path.startsWith('http') ? path : `${API_BASE_URL}${path}`;
   options = { ...options };
 
   if (!options.headers) options.headers = {};
 
-  // Token hinzufügen, falls gewünscht
   if (useAuthHeaderToken) {
     const token = sessionStorage.getItem('accessToken');
     if (!token) throw new Error('Kein Access-Token gefunden. Bitte einloggen.');
@@ -382,19 +376,19 @@ async function fetchWithRefresh(path, options = {}, useAuthHeaderToken = false) 
   return res;
 }
 
+// API-Fetch mit CSRF-Token (bei schreibenden Methoden) und Fehlerbehandlung
 async function apiFetch(path, options = {}, useAuthHeaderToken = false) {
   const writeMethods = ['POST', 'PUT', 'DELETE', 'PATCH'];
   const method = (options.method || 'GET').toUpperCase();
 
   if (!options.headers) options.headers = {};
 
-  // CSRF-Token nur bei schreibenden Methoden hinzufügen
   if (writeMethods.includes(method)) {
-    const csrfToken = getCsrfTokenFromCookie();
+    const csrfToken = getCsrfToken();
     if (csrfToken) {
       options.headers['X-CSRF-Token'] = csrfToken;
     } else {
-      console.warn('⚠️ Kein CSRF-Token im Cookie gefunden.');
+      console.warn('⚠️ Kein CSRF-Token im localStorage gefunden.');
     }
   }
 
@@ -412,7 +406,7 @@ async function apiFetch(path, options = {}, useAuthHeaderToken = false) {
   }
 }
 
-
+// Login-Funktion: speichert Access- und CSRF-Token
 async function login(email, passwort) {
   console.log('Login-Daten:', { email, passwort });
   if (!email || !passwort) {
@@ -422,13 +416,12 @@ async function login(email, passwort) {
 
   try {
     const res = await apiFetch('/api/login', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json'
-  },
-  body: JSON.stringify({ email, passwort })
-});
-
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ email, passwort })
+    });
 
     console.log('✅ Login erfolgreich:', res);
 
@@ -440,6 +433,8 @@ async function login(email, passwort) {
 
     if (res.csrfToken) {
       localStorage.setItem('csrfToken', res.csrfToken);
+    } else {
+      console.warn('⚠️ Kein CSRF-Token in der Login-Antwort erhalten.');
     }
 
     await updateProfile();
@@ -449,7 +444,7 @@ async function login(email, passwort) {
   }
 }
 
-// === Login-Formular ===
+// Login-Formular-Handler (einfach übernehmen)
 loginForm.addEventListener('submit', async (ev) => {
   ev.preventDefault();
 
@@ -467,8 +462,7 @@ loginForm.addEventListener('submit', async (ev) => {
   }
 });
 
-
-// === Automatischer Login (z.B. nach QR-Scan) ===
+// Automatischer Login mit gespeichertem Access-Token
 async function tryAutoLogin() {
   const token = sessionStorage.getItem('accessToken');
   if (!token) return false;
