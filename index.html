@@ -338,18 +338,24 @@ async function apiFetch(path, options = {}, useAuthHeaderToken = false) {
   const url = path.startsWith('http') ? path : `${API_BASE_URL}${path}`;
   const method = (options.method || 'GET').toUpperCase();
 
+  // Header initialisieren (kopieren, falls vorhanden)
   const headers = options.headers ? { ...options.headers } : {};
-  options.credentials = 'include'; // sendet Cookies wie HttpOnly
 
-  // Nutze Authorization-Header nur wenn explizit gewünscht
+  // Cookies immer mitsenden (für HttpOnly-Cookies wie Refresh-Token)
+  options.credentials = 'include';
+
+  // Authorization-Header nur, wenn explizit verlangt
   if (useAuthHeaderToken) {
     const token = sessionStorage.getItem('accessToken');
-    if (!token) throw new Error('Kein Access-Token gefunden. Bitte einloggen.');
+    if (!token) {
+      throw new Error('Kein Access-Token gefunden. Bitte einloggen.');
+    }
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  // Nur bei schreibenden Methoden CSRF hinzufügen
-  if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(method)) {
+  // CSRF-Token nur bei "schreibenden" Methoden hinzufügen
+  const writeMethods = ['POST', 'PUT', 'DELETE', 'PATCH'];
+  if (writeMethods.includes(method)) {
     const csrfToken = getCsrfTokenFromCookie();
     if (csrfToken) {
       headers['X-CSRF-Token'] = csrfToken;
@@ -358,24 +364,35 @@ async function apiFetch(path, options = {}, useAuthHeaderToken = false) {
     }
   }
 
+  // JSON-Body serialisieren, wenn nicht bereits String
   if (options.body && typeof options.body !== 'string') {
     headers['Content-Type'] = 'application/json';
     options.body = JSON.stringify(options.body);
   }
 
-  options.method = method;
+  // Header und Methode setzen
   options.headers = headers;
+  options.method = method;
 
+  // Fetch ausführen und auf Fehler prüfen
   const response = await fetch(url, options);
 
   if (!response.ok) {
-    const errorText = await response.text().catch(() => '');
+    // Versuche Fehlermeldung aus Antwort zu lesen
+    let errorText = '';
+    try {
+      errorText = await response.text();
+    } catch {}
+
+    // Mindestens Statuscode als Fehlermeldung verwenden
     throw new Error(errorText || `Fehler: HTTP ${response.status}`);
   }
 
+  // JSON-Antwort parsen, falls möglich
   try {
     return await response.json();
   } catch {
+    // Falls keine JSON-Daten vorhanden, leeres Objekt zurückgeben
     return {};
   }
 }
@@ -434,15 +451,13 @@ async function tryTokenRefresh() {
 }
 
 
-  async function updateProfile() {
+async function updateProfile() {
   try {
-    const res = await apiFetch('/api/me');
-    if (!res.ok) throw new Error('Fehler beim Laden des Profils');
-    const user = await res.json();
+    const user = await apiFetch('/api/me');
     const userNameElem = document.getElementById('user-name');
-    if(userNameElem) userNameElem.textContent = user.vorname || user.email || 'Benutzer';
+    if (userNameElem) userNameElem.textContent = user.vorname || user.email || 'Benutzer';
     showSection(timeTrackingSection);
-  } catch(err) {
+  } catch (err) {
     console.error('updateProfile Fehler:', err);
   }
 }
@@ -557,19 +572,23 @@ async function login(email, passwort) {
 
     console.log('✅ Login erfolgreich:', res);
 
-    // Optional: CSRF-Token speichern, falls du es clientseitig brauchst
+    if (res.accessToken) {
+      sessionStorage.setItem('accessToken', res.accessToken);
+    } else {
+      throw new Error('Kein Access-Token in der Login-Antwort erhalten.');
+    }
+
     if (res.csrfToken) {
       localStorage.setItem('csrfToken', res.csrfToken);
     }
 
-    // Optional: User-Daten aus der API holen (z. B. /api/me)
-    await updateProfile();
-
+    await updateProfile(); // ruf updateProfile mit Token auf (weiter unten Hinweise)
   } catch (err) {
     console.error('❌ Login fehlgeschlagen:', err.message);
     alert('Login fehlgeschlagen: ' + err.message);
   }
 }
+
 
 
 
