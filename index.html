@@ -466,11 +466,10 @@ loginForm.addEventListener('submit', async (ev) => {
     showSection(timeTrackingSection);
     await updateProfile();
   } catch (err) {
-    console.error(err);
-    alert(err.message);
+    alert('Login fehlgeschlagen: ' + err.message);
   }
 });
-
+  
 // Automatischer Login mit gespeichertem Access-Token
 async function tryAutoLogin() {
   const token = sessionStorage.getItem('accessToken');
@@ -569,14 +568,13 @@ function showSection(section) {
 }
 
 // === QR Scanner ===
-
 const config = {
-  fps: 10,               // z.B. Frames pro Sekunde
-  qrbox: 250,            // Größe des Scan-Bereichs (Quadrat)
-  // weitere Optionen je nach Bibliothek möglich
+  fps: 10,
+  qrbox: 250,
 };
-  
+
 let scannerIsRunning = false;
+let html5QrCode = null;
 
 async function startQrScanner() {
   if (scannerIsRunning) {
@@ -604,7 +602,6 @@ async function startQrScanner() {
   }
 }
 
-  
 async function stopQrScanner() {
   if (!scannerIsRunning) {
     console.warn("Scanner läuft nicht, Stop übersprungen");
@@ -621,19 +618,38 @@ async function stopQrScanner() {
   }
 }
 
-
-
 // QR-Code Validierung gegen Backend
 async function validateQrCode(qr) {
- const res = await fetch(`${API_BASE}/validate-qr`, {  // nur einmal /api
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ qr }),
-});
+  const res = await fetch(`${API_BASE}/validate-qr`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ qr }),
+  });
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err.error || 'Ungültiger QR-Code');
+  }
+}
+
+// Wird aufgerufen, wenn QR-Code erkannt wurde
+async function onQrCodeDetected(decodedText) {
+  try {
+    await stopQrScanner();
+
+    // QR-Code validieren
+    await validateQrCode(decodedText);
+
+    // Nach erfolgreicher Validierung Login anzeigen
+    showSection(loginSection);
+
+    // Optional: QR-Code im Loginformular vorbefüllen
+    // loginForm['email'].value = decodedText; // wenn du den QR als Email nutzt
+  } catch (err) {
+    alert('Ungültiger QR-Code, bitte erneut scannen.');
+    console.error(err);
+    // Scanner wieder starten, damit Nutzer nochmal scannen kann
+    startQrScanner();
   }
 }
 
@@ -1025,37 +1041,29 @@ async function getLetzterStatus() {
 
 // === Initial Setup ===
 async function init() {
-  try {
-    // Erst Login prüfen, ggf. automatisch
-    const loggedIn = await tryAutoLogin();
-
-    if (loggedIn) {
-      // Wenn eingeloggt, Status abfragen und Buttons setzen
-      const status = await getLetzterStatus();
-      if (status?.aktion === 'start') {
-        clockInBtn.disabled = true;
-        clockOutBtn.disabled = false;
-      } else {
-        clockInBtn.disabled = false;
-        clockOutBtn.disabled = true;
-      }
-      // Direkt zur Zeit-Erfassung (oder Haupt-UI) wechseln
-      showSection(timeTrackingSection);
-    } else {
-      // Nicht eingeloggt: QR-Scanner starten und QR-Login anzeigen
-      showSection(qrSection);
-      await startQrScanner();
-
-      clockInBtn.disabled = true;
-      clockOutBtn.disabled = true;
-    }
-  } catch (err) {
-    console.error('Init-Fehler:', err);
-    alert('Fehler beim Initialisieren. Bitte Seite neu laden.');
+  if (!clockInBtn || !clockOutBtn) {
+    console.warn('⚠️ ClockIn/ClockOut Button nicht gefunden.');
+    return;
   }
-}
 
-init();
+  showSection(qrSection);
+  await startQrScanner();
+
+  // tryAutoLogin nur beim Seitenstart — optional, nicht direkt nach Scannerstart
+  const autoLoginErfolg = await tryAutoLogin();
+  if (autoLoginErfolg) {
+    showSection(timeTrackingSection);
+    // Status Buttons setzen
+    try {
+      const status = await getLetzterStatus();
+      clockInBtn.disabled = status?.aktion === 'start';
+      clockOutBtn.disabled = !(status?.aktion === 'start');
+    } catch (err) {
+      console.warn('⚠️ Status konnte nicht geladen werden:', err.message);
+    }
+  }
+  // Wenn kein Token, bleibt man im QR-Scanner, wartet auf Scan
+}
 
 
 async function fetchUserProfile() {
