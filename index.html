@@ -570,6 +570,12 @@ function showSection(section) {
 
 // === QR Scanner ===
 
+const config = {
+  fps: 10,               // z.B. Frames pro Sekunde
+  qrbox: 250,            // Größe des Scan-Bereichs (Quadrat)
+  // weitere Optionen je nach Bibliothek möglich
+};
+  
 let scannerIsRunning = false;
 
 async function startQrScanner() {
