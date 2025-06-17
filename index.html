@@ -321,7 +321,6 @@ const API_BASE = 'https://backend-869x.onrender.com/api';
 
   
 let html5QrCode = null;
-let scannedVehicleId = null;
 let loggedInUser = null;
 let biometricEnabled = false;
 
@@ -564,7 +563,7 @@ async function startQrScanner() {
         // === Hier ist der Codeblock korrekt platziert ===
         try {
           await validateQrCode(qrCode);               // → prüft gegen Backend
-          scannedVehicleId = qrCode;                  // → speichert ID
+                           // → speichert ID
           const autoLoggedIn = await tryAutoLogin();  // → versucht automatischen Login
           if (!autoLoggedIn) showSection(loginSection); // → sonst Login anzeigen
         } catch (err) {
@@ -821,7 +820,7 @@ async function updateTimeButtons() {
 // === Logout Cleanup ===
 function handleLogoutCleanup() {
   loggedInUser = null;
-  scannedVehicleId = null;
+
   biometricEnabled = false;
 
   // Formular-Felder leeren (hier angenommen so heißen sie)
@@ -837,7 +836,6 @@ function handleLogoutCleanup() {
   logoutBtn.classList.add('hidden');
   activateBiometricBtn.classList.remove('hidden');
   userNameSpan.textContent = '';
-  vehicleIdSpan.textContent = '';
 }
 
 // === Logout ===
