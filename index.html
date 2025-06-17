@@ -570,47 +570,51 @@ function showSection(section) {
 
 // === QR Scanner ===
 
+let scannerIsRunning = false;
+
 async function startQrScanner() {
+  if (scannerIsRunning) {
+    console.warn("Scanner läuft schon, Start übersprungen");
+    return;
+  }
+
   if (!html5QrCode) {
     html5QrCode = new Html5Qrcode("qr-reader");
   }
 
   try {
-   await html5QrCode.start(
-  { facingMode: "environment" },
-  {}, // oder null
+    scannerIsRunning = true;
+    await html5QrCode.start(
+      { facingMode: "environment" },
+      config,
       async (decodedText, decodedResult) => {
         console.log("QR-Code erkannt:", decodedText);
-        stopQrScanner();
+        await stopQrScanner();
 
-        // Login anhand QR-Daten
-        const autoLoggedIn = await tryAutoLogin(decodedText);
-
-        if (autoLoggedIn) {
-          await updateProfile();
-          showSection(timeTrackingSection);
-        } else {
-          showSection(loginSection);
-        }
+        // Weitere Logik...
       }
     );
   } catch (error) {
     console.error("Fehler beim Starten des QR-Scanners:", error);
+    scannerIsRunning = false;
   }
 }
+  
+async function stopQrScanner() {
+  if (!scannerIsRunning) {
+    console.warn("Scanner läuft nicht, Stop übersprungen");
+    return;
+  }
 
-function stopQrScanner() {
-  if (html5QrCode) {
-    html5QrCode.stop()
-      .then(() => {
-        console.log("QR-Scanner gestoppt");
-      })
-      .catch(err => {
-        console.error("Fehler beim Stoppen des QR-Scanners:", err);
-      });
+  try {
+    await html5QrCode.stop();
+    console.log("QR-Scanner gestoppt");
+  } catch (err) {
+    console.error("Fehler beim Stoppen des QR-Scanners:", err);
+  } finally {
+    scannerIsRunning = false;
   }
 }
-
 
 
 
