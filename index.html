@@ -576,9 +576,9 @@ async function startQrScanner() {
   }
 
   try {
-    await html5QrCode.start(
-      { facingMode: "environment" },
-      config,
+   await html5QrCode.start(
+  { facingMode: "environment" },
+  {}, // oder null
       async (decodedText, decodedResult) => {
         console.log("QR-Code erkannt:", decodedText);
         stopQrScanner();
