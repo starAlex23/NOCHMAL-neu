@@ -595,9 +595,7 @@ async function startQrScanner() {
       config,
       async (decodedText, decodedResult) => {
         console.log("QR-Code erkannt:", decodedText);
-        await stopQrScanner();
-
-        // Weitere Logik...
+        await onQrCodeDetected(decodedText);
       }
     );
   } catch (error) {
@@ -605,6 +603,7 @@ async function startQrScanner() {
     scannerIsRunning = false;
   }
 }
+
   
 async function stopQrScanner() {
   if (!scannerIsRunning) {
