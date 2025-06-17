@@ -336,6 +336,7 @@ function getCsrfToken() {
   return localStorage.getItem('csrfToken');
 }
 
+
 // Fetch mit Access-Token und Refresh-Token-Handling
 async function fetchWithRefresh(path, options = {}, useAuthHeaderToken = false) {
   const url = path.startsWith('http') ? path : `${API_BASE_URL}${path}`;
@@ -349,7 +350,7 @@ async function fetchWithRefresh(path, options = {}, useAuthHeaderToken = false) 
     options.headers['Authorization'] = `Bearer ${token}`;
   }
 
-  options.credentials = 'include';
+  options.credentials = 'include'; // für Cookies
 
   let res = await fetch(url, options);
 
@@ -362,8 +363,17 @@ async function fetchWithRefresh(path, options = {}, useAuthHeaderToken = false) 
 
     if (refreshRes.ok) {
       const refreshData = await refreshRes.json();
-      sessionStorage.setItem('accessToken', refreshData.accessToken);
-      options.headers['Authorization'] = `Bearer ${refreshData.accessToken}`;
+
+      if (refreshData.accessToken) {
+        sessionStorage.setItem('accessToken', refreshData.accessToken);
+        options.headers['Authorization'] = `Bearer ${refreshData.accessToken}`;
+      }
+
+      // ⬇️ NEU: CSRF-Token ggf. aus JSON übernehmen (wenn der Server es zurückgibt)
+      if (refreshData.csrfToken) {
+        localStorage.setItem('csrfToken', refreshData.csrfToken);
+        console.log('🔁 Neuer CSRF-Token nach Refresh gespeichert:', refreshData.csrfToken);
+      }
 
       res = await fetch(url, options);
 
@@ -382,8 +392,8 @@ async function fetchWithRefresh(path, options = {}, useAuthHeaderToken = false) 
 
 // API-Fetch mit CSRF-Token (bei schreibenden Methoden) und Fehlerbehandlung
 async function apiFetch(path, options = {}, useAuthHeaderToken = false) {
-  const writeMethods = ['POST', 'PUT', 'DELETE', 'PATCH'];
   const method = (options.method || 'GET').toUpperCase();
+  const writeMethods = ['POST', 'PUT', 'DELETE', 'PATCH'];
 
   if (!options.headers) options.headers = {};
 
@@ -396,7 +406,18 @@ async function apiFetch(path, options = {}, useAuthHeaderToken = false) {
     }
   }
 
-  const response = await fetchWithRefresh(path, options, useAuthHeaderToken);
+  // Immer Credentials mitsenden!
+  options.credentials = 'include';
+
+  // Optional: Auth Header setzen
+  if (useAuthHeaderToken) {
+    const token = sessionStorage.getItem('accessToken');
+    if (token) {
+      options.headers['Authorization'] = `Bearer ${token}`;
+    }
+  }
+
+  const response = await fetch(API_BASE + path, options);
 
   if (!response.ok) {
     const errorText = await response.text().catch(() => '');
@@ -409,6 +430,7 @@ async function apiFetch(path, options = {}, useAuthHeaderToken = false) {
     return {};
   }
 }
+
 
 // Login-Funktion: speichert Access- und CSRF-Token
 async function login(email, passwort) {
