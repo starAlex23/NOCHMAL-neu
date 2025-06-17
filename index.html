@@ -697,7 +697,7 @@ async function onQrCodeDetected(qrCodeText) {
 // WebAuthn Registrierung starten
 async function startWebAuthnRegistration() {
   try {
-    const resp = await apiFetch('/webauthn/register-request', {
+    const resp = await apiFetch('/api/webauthn/register-request', {
       method: 'POST',
     });
     if (!resp.ok) {
@@ -733,7 +733,7 @@ if (!window.PublicKeyCredential) {
       },
     };
 
-    const verifyResp = await apiFetch('/webauthn/register-response', {
+    const verifyResp = await apiFetch('/api/webauthn/register-response', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(credentialResponse),
@@ -756,7 +756,7 @@ if (!window.PublicKeyCredential) {
 // WebAuthn Login Anfrage + Antwort
 async function loginViaWebAuthn(email) {
   try {
-    const res = await apiFetch('/webauthn/login-request', {
+    const res = await apiFetch('/api/webauthn/login-request', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email }),
@@ -789,7 +789,7 @@ async function loginViaWebAuthn(email) {
       },
     };
 
-    const verifyResp = await apiFetch('/webauthn/login-response', {
+    const verifyResp = await apiFetch('/api/webauthn/login-response', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ credential }),
@@ -886,7 +886,7 @@ function updateUIAfterLogin() {
 
 async function updateTimeButtons() {
   try {
-    const data = await apiFetch('/zeit/status', {}, true);
+    const data = await apiFetch('/api/zeit/status', {}, true);
     // Annahme: data = { status: 'running' | 'stopped' | ... }
     clockInBtn.disabled = data.status === 'running';
     clockOutBtn.disabled = data.status !== 'running';
@@ -924,7 +924,7 @@ function handleLogoutCleanup() {
 logoutBtn.addEventListener('click', async () => {
   try {
     // Token beim Logout-Request mit senden!
-    const res = await apiFetch('/logout', { method: 'POST' }, true);
+    const res = await apiFetch('/api/logout', { method: 'POST' }, true);
 
     // Falls logout API ok antwortet, dann cleanup:
     handleLogoutCleanup();
@@ -961,7 +961,7 @@ registerForm.addEventListener('submit', async (ev) => {
   const passwort = registerForm['password'].value.trim(); // wichtig: Backend erwartet "passwort"
 
   try {
-    const res = await apiFetch('/register', {
+    const res = await apiFetch('/api/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ vorname, nachname, email, passwort }),
@@ -1004,7 +1004,7 @@ clockInBtn.addEventListener('click', async () => {
   }
 
   try {
-await apiFetch('/zeit', {
+await apiFetch('/api/zeit', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
@@ -1033,7 +1033,7 @@ clockOutBtn.addEventListener('click', async () => {
   clockOutBtn.disabled = true;
 
   try {
-    await apiFetch('/zeit', {
+    await apiFetch('/api/zeit', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -1056,7 +1056,7 @@ clockOutBtn.addEventListener('click', async () => {
 //schon eingestempelt?
 async function getLetzterStatus() {
   try {
-    const data = await apiFetch('/zeit/letzter-status', {
+    const data = await apiFetch('/api/zeit/letzter-status', {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
