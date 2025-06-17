@@ -815,8 +815,16 @@ function handleLogoutCleanup() {
   loggedInUser = null;
   scannedVehicleId = null;
   biometricEnabled = false;
-  loginEmail.value = '';
-  loginPassword.value = '';
+
+  // Formular-Felder leeren (hier angenommen so heißen sie)
+  loginForm['email'].value = '';
+  loginForm['passwort'].value = '';
+
+  // Tokens aus Speicher löschen
+  sessionStorage.removeItem('accessToken');
+  localStorage.removeItem('csrfToken');
+
+  // UI anpassen
   showSection(qrSection);
   logoutBtn.classList.add('hidden');
   activateBiometricBtn.classList.remove('hidden');
@@ -829,14 +837,12 @@ logoutBtn.addEventListener('click', async () => {
   try {
     const res = await apiFetch('/api/logout', { method: 'POST' });
 
-    if (res.ok) {
-      handleLogoutCleanup();
-    } else {
-      alert('Logout fehlgeschlagen');
-    }
+    // apiFetch wirft Fehler bei !ok, daher kann res.ok oft entfallen
+    handleLogoutCleanup();
+    alert('Logout erfolgreich!');
   } catch (err) {
     console.error(err);
-    alert('Logout Fehler');
+    alert('Logout Fehler: ' + err.message);
   }
 });
 
