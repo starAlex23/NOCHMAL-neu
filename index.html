@@ -478,28 +478,31 @@ async function tryAutoLogin() {
 }
 
 async function init() {
-  await tryAutoLogin();
-}
+  showSection(qrSection);
+  await startQrScanner();
 
-init();
+  const autoLoginErfolg = await tryAutoLogin();
 
+  if (!autoLoginErfolg) {
+    console.warn('⛔️ Auto-Login fehlgeschlagen – keine Statusabfrage.');
+    return; // NICHT weitermachen, wenn kein Token vorhanden ist
+  }
 
-
-  
-
-async function tryTokenRefresh() {
   try {
-    const res = await fetch(API_BASE + '/refresh', {
-      method: 'POST',
-      credentials: 'include'
-    });
-    if (!res.ok) return false;
-    return true;
+    const status = await getLetzterStatus();
+
+    if (status?.aktion === 'start') {
+      clockInBtn.disabled = true;
+      clockOutBtn.disabled = false;
+    } else {
+      clockInBtn.disabled = false;
+      clockOutBtn.disabled = true;
+    }
   } catch (err) {
-    console.error('Fehler beim Token-Refresh:', err);
-    return false;
+    console.warn('⚠️ Status konnte nicht geladen werden:', err.message);
   }
 }
+
 
 
 async function updateProfile() {
