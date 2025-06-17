@@ -968,20 +968,20 @@ clockInBtn.addEventListener('click', async () => {
   }
 
   try {
-    const res = await apiFetch('/api/zeit', {
+    await apiFetch('/api/zeit', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ aktion: 'start' }),
-    }, true);
+    }, true); // true = mit Auth-Header
 
-    // apiFetch gibt JSON zurück, also nicht nochmal res.json()
     alert('Arbeitszeit gestartet');
-    await updateTimeButtons(); // Buttons nach dem Start anpassen
+    await updateTimeButtons(); // Buttons anpassen
   } catch (err) {
     console.error('Fehler beim Start der Arbeitszeit:', err);
     alert('Fehler beim Start der Arbeitszeit: ' + err.message);
   }
 });
+
 
 
 // === Zeit erfassen (Stopp) ===
@@ -994,18 +994,14 @@ clockOutBtn.addEventListener('click', async () => {
   clockOutBtn.disabled = true;
 
   try {
-    const res = await apiFetch('/api/zeit', {
+    await apiFetch('/api/zeit', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ aktion: 'stop' }),
     }, true);
 
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.error || 'Stop der Zeitbuchung fehlgeschlagen');
-    }
-
     alert('Arbeitszeit gestoppt');
+    await updateTimeButtons(); // Buttons anpassen
   } catch (err) {
     console.error('Fehler beim Stop:', err);
     alert('Fehler beim Stoppen der Arbeitszeit: ' + err.message);
