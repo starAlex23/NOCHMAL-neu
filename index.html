@@ -436,13 +436,18 @@ async function login(email, passwort) {
       console.warn('⚠️ Kein CSRF-Token in der Login-Antwort erhalten.');
     }
 
+    // ⬇️ Das hier ist wichtig!
+    if (res.user) {
+      loggedInUser = res.user;
+    }
+
     await updateProfile();
   } catch (err) {
     console.error('❌ Login fehlgeschlagen:', err.message);
     alert('Login fehlgeschlagen: ' + err.message);
   }
 }
-
+  
 // Login-Formular-Handler (einfach übernehmen)
 loginForm.addEventListener('submit', async (ev) => {
   ev.preventDefault();
@@ -467,12 +472,14 @@ async function tryAutoLogin() {
   if (!token) return false;
 
   try {
-    const userData = await apiFetch('/api/me', {}, true);
-    loggedInUser = userData;
+    const userData = await apiFetch('/api/me', {}, true); // gibt JSON zurück
+    loggedInUser = userData; // ⬅️ das hier ist entscheidend
+    biometricEnabled = userData.biometricEnabled || false;
+    updateUIAfterLogin();
     return true;
-  } catch {
+  } catch (err) {
+    console.warn('AutoLogin fehlgeschlagen:', err);
     sessionStorage.removeItem('accessToken');
-    loggedInUser = null;
     return false;
   }
 }
