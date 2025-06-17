@@ -333,9 +333,14 @@ function getCsrfTokenFromCookie() {
 
 const API_BASE_URL = 'https://backend-869x.onrender.com';
 
+function getCsrfTokenFromCookie() {
+  const match = document.cookie.match(/csrfToken=([^;]+)/);
+  return match ? match[1] : null;
+}
+
 async function apiFetch(path, options = {}, useAuthHeaderToken = false) {
   if (!options.headers) options.headers = {};
-  options.credentials = 'include'; // Cookies mitschicken (z.B. Refresh-Token)
+  options.credentials = 'include'; // Cookies wie HttpOnly-Token mitschicken
 
   if (useAuthHeaderToken) {
     const token = sessionStorage.getItem('accessToken');
@@ -343,13 +348,28 @@ async function apiFetch(path, options = {}, useAuthHeaderToken = false) {
     options.headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const method = options.method ? options.method.toUpperCase() : 'GET';
+  const method = (options.method || 'GET').toUpperCase();
   if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(method)) {
     const csrfToken = getCsrfTokenFromCookie();
     if (csrfToken) {
       options.headers['X-CSRF-Token'] = csrfToken;
     }
   }
+
+  if (options.body && typeof options.body !== 'string') {
+    options.headers['Content-Type'] = 'application/json';
+    options.body = JSON.stringify(options.body);
+  }
+
+  const response = await fetch(path, options);
+  if (!response.ok) {
+    const errorText = await response.text().catch(() => response.statusText);
+    throw new Error(errorText || `HTTP ${response.status}`);
+  }
+
+  return response.json().catch(() => ({}));
+}
+
 
   // Hier absolute URL mit Basis-URL bilden
   const url = API_BASE_URL + path;
@@ -383,6 +403,8 @@ async function apiFetch(path, options = {}, useAuthHeaderToken = false) {
 }
 
 
+
+  
 
 async function tryTokenRefresh() {
   try {
@@ -514,28 +536,21 @@ async function validateQrCode(qr) {
 
 // Login mit Email/Passwort
 async function login(email, passwort) {
-  const res = await apiFetch('/api/login', {
+  const data = await apiFetch('/api/login', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, passwort }),
+    body: { email, passwort } // apiFetch wandelt in JSON
   });
 
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.error || 'Login fehlgeschlagen');
-  }
-
-  const data = await res.json();
   console.log('Login response:', data);
 
   if (!data.user) {
-    throw new Error('Keine Benutzerdaten im Login-Antwort erhalten');
+    throw new Error('Keine Benutzerdaten in der Antwort.');
   }
 
-  sessionStorage.setItem('accessToken', data.accessToken);
-  sessionStorage.setItem('csrfToken', data.csrfToken);
-  loggedInUser = data.user;
+  // Nur CSRF-Token speichern (AccessToken ist HttpOnly-Cookie)
+  localStorage.setItem('csrfToken', data.csrfToken);
 
+  loggedInUser = data.user;
   updateUIAfterLogin();
 
   return loggedInUser;
@@ -724,7 +739,7 @@ async function tryAutoLogin() {
   if (!token) return false;
 
   try {
-    const res = await apiFetch('api/me', {}, true); // true = Token-Header mitschicken
+    const res = await apiFetch('/api/me', {}, true); // true = Token-Header mitschicken
     if (!res.ok) {
       sessionStorage.removeItem('accessToken');
       return false;
@@ -930,7 +945,7 @@ clockOutBtn.addEventListener('click', async () => {
 //schon eingestempelt?
 async function getLetzterStatus() {
   try {
-    const response = await apiFetch('api/zeit/letzter-status', {
+    const response = await apiFetch('/api/zeit/letzter-status', {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
