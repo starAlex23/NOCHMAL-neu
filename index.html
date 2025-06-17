@@ -548,7 +548,7 @@ async function validateQrCode(qr) {
 async function login(email, passwort) {
   const data = await apiFetch('/api/login', {
     method: 'POST',
-    body: { email, passwort } // apiFetch wandelt in JSON
+    body: { email, passwort }
   });
 
   console.log('Login response:', data);
@@ -557,7 +557,10 @@ async function login(email, passwort) {
     throw new Error('Keine Benutzerdaten in der Antwort.');
   }
 
-  // Nur CSRF-Token speichern (AccessToken ist HttpOnly-Cookie)
+  // AccessToken im sessionStorage speichern
+  sessionStorage.setItem('accessToken', data.accessToken);
+
+  // CSRF-Token speichern (wie bisher)
   localStorage.setItem('csrfToken', data.csrfToken);
 
   loggedInUser = data.user;
@@ -565,6 +568,7 @@ async function login(email, passwort) {
 
   return loggedInUser;
 }
+
 
 
 
