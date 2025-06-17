@@ -353,7 +353,7 @@ async function apiFetch(path, options = {}, useAuthHeaderToken = false) {
 
   // CSRF-Token bei schreibenden Methoden ausschließlich aus Cookie hinzufügen
   if (writeMethods.includes(method)) {
-    const csrfToken = getCookie('csrf');
+    const csrfToken = getCookie('csrfToken');
     if (!csrfToken) {
       console.warn('⚠️ Kein CSRF-Token im Cookie gefunden.');
     } else {
@@ -998,7 +998,7 @@ clockInBtn.addEventListener('click', async () => {
   clockInBtn.disabled = true;
 
   try {
-    const csrfToken = getCookie('csrf') || '';
+    const csrfToken = getCookie('csrfToken') || '';
     await apiFetch('/api/zeit', {
       method: 'POST',
       headers: {
@@ -1029,7 +1029,7 @@ clockOutBtn.addEventListener('click', async () => {
   clockOutBtn.disabled = true;
 
   try {
-    const csrfToken = getCookie('csrf') || '';
+    const csrfToken = getCookie('csrfToken') || '';
     await apiFetch('/api/zeit', {
       method: 'POST',
       headers: {
