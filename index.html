@@ -343,22 +343,29 @@ function getCookie(name) {
 }
 
 // Haupt-Fetch mit automatischem Token-Refresh, CSRF-Token und Auth-Header
-async function apiFetch(path, options = {}) {
+async function apiFetch(path, options = {}, useAuthHeaderToken = false) {
   const method = (options.method || 'GET').toUpperCase();
   const writeMethods = ['POST', 'PUT', 'DELETE', 'PATCH'];
 
-  // Defensive Kopie und Standard-Header
   options = { ...options };
   options.headers = options.headers || {};
-  options.credentials = 'include'; // Cookies mitschicken
+  options.credentials = 'include'; // zwingend, damit Cookies gesendet werden
 
-  // CSRF-Token bei schreibenden Methoden setzen
+  // CSRF-Token für Schreibmethoden aus Cookie setzen
   if (writeMethods.includes(method)) {
     const csrfToken = getCookie('csrfToken');
     if (!csrfToken) {
       console.warn('⚠️ Kein CSRF-Token im Cookie gefunden.');
     } else {
       options.headers['X-CSRF-Token'] = csrfToken;
+    }
+  }
+
+  // Authorization-Header wird NICHT mehr gesetzt, da Auth per HttpOnly-Cookie läuft
+  if (useAuthHeaderToken) {
+    const token = getCookie('token');
+    if (token) {
+      options.headers['Authorization'] = 'Bearer ' + token;
     }
   }
 
@@ -370,8 +377,8 @@ async function apiFetch(path, options = {}) {
 
   let response = await fetchWithCookies();
 
-  // Token abgelaufen? Versuch Refresh
   if (response.status === 401) {
+    // Token expired -> Refresh versuchen
     const refreshResponse = await fetch(`${API_BASE_URL}/api/refresh`, {
       method: 'POST',
       credentials: 'include',
@@ -381,7 +388,7 @@ async function apiFetch(path, options = {}) {
       throw new Error('Token-Refresh fehlgeschlagen. Bitte neu einloggen.');
     }
 
-    // Erneuter Versuch mit neuen Cookies
+    // Erneut die ursprüngliche Anfrage mit neuen Cookies senden
     response = await fetchWithCookies();
 
     if (response.status === 401) {
@@ -389,7 +396,6 @@ async function apiFetch(path, options = {}) {
     }
   }
 
-  // Fehlerbehandlung mit Nachricht aus Server-Antwort
   if (!response.ok) {
     let errorMsg = `Fehler: HTTP ${response.status}`;
     try {
@@ -403,14 +409,12 @@ async function apiFetch(path, options = {}) {
     throw new Error(errorMsg);
   }
 
-  // Erfolgreich: JSON zurückgeben (oder leeres Objekt)
   try {
     return await response.json();
   } catch {
     return {};
   }
 }
-
 
 // Login-Funktion: speichert Access- und CSRF-Token
 async function login(email, passwort) {
@@ -423,7 +427,8 @@ async function login(email, passwort) {
     const res = await apiFetch('/api/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, passwort })
+      body: JSON.stringify({ email, passwort }),
+      // kein credentials hier, da apiFetch das immer setzt
     });
 
     console.log('✅ Eingeloggt:', res.user);
@@ -446,13 +451,17 @@ async function login(email, passwort) {
 // Automatischer Login mit gespeichertem Access-Token
 async function tryAutoLogin() {
   try {
-    const userData = await apiFetch('/api/me');
+    // Kein Token aus sessionStorage, einfach /api/me anfragen
+    const userData = await apiFetch('/api/me', {}, false); // kein Bearer-Token im Header
+
     loggedInUser = userData;
     biometricEnabled = userData.biometricEnabled || false;
-    updateUIAfterLogin(); // falls vorhanden
+    updateUIAfterLogin();
+
     return true;
   } catch (err) {
-    console.warn('AutoLogin fehlgeschlagen:', err.message);
+    console.warn('AutoLogin fehlgeschlagen:', err);
+    // Hier ggf. Logout-Cleanup, falls notwendig
     return false;
   }
 }
