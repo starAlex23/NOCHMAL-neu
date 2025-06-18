@@ -455,6 +455,9 @@ async function login(email, passwort) {
       },
       body: JSON.stringify({ email, passwort })
     });
+    
+console.log('Cookies:', document.cookie);
+console.log('AccessToken:', getCookie('accessToken'));
 
     console.log('✅ Login erfolgreich:', res);
 
