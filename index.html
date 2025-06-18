@@ -481,6 +481,8 @@ async function login(email, passwort) {
 
     // Profil aktualisieren (Frontend-UI)
     await updateProfile();
+    showSection(timeTrackingSection); // oder andere gewünschte Section
+
 
   } catch (err) {
     console.error('❌ Login fehlgeschlagen:', err.message);
