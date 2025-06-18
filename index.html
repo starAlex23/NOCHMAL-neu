@@ -466,7 +466,19 @@ async function tryAutoLogin() {
   }
 }
 
+  
+loginForm.addEventListener('submit', async (event) => {
+  event.preventDefault();  // Verhindert das Neuladen der Seite
 
+  const email = loginForm.email.value;     // Annahme: <input name="email">
+  const passwort = loginForm.passwort.value; // Annahme: <input name="passwort">
+
+  try {
+    await login(email, passwort);  // Deine bereits bestehende login-Funktion
+  } catch (err) {
+    console.error('Login fehlgeschlagen:', err);
+  }
+});
 
   
 async function init() {
