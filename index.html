@@ -343,7 +343,7 @@ function getCookie(name) {
 }
 
 // Haupt-Fetch mit automatischem Token-Refresh, CSRF-Token und Auth-Header
-async function apiFetch(path, options = {}, useAuthHeaderToken = false) {
+async function apiFetch(path, options = {}) {
   const method = (options.method || 'GET').toUpperCase();
   const writeMethods = ['POST', 'PUT', 'DELETE', 'PATCH'];
 
@@ -351,7 +351,7 @@ async function apiFetch(path, options = {}, useAuthHeaderToken = false) {
 
   if (!options.headers) options.headers = {};
 
-  // CSRF-Token bei schreibenden Methoden ausschließlich aus Cookie hinzufügen
+  // CSRF-Token bei schreibenden Methoden aus Cookie hinzufügen
   if (writeMethods.includes(method)) {
     const csrfToken = getCookie('csrfToken');
     if (!csrfToken) {
@@ -361,55 +361,32 @@ async function apiFetch(path, options = {}, useAuthHeaderToken = false) {
     }
   }
 
-  options.credentials = 'include'; // Cookies senden
-
-  // Authorization-Header nur hinzufügen, wenn gewünscht
-  if (useAuthHeaderToken) {
-    const token = sessionStorage.getItem('accessToken');
-    if (!token) throw new Error('Kein Access-Token gefunden. Bitte einloggen.');
-    options.headers['Authorization'] = `Bearer ${token}`;
-  }
+  options.credentials = 'include'; // Cookies senden (AccessToken, RefreshToken, CSRF-Token)
 
   const url = path.startsWith('http') ? path : `${API_BASE_URL}${path}`;
 
-  // Interne Funktion zum Ausführen des Requests
-  async function fetchWithToken() {
+  async function fetchWithCookies() {
     return fetch(url, options);
   }
 
-  let response = await fetchWithToken();
+  let response = await fetchWithCookies();
 
   // 401 = Token evtl. abgelaufen? Versuch Refresh
-  if (response.status === 401 && useAuthHeaderToken) {
-    // Refresh-Token anfragen
+  if (response.status === 401) {
+    // Refresh-Token anfragen (der Server setzt ggf. neue Access- und Refresh-Tokens per Cookie)
     const refreshResponse = await fetch(`${API_BASE_URL}/api/refresh`, {
       method: 'POST',
       credentials: 'include',
     });
 
     if (!refreshResponse.ok) {
-      sessionStorage.removeItem('accessToken');
       throw new Error('Session abgelaufen. Bitte neu einloggen.');
     }
 
-    const refreshData = await refreshResponse.json();
-
-    if (!refreshData.accessToken) {
-      sessionStorage.removeItem('accessToken');
-      throw new Error('Token-Refresh fehlgeschlagen. Bitte neu einloggen.');
-    }
-
-    // Neuen Access-Token speichern
-    sessionStorage.setItem('accessToken', refreshData.accessToken);
-    options.headers['Authorization'] = `Bearer ${refreshData.accessToken}`;
-
-    // Hinweis: CSRF-Token nicht mehr in localStorage speichern!
-
-    // Anfrage erneut senden
-    response = await fetchWithToken();
+    // Refresh erfolgreich, erneut originalen Request senden
+    response = await fetchWithCookies();
 
     if (response.status === 401) {
-      sessionStorage.removeItem('accessToken');
       throw new Error('Token-Refresh fehlgeschlagen. Bitte neu einloggen.');
     }
   }
@@ -434,87 +411,56 @@ async function apiFetch(path, options = {}, useAuthHeaderToken = false) {
   }
 }
 
-
-
-
-
 // Login-Funktion: speichert Access- und CSRF-Token
 async function login(email, passwort) {
-  console.log('Login-Daten:', { email, passwort });
   if (!email || !passwort) {
     alert('Bitte Email und Passwort ausfüllen!');
     return;
   }
 
   try {
-    // Request zum Backend
+    // Wichtig: credentials: 'include' um Cookies zu setzen
     const res = await apiFetch('/api/login', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ email, passwort })
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, passwort }),
+      credentials: 'include',
     });
-    
-console.log('Cookies:', document.cookie);
-console.log('AccessToken:', getCookie('accessToken'));
 
-    console.log('✅ Login erfolgreich:', res);
+    console.log('Login erfolgreich:', res);
 
-    // AccessToken aus Cookie lesen und in sessionStorage speichern
-    const accessTokenFromCookie = getCookie('accessToken');
-    if (accessTokenFromCookie) {
-      sessionStorage.setItem('accessToken', accessTokenFromCookie);
-    } else {
-      throw new Error('Kein Access-Token im Cookie gefunden.');
-    }
-
-    // CSRF-Token aus Antwort prüfen
-    if (res.csrfToken) {
-      console.log('✅ CSRF-Token erhalten:', res.csrfToken);
-      // Optional: csrfToken auch irgendwo speichern, falls du es brauchst
-    } else {
-      console.warn('⛔ Kein CSRF-Token in der Login-Antwort:', res);
-    }
-
-    // Benutzer-Daten setzen
     if (res.user) {
       loggedInUser = res.user;
     }
 
-    // Profil aktualisieren (Frontend-UI)
     await updateProfile();
-    showSection(timeTrackingSection); // oder andere gewünschte Section
-
+    showSection(timeTrackingSection);
 
   } catch (err) {
-    console.error('❌ Login fehlgeschlagen:', err.message);
+    console.error('Login fehlgeschlagen:', err.message);
     alert('Login fehlgeschlagen: ' + err.message);
   }
 }
 
+
 // Automatischer Login mit gespeichertem Access-Token
 async function tryAutoLogin() {
-  const token = sessionStorage.getItem('accessToken');
-  if (!token) return false;
-
   try {
-    const userData = await apiFetch('/api/me', {}, true);
+    // Einfach /api/me aufrufen, Cookies werden gesendet (credentials: include im apiFetch)
+    const userData = await apiFetch('/api/me');
     loggedInUser = userData;
     biometricEnabled = userData.biometricEnabled || false;
-    updateUIAfterLogin(); // optional
+    updateUIAfterLogin();
     return true;
   } catch (err) {
     console.warn('AutoLogin fehlgeschlagen:', err);
-    sessionStorage.removeItem('accessToken');
     return false;
   }
 }
 
+
   
 async function init() {
-  
-
   if (!clockInBtn || !clockOutBtn) {
     console.warn('⚠️ ClockIn/ClockOut Button nicht gefunden.');
     return;
@@ -546,6 +492,7 @@ async function init() {
 }
 
 document.addEventListener('DOMContentLoaded', init);
+
 
 
 
