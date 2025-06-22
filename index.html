@@ -835,6 +835,11 @@ function toBase64Url(buffer) {
 
 // === UI Aktualisierung nach Login ===
 function updateUIAfterLogin(user) {
+  if (!user) {
+    console.warn('⚠️ Kein Benutzerobjekt übergeben an updateUIAfterLogin');
+    return;
+  }
+
   loggedInUser = user;
 
   userNameSpan.textContent = user.name || user.email || 'Benutzer';
@@ -848,7 +853,6 @@ function updateUIAfterLogin(user) {
 
   showSection(mainSection);
 
-  // Buttons aktivieren
   clockInBtn.disabled = false;
   clockOutBtn.disabled = false;
 }
