@@ -351,17 +351,16 @@ async function apiFetch(path, options = {}, useAuthHeaderToken = false) {
   options.headers = options.headers || {};
   options.credentials = 'include'; // zwingend, damit Cookies gesendet werden
 
-  // CSRF-Token für Schreibmethoden aus Cookie setzen
+  // CSRF-Token für schreibende Methoden aus localStorage setzen
   if (writeMethods.includes(method)) {
-    const csrfToken = getCookie('csrfToken');
+    const csrfToken = localStorage.getItem('csrfToken');
     if (!csrfToken) {
-      console.warn('⚠️ Kein CSRF-Token im Cookie gefunden.');
+      console.warn('⚠️ Kein CSRF-Token im localStorage gefunden.');
     } else {
       options.headers['X-CSRF-Token'] = csrfToken;
     }
   }
 
-  // Authorization-Header wird NICHT mehr gesetzt, da Auth per HttpOnly-Cookie läuft
   if (useAuthHeaderToken) {
     const token = getCookie('token');
     if (token) {
@@ -378,7 +377,6 @@ async function apiFetch(path, options = {}, useAuthHeaderToken = false) {
   let response = await fetchWithCookies();
 
   if (response.status === 401) {
-    // Token expired -> Refresh versuchen
     const refreshResponse = await fetch(`${API_BASE_URL}/api/refresh`, {
       method: 'POST',
       credentials: 'include',
@@ -388,7 +386,6 @@ async function apiFetch(path, options = {}, useAuthHeaderToken = false) {
       throw new Error('Token-Refresh fehlgeschlagen. Bitte neu einloggen.');
     }
 
-    // Erneut die ursprüngliche Anfrage mit neuen Cookies senden
     response = await fetchWithCookies();
 
     if (response.status === 401) {
@@ -416,6 +413,7 @@ async function apiFetch(path, options = {}, useAuthHeaderToken = false) {
   }
 }
 
+
 // Login-Funktion: speichert Access- und CSRF-Token
 async function login(email, passwort) {
   if (!email || !passwort) {
@@ -428,7 +426,6 @@ async function login(email, passwort) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, passwort }),
-      // kein credentials hier, da apiFetch das immer setzt
     });
 
     console.log('✅ Eingeloggt:', res.user);
@@ -437,7 +434,11 @@ async function login(email, passwort) {
       loggedInUser = res.user;
     }
 
-    await updateProfile(); // Lädt aktuelle Daten via /api/me
+    if (res.csrfToken) {
+      localStorage.setItem('csrfToken', res.csrfToken); // ⬅️ hier speichern
+    }
+
+    await updateProfile();
     showSection(timeTrackingSection);
 
   } catch (err) {
@@ -445,6 +446,7 @@ async function login(email, passwort) {
     alert('Login fehlgeschlagen: ' + err.message);
   }
 }
+
 
 
 
@@ -855,18 +857,18 @@ async function updateTimeButtons() {
 // === Logout Cleanup ===
 function handleLogoutCleanup() {
   loggedInUser = null;
-
   biometricEnabled = false;
 
-  // Formular-Felder leeren (hier angenommen so heißen sie)
+  // Formular-Felder leeren
   loginForm['email'].value = '';
   loginForm['passwort'].value = '';
 
   // Tokens aus Speicher löschen
   sessionStorage.removeItem('accessToken');
-  localStorage.removeItem('csrfToken');
+  localStorage.removeItem('csrfToken'); // ⬅️ wichtig!
+  document.cookie = 'csrfToken=; Max-Age=0; path=/; secure; SameSite=None'; // ⬅️ aus Cookie löschen, falls vorhanden
 
-  // UI anpassen
+  // UI zurücksetzen
   showSection(qrSection);
   logoutBtn.classList.add('hidden');
   activateBiometricBtn.classList.remove('hidden');
@@ -876,10 +878,8 @@ function handleLogoutCleanup() {
 // === Logout ===
 logoutBtn.addEventListener('click', async () => {
   try {
-    // Token beim Logout-Request mit senden!
-    const res = await apiFetch('/api/logout', { method: 'POST' }, true);
+    await apiFetch('/api/logout', { method: 'POST' });
 
-    // Falls logout API ok antwortet, dann cleanup:
     handleLogoutCleanup();
     alert('Logout erfolgreich!');
   } catch (err) {
@@ -959,15 +959,10 @@ clockInBtn.addEventListener('click', async () => {
   clockInBtn.disabled = true;
 
   try {
-    const csrfToken = getCookie('csrfToken') || '';
     await apiFetch('/api/zeit', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRF-Token': csrfToken,
-      },
       body: JSON.stringify({ aktion: 'start' }),
-    }, true);
+    });
 
     alert('Arbeitszeit gestartet');
     await updateTimeButtons();
@@ -990,15 +985,10 @@ clockOutBtn.addEventListener('click', async () => {
   clockOutBtn.disabled = true;
 
   try {
-    const csrfToken = getCookie('csrfToken') || '';
     await apiFetch('/api/zeit', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRF-Token': csrfToken,
-      },
       body: JSON.stringify({ aktion: 'stop' }),
-    }, true);
+    });
 
     alert('Arbeitszeit gestoppt');
     await updateTimeButtons();
@@ -1010,6 +1000,7 @@ clockOutBtn.addEventListener('click', async () => {
   }
 });
 
+  
 //schon eingestempelt?
 async function getLetzterStatus() {
   try {
