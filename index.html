@@ -834,8 +834,10 @@ function toBase64Url(buffer) {
 
 
 // === UI Aktualisierung nach Login ===
-function updateUIAfterLogin() {
-  userNameSpan.textContent = loggedInUser.name || loggedInUser.email || 'Benutzer';
+function updateUIAfterLogin(user) {
+  loggedInUser = user;
+
+  userNameSpan.textContent = user.name || user.email || 'Benutzer';
 
   showSection(timeTrackingSection);
   loginSection.classList.add('hidden');
@@ -843,7 +845,15 @@ function updateUIAfterLogin() {
   qrSection.classList.add('hidden');
   logoutBtn.classList.remove('hidden');
   activateBiometricBtn.classList.toggle('hidden', biometricEnabled);
+
+  showSection(mainSection);
+
+  // Buttons aktivieren
+  clockInBtn.disabled = false;
+  clockOutBtn.disabled = false;
 }
+
+
 
 async function updateTimeButtons() {
   try {
@@ -956,6 +966,7 @@ activateBiometricBtn.addEventListener('click', async () => {
 
 
 // === Zeit erfassen (Start) ===
+// === Zeit erfassen (Start & danach sofort Logout) ===
 clockInBtn.addEventListener('click', async () => {
   if (!loggedInUser) {
     alert('Bitte zuerst einloggen');
@@ -970,15 +981,21 @@ clockInBtn.addEventListener('click', async () => {
       body: JSON.stringify({ aktion: 'start' }),
     });
 
-    alert('Arbeitszeit gestartet');
-    await updateTimeButtons();
+    alert('✅ Du wurdest erfolgreich eingestempelt.\nDu wirst jetzt ausgeloggt.');
+
+    // Logout durchführen
+    await apiFetch('/api/logout', { method: 'POST' });
+
+    // UI aufräumen und zurück zur QR/Loginmaske
+    handleLogoutCleanup();
   } catch (err) {
-    console.error('Fehler beim Start der Arbeitszeit:', err);
-    alert('Fehler beim Start der Arbeitszeit: ' + err.message);
-  } finally {
-    clockInBtn.disabled = false;
+    console.error('Fehler beim Start der Arbeitszeit oder beim Logout:', err);
+    alert('Fehler: ' + err.message);
+    clockInBtn.disabled = false; // Nur bei Fehler wieder aktivieren
   }
 });
+
+
 
 
 // === Zeit erfassen (Stopp) ===
