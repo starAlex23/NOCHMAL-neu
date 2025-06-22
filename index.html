@@ -352,14 +352,20 @@ async function apiFetch(path, options = {}, useAuthHeaderToken = false) {
   options.credentials = 'include'; // zwingend, damit Cookies gesendet werden
 
   // CSRF-Token für schreibende Methoden aus localStorage setzen
-  if (writeMethods.includes(method)) {
-    const csrfToken = localStorage.getItem('csrfToken');
-    if (!csrfToken) {
-      console.warn('⚠️ Kein CSRF-Token im localStorage gefunden.');
-    } else {
-      options.headers['X-CSRF-Token'] = csrfToken;
-    }
+if (writeMethods.includes(method)) {
+  // Content-Type setzen, wenn noch nicht gesetzt
+  if (!options.headers['Content-Type']) {
+    options.headers['Content-Type'] = 'application/json';
   }
+
+  const csrfToken = localStorage.getItem('csrfToken');
+  if (!csrfToken) {
+    console.warn('⚠️ Kein CSRF-Token im localStorage gefunden.');
+  } else {
+    options.headers['X-CSRF-Token'] = csrfToken;
+  }
+}
+
 
   if (useAuthHeaderToken) {
     const token = getCookie('token');
