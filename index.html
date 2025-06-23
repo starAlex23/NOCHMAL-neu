@@ -194,7 +194,7 @@ button:disabled {
 <input type="password" id="login-password" name="passwort" required autocomplete="current-password" />
 
 
-    <button id="activate-biometric" type="button">🔐 Biometrie aktivieren</button>
+   
 
     <button type="submit">Einloggen</button>
   </form>
@@ -231,16 +231,15 @@ button:disabled {
 <div id="logout-message"></div>
 
     
-    <button id="registerWebAuthn" type="button">WebAuthn registrieren</button>
-    <button id="loginWebAuthn" type="button">Mit WebAuthn anmelden</button>
+   
   </section>
 
   <!-- 4. Zeiterfassung -->
   <section id="time-tracking-section" class="card hidden" aria-label="Zeiterfassung">
     <h2>Willkommen, <span id="user-name"></span></h2>
     
-    <button id="clock-in-btn" type="button">Einstechen (Start)</button>
-    <button id="clock-out-btn" type="button" disabled>Ausstechen (Stop)</button>
+    <button id="clock-in-btn" type="button">Einstempeln (Start)</button>
+    <button id="clock-out-btn" type="button" disabled>Ausstempeln (Stop)</button>
 
     <p id="time-message"></p>
 
@@ -256,12 +255,7 @@ button:disabled {
 <script>
 document.addEventListener('DOMContentLoaded', () => {
   // WebAuthn-Zuweisung
-  if (typeof startWebAuthnRegistration === 'function') {
-    document.getElementById('registerWebAuthn').onclick = startWebAuthnRegistration;
-  }
-  if (typeof startWebAuthnLogin === 'function') {
-    document.getElementById('loginWebAuthn').onclick = startWebAuthnLogin;
-  }
+
 
   // Zeitstatus prüfen
 (async () => {
