@@ -830,48 +830,63 @@ function toBase64Url(buffer) {
 }
 
 
+  
+async function checkUserStatus() {
+  try {
+    const result = await apiFetch('/api/status'); // ⬅️ csrf nicht nötig, ist GET
+    const eingestempelt = result.ist_eingestempelt;
 
+    clockInBtn.disabled = eingestempelt;
+    clockOutBtn.disabled = !eingestempelt;
+  } catch (err) {
+    console.warn('⚠️ Konnte Status nicht abrufen:', err);
+  }
+}
 
 
 // === UI Aktualisierung nach Login ===
-function updateUIAfterLogin(user) {
+async function updateUIAfterLogin(user) {
   if (!user) {
     console.warn('⚠️ Kein Benutzerobjekt übergeben an updateUIAfterLogin');
     return;
   }
 
   loggedInUser = user;
-
   userNameSpan.textContent = user.name || user.email || 'Benutzer';
 
+  // UI-Sektionen steuern
+  showSection(mainSection);
   showSection(timeTrackingSection);
   loginSection.classList.add('hidden');
   registerSection.classList.add('hidden');
   qrSection.classList.add('hidden');
-  logoutBtn.classList.remove('hidden');
+
+  // Biometrie anzeigen/verstecken
   activateBiometricBtn.classList.toggle('hidden', biometricEnabled);
 
-  showSection(mainSection);
+  // Logout sichtbar
+  logoutBtn.classList.remove('hidden');
 
-  clockInBtn.disabled = false;
-  clockOutBtn.disabled = false;
+  // Einstempel-Status prüfen und Buttons setzen
+  await updateTimeButtons();
 }
+
 
 
 
 async function updateTimeButtons() {
   try {
     const data = await apiFetch('/api/zeit/status', {}, true);
-    // Annahme: data = { status: 'running' | 'stopped' | ... }
+    // Erwartet: { status: 'running' | 'stopped' }
     clockInBtn.disabled = data.status === 'running';
     clockOutBtn.disabled = data.status !== 'running';
   } catch (err) {
     console.warn('Status konnte nicht geladen werden:', err);
-    // Buttons ggf. deaktivieren, da unsicher:
     clockInBtn.disabled = true;
     clockOutBtn.disabled = true;
   }
 }
+
 
   
 // === Logout Cleanup ===
