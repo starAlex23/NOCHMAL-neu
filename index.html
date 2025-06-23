@@ -428,35 +428,29 @@ async function login(email, passwort) {
       body: JSON.stringify({ email, passwort }),
     });
 
+    // Nur noch prüfen, ob das response-Objekt korrekt ist
     if (!res.user) {
-      throw new Error('Kein Benutzerobjekt zurückgegeben.');
+      alert('Login erfolgreich, aber kein Benutzerobjekt erhalten.');
+      return;
     }
 
     console.log('✅ Eingeloggt:', res.user);
 
-    // Tokens speichern
     if (res.csrfToken) {
       localStorage.setItem('csrfToken', res.csrfToken);
     }
 
-    // Benutzer setzen
     loggedInUser = res.user;
-   
 
-    // UI aktualisieren
     await updateUIAfterLogin(res.user);
-
-    // Hauptbereich anzeigen
     showSection(timeTrackingSection);
-
-    // Optional: /api/me erneut abrufen, wenn du frische Daten brauchst
-    // await updateProfile();
 
   } catch (err) {
     console.error('❌ Login fehlgeschlagen:', err.message);
     alert('Login fehlgeschlagen: ' + err.message);
   }
 }
+
 
 
 
@@ -781,7 +775,7 @@ registerForm.addEventListener('submit', async (ev) => {
   const vorname = registerForm['firstname'].value.trim();
   const nachname = registerForm['lastname'].value.trim();
   const email = registerForm['email'].value.trim();
-  const passwort = registerForm['password'].value.trim(); // wichtig: Backend erwartet "passwort"
+  const passwort = registerForm['password'].value.trim();
 
   try {
     const res = await apiFetch('/api/register', {
@@ -790,17 +784,14 @@ registerForm.addEventListener('submit', async (ev) => {
       body: JSON.stringify({ vorname, nachname, email, passwort }),
     });
 
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.error || 'Registrierung fehlgeschlagen');
-    }
-
-    alert('Registrierung erfolgreich! Bitte einloggen.');
+    // Wenn erfolgreich, bekommst du direkt das JSON mit message z. B.
+    alert(res.message || 'Registrierung erfolgreich! Bitte einloggen.');
     showSection(loginSection);
   } catch (err) {
-    alert(err.message);
+    alert(err.message || 'Registrierung fehlgeschlagen.');
   }
 });
+
   
 // === Zeit erfassen (Start) ===
 // === Zeit erfassen (Start & danach sofort Logout) ===
