@@ -436,17 +436,18 @@ async function login(email, passwort) {
 
     console.log('✅ Eingeloggt:', res.user);
 
-    if (res.user) {
-      loggedInUser = res.user;
+    if (!res.user) {
+      throw new Error('Kein Benutzerobjekt zurückgegeben.');
     }
+
+    loggedInUser = res.user;
 
     if (res.csrfToken) {
-      localStorage.setItem('csrfToken', res.csrfToken); // ⬅️ hier speichern
+      localStorage.setItem('csrfToken', res.csrfToken);
     }
 
-   
     await updateProfile();
-    updateUIAfterLogin(response.user);
+    updateUIAfterLogin(res.user);
     showSection(timeTrackingSection);
 
   } catch (err) {
@@ -454,6 +455,7 @@ async function login(email, passwort) {
     alert('Login fehlgeschlagen: ' + err.message);
   }
 }
+
 
 
 
@@ -529,13 +531,15 @@ document.addEventListener('DOMContentLoaded', init);
 
 async function updateProfile() {
   try {
-    loggedInUser = await apiFetch('/api/me', {}, true);
-    updateUIAfterLogin();
+    const user = await apiFetch('/api/me', {}, true);
+    loggedInUser = user;
+    await updateUIAfterLogin(user);
   } catch (err) {
     console.error('Profil konnte nicht geladen werden:', err);
     handleLogoutCleanup();
   }
 }
+
 
 
 // === Theme Handling ===
