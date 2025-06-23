@@ -444,7 +444,9 @@ async function login(email, passwort) {
       localStorage.setItem('csrfToken', res.csrfToken); // ⬅️ hier speichern
     }
 
+   
     await updateProfile();
+    updateUIAfterLogin(response.user);
     showSection(timeTrackingSection);
 
   } catch (err) {
