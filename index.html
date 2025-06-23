@@ -1028,6 +1028,7 @@ clockInBtn.addEventListener('click', async () => {
 
 
 // === Zeit erfassen (Stopp) ===
+// === Zeit erfassen (Stopp & danach sofort Logout) ===
 clockOutBtn.addEventListener('click', async () => {
   if (!loggedInUser) {
     alert('Bitte zuerst einloggen');
@@ -1042,15 +1043,19 @@ clockOutBtn.addEventListener('click', async () => {
       body: JSON.stringify({ aktion: 'stop' }),
     });
 
-    alert('Arbeitszeit gestoppt');
-    await updateTimeButtons();
+    alert('⏹️ Du wurdest erfolgreich ausgestempelt.\nDu wirst jetzt ausgeloggt.');
+
+    // Logout durchführen
+    await apiFetch('/api/logout', { method: 'POST' });
+
+    // UI aufräumen und zurück zur QR/Loginmaske
+    handleLogoutCleanup();
   } catch (err) {
-    console.error('Fehler beim Stoppen der Arbeitszeit:', err);
+    console.error('Fehler beim Stoppen der Arbeitszeit oder beim Logout:', err);
     alert('Fehler beim Stoppen der Arbeitszeit: ' + err.message);
-  } finally {
-    clockOutBtn.disabled = false;
   }
 });
+
 
 
   //schon eingestempelt?
