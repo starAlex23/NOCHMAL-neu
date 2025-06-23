@@ -434,34 +434,29 @@ async function login(email, passwort) {
       body: JSON.stringify({ email, passwort }),
     });
 
-    console.log('✅ Eingeloggt:', res.user);
-
     if (!res.user) {
       throw new Error('Kein Benutzerobjekt zurückgegeben.');
     }
 
-    loggedInUser = res.user;
+    console.log('✅ Eingeloggt:', res.user);
 
+    // Tokens speichern
     if (res.csrfToken) {
       localStorage.setItem('csrfToken', res.csrfToken);
     }
 
-   // Reihenfolge wichtig
-if (res.csrfToken) {
-  localStorage.setItem('csrfToken', res.csrfToken);
-}
+    // Benutzer setzen
+    loggedInUser = res.user;
+    biometricEnabled = res.user.biometricEnabled || false;
 
-// loggedInUser sofort setzen
-loggedInUser = res.user;
-biometricEnabled = res.user.biometricEnabled || false;
+    // UI aktualisieren
+    await updateUIAfterLogin(res.user);
 
-// Jetzt direkt UI aktualisieren
-updateUIAfterLogin(res.user);
-
-// /api/me ist redundant nach Login
-// await updateProfile();  <-- kann weg oder nur für später verwenden
-
+    // Hauptbereich anzeigen
     showSection(timeTrackingSection);
+
+    // Optional: /api/me erneut abrufen, wenn du frische Daten brauchst
+    // await updateProfile();
 
   } catch (err) {
     console.error('❌ Login fehlgeschlagen:', err.message);
@@ -876,7 +871,7 @@ async function updateUIAfterLogin(user) {
   userNameSpan.textContent = user.name || user.email || 'Benutzer';
 
   // UI-Sektionen steuern
-  showSection(timeTrackingSection);  // Richtig: Variable verwenden
+  showSection(timeTrackingSection);
   loginSection.classList.add('hidden');
   registerSection.classList.add('hidden');
   qrSection.classList.add('hidden');
@@ -888,9 +883,9 @@ async function updateUIAfterLogin(user) {
   logoutBtn.classList.remove('hidden');
 
   // Einstempel-Status prüfen und Buttons setzen
-  updateUIAfterLogin(res.user); // ← so ist `user` gesetzt
-
+  await updateTimeButtons(); // ✅ das ist richtig
 }
+
 
 
 
