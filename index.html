@@ -253,7 +253,7 @@ button:disabled {
 
 <script>
   document.addEventListener('DOMContentLoaded', () => {
-  // WebAuthn-Zuweisung
+ 
 
 
   // Zeitstatus prüfen
@@ -322,7 +322,6 @@ const API_BASE = 'https://backend-869x.onrender.com/api';
   
 
 let loggedInUser = null;
-let biometricEnabled = false;
 
 const API_BASE_URL = 'https://backend-869x.onrender.com';
 
@@ -442,7 +441,7 @@ async function login(email, passwort) {
 
     // Benutzer setzen
     loggedInUser = res.user;
-    biometricEnabled = res.user.biometricEnabled || false;
+   
 
     // UI aktualisieren
     await updateUIAfterLogin(res.user);
@@ -470,7 +469,7 @@ async function tryAutoLogin() {
     const userData = await apiFetch('/api/me', {}, false); // kein Bearer-Token im Header
 
     loggedInUser = userData;
-    biometricEnabled = userData.biometricEnabled || false;
+  
     updateUIAfterLogin();
 
     return true;
@@ -536,7 +535,7 @@ async function updateProfile() {
   try {
     const user = await apiFetch('/api/me', {}, true);  // optional: mit Authorization
     loggedInUser = user;
-    biometricEnabled = user.biometricEnabled || false;
+   
     updateUIAfterLogin(user); // ⬅️ hier Übergabe fixen!
   } catch (err) {
     console.error('Profil konnte nicht geladen werden:', err);
@@ -661,17 +660,6 @@ async function onQrCodeDetected(qrCodeText) {
   }
 }
 
-
-
-
-
-
-
-
-
-
-
-
  function showPopupMessage(msg, duration = 3000) {
   const popup = document.getElementById('popup-message');
   popup.textContent = msg;
@@ -704,11 +692,6 @@ function toBase64Url(buffer) {
   return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
-
-  
-
-
-
 // === UI Aktualisierung nach Login ===
 async function updateUIAfterLogin(user) {
   if (!user) {
@@ -725,8 +708,7 @@ async function updateUIAfterLogin(user) {
   registerSection.classList.add('hidden');
   qrSection.classList.add('hidden');
 
-  // Biometrie anzeigen/verstecken
-  activateBiometricBtn.classList.toggle('hidden', biometricEnabled);
+
 
   // Logout sichtbar
   logoutBtn.classList.remove('hidden');
@@ -734,10 +716,6 @@ async function updateUIAfterLogin(user) {
   // Einstempel-Status prüfen und Buttons setzen
   await updateTimeButtons(); // ✅ das ist richtig
 }
-
-
-
-
 
 async function updateTimeButtons() {
   try {
@@ -753,13 +731,9 @@ async function updateTimeButtons() {
   }
 }
 
-
-
-  
 // === Logout Cleanup ===
 function handleLogoutCleanup() {
   loggedInUser = null;
-  biometricEnabled = false;
 
   // Formular-Felder leeren
   loginForm['email'].value = '';
@@ -773,7 +747,7 @@ function handleLogoutCleanup() {
   // UI zurücksetzen
   showSection(qrSection);
   logoutBtn.classList.add('hidden');
-  activateBiometricBtn.classList.remove('hidden');
+ 
   userNameSpan.textContent = '';
 }
 
@@ -789,12 +763,6 @@ logoutBtn.addEventListener('click', async () => {
     alert('Logout Fehler: ' + err.message);
   }
 });
-
-
-
-
-
-
 
 // === Register-Link im Login-Form ===
 showRegisterBtn.addEventListener('click', () => {
@@ -833,24 +801,7 @@ registerForm.addEventListener('submit', async (ev) => {
     alert(err.message);
   }
 });
-
-
-// === WebAuthn Aktivierung Button ===
-activateBiometricBtn.addEventListener('click', async () => {
-  activateBiometricBtn.disabled = true;
-  try {
-    await startWebAuthnRegistration();
-    alert('Biometrische Anmeldung aktiviert!');
-    biometricEnabled = true;
-    activateBiometricBtn.classList.add('hidden');
-  } catch (err) {
-    alert('WebAuthn Registrierung fehlgeschlagen: ' + err.message);
-  } finally {
-    activateBiometricBtn.disabled = false;
-  }
-});
-
-
+  
 // === Zeit erfassen (Start) ===
 // === Zeit erfassen (Start & danach sofort Logout) ===
 clockInBtn.addEventListener('click', async () => {
