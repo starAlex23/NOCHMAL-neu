@@ -896,16 +896,16 @@ async function updateUIAfterLogin(user) {
 
 async function updateTimeButtons() {
   try {
-    const data = await apiFetch('/api/status', {}, true);
-    // Erwartet: { status: 'running' | 'stopped' }
-    clockInBtn.disabled = data.status === 'running';
-    clockOutBtn.disabled = data.status !== 'running';
+    const data = await apiFetch('/api/zeit/status', {}, true);
+    clockInBtn.disabled = data.status === 'running';     // Nur aktiv, wenn NICHT eingestempelt
+    clockOutBtn.disabled = data.status !== 'running';    // Nur aktiv, wenn eingestempelt
   } catch (err) {
     console.warn('Status konnte nicht geladen werden:', err);
     clockInBtn.disabled = true;
     clockOutBtn.disabled = true;
   }
 }
+
 
 
   
