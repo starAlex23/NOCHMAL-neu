@@ -446,8 +446,21 @@ async function login(email, passwort) {
       localStorage.setItem('csrfToken', res.csrfToken);
     }
 
-    await updateProfile();
-    updateUIAfterLogin(res.user);
+   // Reihenfolge wichtig
+if (res.csrfToken) {
+  localStorage.setItem('csrfToken', res.csrfToken);
+}
+
+// loggedInUser sofort setzen
+loggedInUser = res.user;
+biometricEnabled = res.user.biometricEnabled || false;
+
+// Jetzt direkt UI aktualisieren
+updateUIAfterLogin(res.user);
+
+// /api/me ist redundant nach Login
+// await updateProfile();  <-- kann weg oder nur für später verwenden
+
     showSection(timeTrackingSection);
 
   } catch (err) {
@@ -531,14 +544,16 @@ document.addEventListener('DOMContentLoaded', init);
 
 async function updateProfile() {
   try {
-    const user = await apiFetch('/api/me', {}, true);
+    const user = await apiFetch('/api/me', {}, true);  // optional: mit Authorization
     loggedInUser = user;
-    await updateUIAfterLogin(user);
+    biometricEnabled = user.biometricEnabled || false;
+    updateUIAfterLogin(user); // ⬅️ hier Übergabe fixen!
   } catch (err) {
     console.error('Profil konnte nicht geladen werden:', err);
     handleLogoutCleanup();
   }
 }
+
 
 
 
@@ -861,8 +876,7 @@ async function updateUIAfterLogin(user) {
   userNameSpan.textContent = user.name || user.email || 'Benutzer';
 
   // UI-Sektionen steuern
-  showSection(login-section);
-  showSection(time-tracking-section);
+  showSection(timeTrackingSection);  // Richtig: Variable verwenden
   loginSection.classList.add('hidden');
   registerSection.classList.add('hidden');
   qrSection.classList.add('hidden');
