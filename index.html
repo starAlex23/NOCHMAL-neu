@@ -264,34 +264,36 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Zeitstatus prüfen
-  (async () => {
-    const token = sessionStorage.getItem('accessToken');
-    if (!token) {
-      console.warn('⛔ Kein Token gefunden, Statusprüfung übersprungen.');
+(async () => {
+  const token = sessionStorage.getItem('accessToken');
+  if (!token) {
+    console.warn('⛔ Kein Token gefunden, Statusprüfung übersprungen.');
+    return;
+  }
+
+  try {
+    const status = await getLetzterStatus();
+    const clockInBtn = document.getElementById('clock-in-btn');
+    const clockOutBtn = document.getElementById('clock-out-btn');
+
+    if (!clockInBtn || !clockOutBtn) {
+      console.warn('⚠️ Clock-In oder Clock-Out Button nicht gefunden.');
       return;
     }
 
-    try {
-      const status = await getLetzterStatus();
-      const clockInBtn = document.getElementById('clockInBtn');
-      const clockOutBtn = document.getElementById('clockOutBtn');
-
-      if (!clockInBtn || !clockOutBtn) {
-        console.warn('⚠️ Clock-In oder Clock-Out Button nicht gefunden.');
-        return;
-      }
-
-      if (status?.aktion === 'start') {
-        clockInBtn.disabled = true;
-        clockOutBtn.disabled = false;
-      } else {
-        clockInBtn.disabled = false;
-        clockOutBtn.disabled = true;
-      }
-    } catch (err) {
-      console.error('❌ Fehler beim Abrufen des Status:', err);
+    // Status prüfen basierend auf "eingestempelt" Feld vom Backend
+    if (status?.eingestempelt === true) {
+      clockInBtn.disabled = true;
+      clockOutBtn.disabled = false;
+    } else {
+      clockInBtn.disabled = false;
+      clockOutBtn.disabled = true;
     }
-  })(); // Async IIFE schließen
+  } catch (err) {
+    console.error('❌ Fehler beim Abrufen des Status:', err);
+  }
+})();
+
 
 }); // <-- Hier fehlte die schließende Klammer und das Semikolon
 
@@ -847,17 +849,7 @@ function toBase64Url(buffer) {
 
 
   
-async function checkUserStatus() {
-  try {
-    const result = await apiFetch('/api/status'); // ⬅️ csrf nicht nötig, ist GET
-    const eingestempelt = result.ist_eingestempelt;
 
-    clockInBtn.disabled = eingestempelt;
-    clockOutBtn.disabled = !eingestempelt;
-  } catch (err) {
-    console.warn('⚠️ Konnte Status nicht abrufen:', err);
-  }
-}
 
 
 // === UI Aktualisierung nach Login ===
@@ -892,9 +884,11 @@ async function updateUIAfterLogin(user) {
 
 async function updateTimeButtons() {
   try {
-    const data = await apiFetch('/api/status', {}, true);
-    clockInBtn.disabled = data.status === 'running';     // Nur aktiv, wenn NICHT eingestempelt
-    clockOutBtn.disabled = data.status !== 'running';    // Nur aktiv, wenn eingestempelt
+    const result = await apiFetch('/api/status'); // keine Auth-Header nötig
+    const eingestempelt = result.ist_eingestempelt;
+
+    clockInBtn.disabled = eingestempelt;
+    clockOutBtn.disabled = !eingestempelt;
   } catch (err) {
     console.warn('Status konnte nicht geladen werden:', err);
     clockInBtn.disabled = true;
@@ -1058,8 +1052,8 @@ clockOutBtn.addEventListener('click', async () => {
   }
 });
 
-  
-//schon eingestempelt?
+
+  //schon eingestempelt?
 async function getLetzterStatus() {
   try {
     const data = await apiFetch('/api/zeit/letzter-status', {
@@ -1076,8 +1070,7 @@ async function getLetzterStatus() {
     return null;
   }
 }
-
-
+  
 
 // === Initial Setup ===
 async function init() {
@@ -1095,9 +1088,10 @@ async function init() {
     showSection(timeTrackingSection);
     // Status Buttons setzen
     try {
-      const status = await getLetzterStatus();
-      clockInBtn.disabled = status?.aktion === 'start';
-      clockOutBtn.disabled = !(status?.aktion === 'start');
+     const status = await getLetzterStatus();
+clockInBtn.disabled = status?.eingestempelt === true;
+clockOutBtn.disabled = status?.eingestempelt !== true;
+
     } catch (err) {
       console.warn('⚠️ Status konnte nicht geladen werden:', err.message);
     }
