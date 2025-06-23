@@ -888,7 +888,8 @@ async function updateUIAfterLogin(user) {
   logoutBtn.classList.remove('hidden');
 
   // Einstempel-Status prüfen und Buttons setzen
-  await updateTimeButtons();
+  updateUIAfterLogin(res.user); // ← so ist `user` gesetzt
+
 }
 
 
