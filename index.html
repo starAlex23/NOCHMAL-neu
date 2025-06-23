@@ -896,7 +896,7 @@ async function updateUIAfterLogin(user) {
 
 async function updateTimeButtons() {
   try {
-    const data = await apiFetch('/api/zeit/status', {}, true);
+    const data = await apiFetch('/api/status', {}, true);
     // Erwartet: { status: 'running' | 'stopped' }
     clockInBtn.disabled = data.status === 'running';
     clockOutBtn.disabled = data.status !== 'running';
