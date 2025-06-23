@@ -184,27 +184,24 @@ button:disabled {
   </section>
 
   <!-- 2. Login -->
-<section id="login-section" class="card hidden" aria-label="Login Formular">
-  <h2>Login</h2>
-  <form id="login-form" novalidate>
-    <label for="login-email">E-Mail</label>
-    <input type="email" id="login-email" name="email" required autocomplete="email" />
+  <section id="login-section" class="card hidden" aria-label="Login Formular">
+    <h2>Login</h2>
+    <form id="login-form" novalidate>
+      <label for="login-email">E-Mail</label>
+      <input type="email" id="login-email" name="email" required autocomplete="email" />
 
-    <label for="login-password">Passwort</label>
-<input type="password" id="login-password" name="passwort" required autocomplete="current-password" />
+      <label for="login-password">Passwort</label>
+      <input type="password" id="login-password" name="passwort" required autocomplete="current-password" />
 
+      <button type="submit">Einloggen</button>
+    </form>
 
-   
+    <div class="link">
+      Noch keinen Account? <button id="show-register-btn" type="button">Jetzt registrieren</button>
+    </div>
 
-    <button type="submit">Einloggen</button>
-  </form>
-  <div class="link">
-    Noch keinen Account? <button id="show-register-btn" type="button">Jetzt registrieren</button>
-  </div>
-  
-  <p id="login-error" class="error-message"></p>
-</section>
-
+    <p id="login-error" class="error-message"></p>
+  </section>
 
   <!-- 3. Registrierung -->
   <section id="register-section" class="card hidden" aria-label="Registrierung Formular">
@@ -212,7 +209,7 @@ button:disabled {
     <form id="register-form" novalidate>
       <label for="register-firstname">Vorname</label>
       <input type="text" id="register-firstname" name="firstname" required autocomplete="given-name" />
-      
+
       <label for="register-lastname">Nachname</label>
       <input type="text" id="register-lastname" name="lastname" required autocomplete="family-name" />
 
@@ -224,36 +221,38 @@ button:disabled {
 
       <button type="submit">Registrieren</button>
     </form>
+
     <div class="link">
       Schon einen Account? <button id="show-login-btn" type="button">Jetzt einloggen</button>
     </div>
 
-<div id="logout-message"></div>
-
-    
-   
+    <div id="logout-message"></div>
   </section>
 
   <!-- 4. Zeiterfassung -->
   <section id="time-tracking-section" class="card hidden" aria-label="Zeiterfassung">
-    <h2>Willkommen, <span id="user-name"></span></h2>
-    
+    <h2>Willkommen, <span id="user-name">Benutzer</span></h2>
+
     <button id="clock-in-btn" type="button">Einstempeln (Start)</button>
     <button id="clock-out-btn" type="button" disabled>Ausstempeln (Stop)</button>
 
     <p id="time-message"></p>
 
-    <button id="logout-btn" type="button" style="margin-top:2rem; background:#e74c3c; color:#fff;">Ausloggen</button>
+    <button id="logout-btn" type="button" style="margin-top:2rem; background:#e74c3c; color:#fff;">
+      Ausloggen
+    </button>
   </section>
 
 </main>
 
+<!-- Theme-Schalter -->
 <button id="theme-switcher" aria-label="Theme wechseln" type="button">🌙</button>
 
+<!-- QR-Scanner -->
 <script src="https://unpkg.com/html5-qrcode"></script>
 
 <script>
-document.addEventListener('DOMContentLoaded', () => {
+  document.addEventListener('DOMContentLoaded', () => {
   // WebAuthn-Zuweisung
 
 
@@ -301,7 +300,7 @@ const registerForm = document.getElementById('register-form');
 const showRegisterBtn = document.getElementById('show-register-btn');
 const showLoginBtn = document.getElementById('show-login-btn');
 const logoutBtn = document.getElementById('logout-btn');
-const activateBiometricBtn = document.getElementById('activate-biometric');
+
 const themeSwitcher = document.getElementById('theme-switcher');
 const userNameSpan = document.getElementById('user-name');
 const clockInBtn = document.getElementById('clock-in-btn');
@@ -666,147 +665,11 @@ async function onQrCodeDetected(qrCodeText) {
 
 
 
-// === Auth ===
-// WebAuthn Registrierung starten
-async function startWebAuthnRegistration() {
-  try {
-    const resp = await apiFetch('/api/webauthn/register-request', {
-      method: 'POST',
-    });
-    if (!resp.ok) {
-      const err = await resp.json().catch(() => ({}));
-      throw new Error(err.error || 'WebAuthn Registrierung Anfrage fehlgeschlagen');
-    }
-    const options = await resp.json();
-
-if (!window.PublicKeyCredential) {
-  alert('WebAuthn wird von deinem Gerät nicht unterstützt.');
-  return;
-}
-    
-    // Challenge und IDs in Uint8Array konvertieren
-    options.challenge = base64urlToUint8Array(options.challenge);
-    options.user.id = base64urlToUint8Array(options.user.id);
-    if (options.excludeCredentials) {
-      options.excludeCredentials = options.excludeCredentials.map(cred => ({
-        ...cred,
-        id: base64urlToUint8Array(cred.id),
-      }));
-    }
-
-    const credential = await navigator.credentials.create({ publicKey: options });
-
-    const credentialResponse = {
-      id: credential.id,
-      rawId: toBase64Url(credential.rawId),
-      type: credential.type,
-      response: {
-        attestationObject: toBase64Url(credential.response.attestationObject),
-        clientDataJSON: toBase64Url(credential.response.clientDataJSON),
-      },
-    };
-
-    const verifyResp = await apiFetch('/api/webauthn/register-response', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(credentialResponse),
-    });
-
-    if (!verifyResp.ok) {
-      const err = await verifyResp.json().catch(() => ({}));
-      throw new Error(err.error || 'WebAuthn Registrierung fehlgeschlagen');
-    }
-
-    return true;
-  } catch (err) {
-    console.error(err);
-    throw err;
-  }
-}
 
 
 
-// WebAuthn Login Anfrage + Antwort
-async function loginViaWebAuthn(email) {
-  try {
-    const res = await apiFetch('/api/webauthn/login-request', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email }),
-    });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.error || 'WebAuthn Login-Anfrage fehlgeschlagen');
-    }
-    const options = await res.json();
-
-    options.challenge = base64urlToUint8Array(options.challenge);
-    if (options.allowCredentials) {
-      options.allowCredentials = options.allowCredentials.map(cred => ({
-        ...cred,
-        id: base64urlToUint8Array(cred.id),
-      }));
-    }
-
-    const assertion = await navigator.credentials.get({ publicKey: options });
-
-    const credential = {
-      id: assertion.id,
-      rawId: toBase64Url(assertion.rawId),
-      type: assertion.type,
-      response: {
-        authenticatorData: toBase64Url(assertion.response.authenticatorData),
-        clientDataJSON: toBase64Url(assertion.response.clientDataJSON),
-        signature: toBase64Url(assertion.response.signature),
-        userHandle: assertion.response.userHandle ? toBase64Url(assertion.response.userHandle) : null,
-      },
-    };
-
-    const verifyResp = await apiFetch('/api/webauthn/login-response', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ credential }),
-    });
-    if (!verifyResp.ok) {
-      const err = await verifyResp.json().catch(() => ({}));
-      throw new Error(err.error || 'WebAuthn Login fehlgeschlagen');
-    }
-
-    const userRes = await apiFetch('/api/me');
-    if (!userRes.ok) throw new Error('Fehler beim Abrufen der Benutzerdaten nach WebAuthn Login');
-    return userRes.json();
-  } catch (err) {
-    console.error(err);
-    throw err;
-  }
-}
 
 
-async function checkBiometricStatus() {
-  try {
-   const response = await fetch(API_BASE + '/api/user/biometric-status', {
-      method: 'GET',
-      credentials: 'include', // sendet Cookies mit
-      headers: {
-        'Accept': 'application/json',
-        // Falls du Token im Header brauchst:
-        // 'Authorization': 'Bearer ' + deinToken,
-        // 'X-CSRF-Token': deinCSRFToken // falls CSRF-Schutz aktiv
-      }
-    });
-
-    if (!response.ok) {
-      throw new Error(`Fehler: ${response.status}`);
-    }
-
-    const data = await response.json();
-    console.log('WebAuthn aktiv?', data.biometricEnabled);
-    return data.biometricEnabled; // true oder false
-  } catch (err) {
-    console.error('Fehler beim Abrufen des Biometrie-Status:', err);
-    return false;
-  }
-}
 
 
  function showPopupMessage(msg, duration = 3000) {
