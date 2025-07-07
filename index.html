@@ -295,24 +295,72 @@
     loadZeiten();
   }
 
+  //Zeiten durchsuchen
 function filterZeiten(suchbegriff, alleZeiten) {
-  const term = suchbegriff.toLowerCase().trim();
-  if (!term) return alleZeiten;
+  const begriffe = normalize(suchbegriff).split(/\s+/).filter(Boolean);
+  if (begriffe.length === 0) return alleZeiten;
 
   return alleZeiten.filter(z => {
-    const name = `${z.vorname} ${z.nachname}`.toLowerCase();
-    const zeit = new Date(z.zeit);
-    const datum = zeit.toISOString().split('T')[0]; // z.B. 2025-07-07
-    const uhrzeit = zeit.toTimeString().slice(0, 5); // z.B. 13:05
+    const name = normalize(`${z.vorname} ${z.nachname}`);
+    const zeitObj = new Date(z.zeit);
+    const datum = zeitObj.toISOString().split('T')[0];
+    const uhrzeit = zeitObj.toTimeString().slice(0, 5);
 
-    return (
-      name.includes(term) ||
-      datum.includes(term) ||
-      uhrzeit.includes(term)
-    );
+    return begriffe.every(term => {
+      const suchDatum = parseDatumSuche(term);
+      const suchUhrzeit = parseUhrzeitSuche(term);
+
+      return (
+        fuzzyMatch(name, term) ||
+        (suchDatum && datum.includes(suchDatum)) ||
+        (suchUhrzeit && uhrzeit.startsWith(suchUhrzeit))
+      );
+    });
   });
 }
 
+
+ function normalize(str) {
+  return str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, '');
+}
+
+function parseDatumSuche(term) {
+  // Versuche verschiedene Formate
+  const clean = term.replace(/[\.,\-]/g, '/').trim();
+  const date = new Date(clean);
+  return isNaN(date.getTime()) ? null : date.toISOString().split('T')[0];
+}
+
+function parseUhrzeitSuche(term) {
+  const match = term.match(/(\d{1,2})[:\.\-]?(\d{0,2})/);
+  if (!match) return null;
+  const hh = match[1].padStart(2, '0');
+  const mm = (match[2] || '00').padStart(2, '0');
+  return `${hh}:${mm}`;
+}
+
+function fuzzyMatch(text, term) {
+  text = normalize(text);
+  term = normalize(term);
+  return text.includes(term) || levenshteinDistance(text, term) <= 2;
+}
+
+function levenshteinDistance(a, b) {
+  const dp = Array.from({ length: a.length + 1 }, () => Array(b.length + 1).fill(0));
+  for (let i = 0; i <= a.length; i++) dp[i][0] = i;
+  for (let j = 0; j <= b.length; j++) dp[0][j] = j;
+  for (let i = 1; i <= a.length; i++) {
+    for (let j = 1; j <= b.length; j++) {
+      dp[i][j] = Math.min(
+        dp[i - 1][j] + 1,
+        dp[i][j - 1] + 1,
+        dp[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)
+      );
+    }
+  }
+  return dp[a.length][b.length];
+}
+ 
   
   async function stempelLöschen(id) {
     const res = await fetch(`${backendUrl}/api/zeit/${id}`, {
