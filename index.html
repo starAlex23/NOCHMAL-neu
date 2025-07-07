@@ -82,11 +82,15 @@
 <div id="dashboard" style="display:none;">
   <h1>Admin Dashboard</h1>
 
+
+<section>
+  <h3>Suche (Name, Datum oder Uhrzeit)</h3>
+  <input type="text" id="zeitensuche" placeholder="z. B. Müller 07.07.2025 13:00" />
+</section>
+
   <section id="zeiten-section">
     <h2>Zeiteinträge</h2>
     <table id="zeiten-table">
-       <h2>Zeiteinträge</h2>
-  <input type="text" id="zeitensuche" placeholder="Suche nach Name, Datum oder Uhrzeit..." />
       <thead>
         <tr>
           <th>ID</th>
@@ -296,6 +300,19 @@
   }
 
   //Zeiten durchsuchen
+let alleZeitenCache = [];
+
+document.getElementById('zeitensuche').addEventListener('input', async (e) => {
+  const suchbegriff = e.target.value;
+
+  if (alleZeitenCache.length === 0) {
+    alleZeitenCache = await fetchZeiten(); // einmalig laden
+  }
+
+  const gefiltert = filterZeiten(suchbegriff, alleZeitenCache);
+  renderZeiten(gefiltert);
+});
+
 function filterZeiten(suchbegriff, alleZeiten) {
   const begriffe = normalize(suchbegriff).split(/\s+/).filter(Boolean);
   if (begriffe.length === 0) return alleZeiten;
@@ -303,36 +320,44 @@ function filterZeiten(suchbegriff, alleZeiten) {
   return alleZeiten.filter(z => {
     const name = normalize(`${z.vorname} ${z.nachname}`);
     const zeitObj = new Date(z.zeit);
-    const datum = zeitObj.toISOString().split('T')[0];
-    const uhrzeit = zeitObj.toTimeString().slice(0, 5);
+    const datum = zeitObj.toISOString().split('T')[0]; // YYYY-MM-DD
+    const uhrzeit = zeitObj.toTimeString().slice(0, 5); // "HH:MM"
 
     return begriffe.every(term => {
       const suchDatum = parseDatumSuche(term);
       const suchUhrzeit = parseUhrzeitSuche(term);
 
       return (
-        fuzzyMatch(name, term) ||
-        (suchDatum && datum.includes(suchDatum)) ||
-        (suchUhrzeit && uhrzeit.startsWith(suchUhrzeit))
+        fuzzyMatch(name, term) || // unscharfer Namensvergleich
+        (suchDatum && datum.includes(suchDatum)) || // z.B. "2025-07-07"
+        (suchUhrzeit && uhrzeit.startsWith(suchUhrzeit)) // z.B. "13:4" → "13:40"
       );
     });
   });
 }
 
-
- function normalize(str) {
-  return str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, '');
+function normalize(str) {
+  return str.toLowerCase()
+    .normalize("NFD") // z.B. ä → a + ¨
+    .replace(/[\u0300-\u036f]/g, '') // Entferne Akzente
+    .replace(/[^a-z0-9:]/gi, ''); // Nur Buchstaben/Zahlen/:
 }
 
 function parseDatumSuche(term) {
-  // Versuche verschiedene Formate
-  const clean = term.replace(/[\.,\-]/g, '/').trim();
+  const clean = term
+    .replace(/[\.\-]/g, '/') // z.B. 07.07.25 → 07/07/25
+    .replace(/(\d{1,2})\/(\d{1,2})\/?(\d{2,4})?/, (_, d, m, y) => {
+      y = y || new Date().getFullYear();
+      y = y.length === 2 ? '20' + y : y;
+      return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+    });
+
   const date = new Date(clean);
   return isNaN(date.getTime()) ? null : date.toISOString().split('T')[0];
 }
 
 function parseUhrzeitSuche(term) {
-  const match = term.match(/(\d{1,2})[:\.\-]?(\d{0,2})/);
+  const match = term.match(/(\d{1,2})[:\.\-]?(\d{0,2})?/);
   if (!match) return null;
   const hh = match[1].padStart(2, '0');
   const mm = (match[2] || '00').padStart(2, '0');
@@ -440,7 +465,8 @@ function renderUsers(users) {
     });
   });
 }
-  
+
+ 
  let globalZeiten = [];
  async function loadZeiten() {
   globalZeiten = await fetchZeiten();
