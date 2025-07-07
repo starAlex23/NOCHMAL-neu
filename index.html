@@ -300,74 +300,64 @@
   }
 
   //Zeiten durchsuchen
-let alleZeitenCache = [];
-
-document.getElementById('zeitensuche').addEventListener('input', async (e) => {
-  const suchbegriff = e.target.value;
-
-  if (alleZeitenCache.length === 0) {
-    alleZeitenCache = await fetchZeiten(); // einmalig laden
-  }
-
-  const gefiltert = filterZeiten(suchbegriff, alleZeitenCache);
-  renderZeiten(gefiltert);
-});
-
 function filterZeiten(suchbegriff, alleZeiten) {
-  const begriffe = normalize(suchbegriff).split(/\s+/).filter(Boolean);
+  const begriffe = suchbegriff.trim().toLowerCase().split(/\s+/).filter(Boolean);
   if (begriffe.length === 0) return alleZeiten;
 
   return alleZeiten.filter(z => {
-    const name = normalize(`${z.vorname} ${z.nachname}`);
-    const zeitObj = new Date(z.zeit);
-    const datum = zeitObj.toISOString().split('T')[0]; // YYYY-MM-DD
-    const uhrzeit = zeitObj.toTimeString().slice(0, 5); // "HH:MM"
+    const name = `${z.vorname} ${z.nachname}`.toLowerCase();
+    const zeit = new Date(z.zeit);
+    const datum = zeit.toISOString().split('T')[0]; // YYYY-MM-DD
+    const uhrzeit = zeit.toTimeString().slice(0, 5); // HH:MM
 
     return begriffe.every(term => {
-      const suchDatum = parseDatumSuche(term);
-      const suchUhrzeit = parseUhrzeitSuche(term);
+      const norm = term.replace(/[\.,\-]/g, ':');
 
-      return (
-        fuzzyMatch(name, term) || // unscharfer Namensvergleich
-        (suchDatum && datum.includes(suchDatum)) || // z.B. "2025-07-07"
-        (suchUhrzeit && uhrzeit.startsWith(suchUhrzeit)) // z.B. "13:4" → "13:40"
-      );
+      // Uhrzeit-Match z. B. 1345 → 13:45, 13.45 → 13:45
+      const uhrzeitMatch = norm.match(/^(\d{1,2})[:]?(\d{2})$/);
+      if (uhrzeitMatch) {
+        const hh = uhrzeitMatch[1].padStart(2, '0');
+        const mm = uhrzeitMatch[2].padStart(2, '0');
+        return uhrzeit.startsWith(`${hh}:${mm}`);
+      }
+
+      // Datum-Match: erkenne viele Formate wie 07.07.2025, 7-7-25, 2025-07-07
+      const dateParsed = parseLooseDate(norm);
+      if (dateParsed) {
+        return datum === dateParsed;
+      }
+
+      // Name fuzzy
+      return fuzzyMatch(name, term);
     });
   });
 }
 
-function normalize(str) {
-  return str.toLowerCase()
-    .normalize("NFD") // z.B. ä → a + ¨
-    .replace(/[\u0300-\u036f]/g, '') // Entferne Akzente
-    .replace(/[^a-z0-9:]/gi, ''); // Nur Buchstaben/Zahlen/:
-}
+function parseLooseDate(input) {
+  const cleaned = input.replace(/[\.,\-]/g, '/');
+  const parts = cleaned.split('/');
+  if (parts.length < 2) return null;
 
-function parseDatumSuche(term) {
-  const clean = term
-    .replace(/[\.\-]/g, '/') // z.B. 07.07.25 → 07/07/25
-    .replace(/(\d{1,2})\/(\d{1,2})\/?(\d{2,4})?/, (_, d, m, y) => {
-      y = y || new Date().getFullYear();
-      y = y.length === 2 ? '20' + y : y;
-      return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
-    });
+  let [d, m, y] = parts;
+  if (!y) y = new Date().getFullYear();
+  if (y.length === 2) y = '20' + y;
 
-  const date = new Date(clean);
-  return isNaN(date.getTime()) ? null : date.toISOString().split('T')[0];
-}
+  d = d.padStart(2, '0');
+  m = m.padStart(2, '0');
 
-function parseUhrzeitSuche(term) {
-  const match = term.match(/(\d{1,2})[:\.\-]?(\d{0,2})?/);
-  if (!match) return null;
-  const hh = match[1].padStart(2, '0');
-  const mm = (match[2] || '00').padStart(2, '0');
-  return `${hh}:${mm}`;
+  const iso = `${y}-${m}-${d}`;
+  const parsed = new Date(iso);
+  return isNaN(parsed.getTime()) ? null : iso;
 }
 
 function fuzzyMatch(text, term) {
   text = normalize(text);
   term = normalize(term);
   return text.includes(term) || levenshteinDistance(text, term) <= 2;
+}
+
+function normalize(str) {
+  return str.normalize("NFD").replace(/[\u0300-\u036f]/g, '').toLowerCase();
 }
 
 function levenshteinDistance(a, b) {
@@ -385,6 +375,7 @@ function levenshteinDistance(a, b) {
   }
   return dp[a.length][b.length];
 }
+
  
   
   async function stempelLöschen(id) {
@@ -473,10 +464,15 @@ function renderUsers(users) {
   renderZeiten(globalZeiten);
 }
 
-document.getElementById('zeitensuche').addEventListener('input', (e) => {
-  const filtered = filterZeiten(e.target.value, globalZeiten);
-  renderZeiten(filtered);
+document.getElementById('zeitensuche').addEventListener('input', async (e) => {
+  const suchbegriff = e.target.value;
+  if (!window.alleZeitenCache) {
+    window.alleZeitenCache = await fetchZeiten();
+  }
+  const gefiltert = filterZeiten(suchbegriff, window.alleZeitenCache);
+  renderZeiten(gefiltert);
 });
+
 
   async function loadUsers() {
     const users = await fetchUsers();
