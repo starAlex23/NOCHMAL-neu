@@ -85,6 +85,8 @@
   <section id="zeiten-section">
     <h2>Zeiteinträge</h2>
     <table id="zeiten-table">
+       <h2>Zeiteinträge</h2>
+  <input type="text" id="zeitensuche" placeholder="Suche nach Name, Datum oder Uhrzeit..." />
       <thead>
         <tr>
           <th>ID</th>
@@ -293,6 +295,25 @@
     loadZeiten();
   }
 
+function filterZeiten(suchbegriff, alleZeiten) {
+  const term = suchbegriff.toLowerCase().trim();
+  if (!term) return alleZeiten;
+
+  return alleZeiten.filter(z => {
+    const name = `${z.vorname} ${z.nachname}`.toLowerCase();
+    const zeit = new Date(z.zeit);
+    const datum = zeit.toISOString().split('T')[0]; // z.B. 2025-07-07
+    const uhrzeit = zeit.toTimeString().slice(0, 5); // z.B. 13:05
+
+    return (
+      name.includes(term) ||
+      datum.includes(term) ||
+      uhrzeit.includes(term)
+    );
+  });
+}
+
+  
   async function stempelLöschen(id) {
     const res = await fetch(`${backendUrl}/api/zeit/${id}`, {
       method: 'DELETE',
@@ -371,12 +392,17 @@ function renderUsers(users) {
     });
   });
 }
+  
+ let globalZeiten = [];
+ async function loadZeiten() {
+  globalZeiten = await fetchZeiten();
+  renderZeiten(globalZeiten);
+}
 
-
-  async function loadZeiten() {
-    const zeiten = await fetchZeiten();
-    renderZeiten(zeiten);
-  }
+document.getElementById('zeitensuche').addEventListener('input', (e) => {
+  const filtered = filterZeiten(e.target.value, globalZeiten);
+  renderZeiten(filtered);
+});
 
   async function loadUsers() {
     const users = await fetchUsers();
