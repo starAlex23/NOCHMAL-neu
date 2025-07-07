@@ -113,22 +113,23 @@
     </form>
   </section>
 
-  <section id="users-section">
-    <h2>Benutzerverwaltung</h2>
-    <table id="users-table">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Name</th>
-          <th>Email</th>
-          <th>Rolle</th>
-          <th>Aktion</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-    <p class="error" id="users-error"></p>
-  </section>
+ <section id="users-section">
+  <h2>Benutzerverwaltung</h2>
+  <table id="users-table">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Rolle</th>
+        <th>Aktion</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+  <p class="error" id="users-error"></p>
+</section>
+
 </div>
 
 <script>
@@ -325,36 +326,52 @@
     }
   }
 
-  function renderUsers(users) {
-    const tbody = document.querySelector('#users-table tbody');
-    tbody.innerHTML = '';
-    for (const u of users) {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${u.id}</td>
-        <td>${u.vorname} ${u.nachname}</td>
-        <td>${u.email}</td>
-        <td>
-          <select data-userid="${u.id}">
-            <option value="user" ${u.rolle === 'user' ? 'selected' : ''}>User</option>
-            <option value="vorarbeiter" ${u.rolle === 'vorarbeiter' ? 'selected' : ''}>Vorarbeiter</option>
-            <option value="admin" ${u.rolle === 'admin' ? 'selected' : ''}>Admin</option>
-          </select>
-        </td>
-        <td><button data-userid="${u.id}">Rolle ändern</button></td>
-      `;
-      tbody.appendChild(tr);
-    }
-    tbody.querySelectorAll('button').forEach(button => {
-      button.addEventListener('click', () => {
-        const userId = parseInt(button.getAttribute('data-userid'), 10);
-        const select = tbody.querySelector(`select[data-userid="${userId}"]`);
-        if (select) {
-          setRole(userId, select.value);
-        }
-      });
-    });
+  
+function renderUsers(users) {
+  const tbody = document.querySelector('#users-table tbody');
+  tbody.innerHTML = '';
+
+  for (const u of users) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${u.id}</td>
+      <td>${u.vorname} ${u.nachname}</td>
+      <td>${u.email}</td>
+      <td>
+        <select data-userid="${u.id}">
+          <option value="user" ${u.rolle === 'user' ? 'selected' : ''}>User</option>
+          <option value="vorarbeiter" ${u.rolle === 'vorarbeiter' ? 'selected' : ''}>Vorarbeiter</option>
+          <option value="admin" ${u.rolle === 'admin' ? 'selected' : ''}>Admin</option>
+        </select>
+      </td>
+      <td>
+        <button class="role-btn" data-userid="${u.id}">Rolle ändern</button>
+        <button class="delete-btn" data-userid="${u.id}">Löschen</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
   }
+
+  // Event-Handler: Rolle ändern
+  tbody.querySelectorAll('.role-btn').forEach(button => {
+    button.addEventListener('click', () => {
+      const userId = parseInt(button.getAttribute('data-userid'), 10);
+      const select = tbody.querySelector(`select[data-userid="${userId}"]`);
+      if (select) {
+        setRole(userId, select.value);
+      }
+    });
+  });
+
+  // Event-Handler: Benutzer löschen
+  tbody.querySelectorAll('.delete-btn').forEach(button => {
+    button.addEventListener('click', () => {
+      const userId = parseInt(button.getAttribute('data-userid'), 10);
+      deleteUser(userId);
+    });
+  });
+}
+
 
   async function loadZeiten() {
     const zeiten = await fetchZeiten();
