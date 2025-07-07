@@ -311,24 +311,14 @@ function filterZeiten(suchbegriff, alleZeiten) {
     const uhrzeit = zeit.toTimeString().slice(0, 5); // HH:MM
 
     return begriffe.every(term => {
-      const norm = term.replace(/[\.,\-]/g, ':');
+      const suchDatum = parseLooseDate(term);
+      const suchUhr = parseUhrzeitSuche(term);
 
-      // Uhrzeit-Match z. B. 1345 → 13:45, 13.45 → 13:45
-      const uhrzeitMatch = norm.match(/^(\d{1,2})[:]?(\d{2})$/);
-      if (uhrzeitMatch) {
-        const hh = uhrzeitMatch[1].padStart(2, '0');
-        const mm = uhrzeitMatch[2].padStart(2, '0');
-        return uhrzeit.startsWith(`${hh}:${mm}`);
-      }
-
-      // Datum-Match: erkenne viele Formate wie 07.07.2025, 7-7-25, 2025-07-07
-      const dateParsed = parseLooseDate(norm);
-      if (dateParsed) {
-        return datum === dateParsed;
-      }
-
-      // Name fuzzy
-      return fuzzyMatch(name, term);
+      return (
+        fuzzyMatch(name, term) ||
+        (suchDatum && datum === suchDatum) ||
+        (suchUhr && uhrzeit === suchUhr)
+      );
     });
   });
 }
@@ -376,7 +366,18 @@ function levenshteinDistance(a, b) {
   return dp[a.length][b.length];
 }
 
- 
+ function parseUhrzeitSuche(term) {
+  const cleaned = term.replace(/[^\d]/g, '');
+  if (cleaned.length < 3 || cleaned.length > 4) return null;
+
+  const hh = cleaned.length === 3 ? '0' + cleaned[0] : cleaned.slice(0, 2);
+  const mm = cleaned.slice(-2);
+
+  if (parseInt(hh, 10) > 23 || parseInt(mm, 10) > 59) return null;
+
+  return `${hh}:${mm}`;
+}
+
   
   async function stempelLöschen(id) {
     const res = await fetch(`${backendUrl}/api/zeit/${id}`, {
