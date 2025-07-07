@@ -392,25 +392,48 @@ function levenshteinDistance(a, b) {
     loadZeiten();
   }
 
-  function renderZeiten(zeiten) {
-    const tbody = document.querySelector('#zeiten-table tbody');
-    tbody.innerHTML = '';
-    for (const z of zeiten) {
-      const name = `${z.vorname} ${z.nachname}`;
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${z.id}</td>
-        <td>${name}</td>
-        <td><input value="${z.aktion}" data-id="${z.id}" class="edit-aktion"></td>
-        <td><input type="datetime-local" value="${new Date(z.zeit).toISOString().slice(0,16)}" data-id="${z.id}" class="edit-zeit"></td>
-        <td>
-          <button onclick="stempelAktualisieren(${z.id}, document.querySelector('.edit-aktion[data-id="${z.id}"]').value, document.querySelector('.edit-zeit[data-id="${z.id}"]').value)">Speichern</button>
-          <button onclick="stempelLöschen(${z.id})">Löschen</button>
-        </td>
-      `;
-      tbody.appendChild(tr);
-    }
+ function renderZeiten(zeiten) {
+  const tbody = document.querySelector('#zeiten-table tbody');
+  tbody.innerHTML = '';
+
+  for (const z of zeiten) {
+    const tr = document.createElement('tr');
+    const name = `${z.vorname} ${z.nachname}`;
+
+    // Zeitstempel in deutsche Ortszeit (inkl. Sommerzeit) umwandeln
+    const lokalZeit = new Date(z.zeit).toLocaleString('de-DE', {
+      timeZone: 'Europe/Berlin',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+
+    tr.innerHTML = `
+      <td>${z.id}</td>
+      <td>${name}</td>
+      <td>${z.aktion}</td>
+      <td>${lokalZeit}</td>
+      <td>
+        <button data-zeitid="${z.id}" class="delete-button">Löschen</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
   }
+
+  // EventListener für Löschen-Buttons (falls du das nutzt)
+  document.querySelectorAll('.delete-button').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.getAttribute('data-zeitid');
+      if (confirm('Zeitstempel wirklich löschen?')) {
+        await deleteZeit(id);
+        loadZeiten(); // neu laden nach Löschung
+      }
+    });
+  });
+}
+
 
   
 function renderUsers(users) {
