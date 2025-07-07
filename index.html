@@ -3,14 +3,17 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Admin Login</title>
+  <title>Admin Login & Dashboard</title>
   <style>
     body {
       font-family: sans-serif;
+      max-width: 900px;
+      margin: 2rem auto;
+      padding: 1rem;
       background: #f0f2f5;
-      padding: 2rem;
     }
-    .login-card {
+    /* Login Card */
+    #login-card {
       max-width: 400px;
       margin: 4rem auto;
       background: white;
@@ -23,24 +26,49 @@
       margin: 0.6rem 0;
       padding: 0.8rem;
       font-size: 1rem;
+      box-sizing: border-box;
     }
     .error {
       color: red;
       margin-top: 0.5rem;
     }
-  </style>
-<html lang="de">
-<head>
-  <meta charset="UTF-8" />
-  <title>Admin Login</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <style>
-    body { font-family: sans-serif; max-width: 400px; margin: 5rem auto; }
-    input, button { display: block; width: 100%; margin: 1rem 0; padding: 0.8rem; }
-    .error { color: red; }
+    /* Dashboard Styles */
+    #dashboard {
+      display: none;
+    }
+    h1, h2 {
+      margin-bottom: 0.5rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 2rem;
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    th, td {
+      padding: 0.5rem;
+      border: 1px solid #ccc;
+      text-align: left;
+    }
+    th {
+      background: #f7f7f7;
+    }
+    select, button {
+      padding: 0.3rem;
+      font-size: 0.9rem;
+    }
+    button {
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
+
+<!-- LOGIN -->
+<div id="login-card">
   <h2>Admin Login</h2>
   <form id="login-form">
     <input type="email" name="email" placeholder="E-Mail" required />
@@ -48,53 +76,216 @@
     <button type="submit">Login</button>
     <p class="error" id="error-msg"></p>
   </form>
+</div>
 
-  <script>
-    const backendUrl = 'https://backend-869x.onrender.com';
-    const form = document.getElementById('login-form');
-    const errorMsg = document.getElementById('error-msg');
+<!-- DASHBOARD -->
+<div id="dashboard">
+  <h1>Admin Dashboard</h1>
 
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      errorMsg.textContent = '';
+  <section id="zeiten-section">
+    <h2>Zeiteinträge</h2>
+    <table id="zeiten-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Name</th>
+          <th>Aktion</th>
+          <th>Zeit</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </section>
 
-      const formData = new FormData(form);
-      const payload = {
-        email: formData.get('email'),
-        passwort: formData.get('passwort')
-      };
+  <section id="users-section">
+    <h2>Benutzerverwaltung</h2>
+    <table id="users-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Rolle</th>
+          <th>Aktion</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <p class="error" id="users-error"></p>
+  </section>
+</div>
 
-      try {
-        const res = await fetch(`${backendUrl}/api/admin-login`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          credentials: 'include', // wichtig für Cookies!
-          body: JSON.stringify(payload)
-        });
+<script>
+  const backendUrl = 'https://backend-869x.onrender.com';
 
-        const data = await res.json();
+  const loginForm = document.getElementById('login-form');
+  const errorMsg = document.getElementById('error-msg');
+  const loginCard = document.getElementById('login-card');
+  const dashboard = document.getElementById('dashboard');
 
-        if (!res.ok) {
-          errorMsg.textContent = data.error || data.message || 'Fehler beim Login.';
-          return;
-        }
+  loginForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    errorMsg.textContent = '';
 
-        // CSRF Token für spätere Requests speichern
-        if (data.csrfToken) {
-          localStorage.setItem('csrfToken', data.csrfToken);
-        }
+    const formData = new FormData(loginForm);
+    const payload = {
+      email: formData.get('email'),
+      passwort: formData.get('passwort')
+    };
 
-        // Weiterleitung nach erfolgreichem Login
-        alert('Login erfolgreich!');
-        // window.location.href = "/admin-dashboard.html"; // später
+    try {
+      const res = await fetch(`${backendUrl}/api/admin-login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include', // wichtig für Cookies!
+        body: JSON.stringify(payload)
+      });
 
-      } catch (err) {
-        console.error(err);
-        errorMsg.textContent = 'Verbindungsfehler zum Backend.';
+      const data = await res.json();
+
+      if (!res.ok) {
+        errorMsg.textContent = data.error || data.message || 'Fehler beim Login.';
+        return;
       }
+
+      if (data.csrfToken) {
+        localStorage.setItem('csrfToken', data.csrfToken);
+      }
+
+      // Login erfolgreich, Login-Form verstecken und Dashboard zeigen
+      loginCard.style.display = 'none';
+      dashboard.style.display = 'block';
+
+      // Daten laden
+      loadZeiten();
+      loadUsers();
+
+    } catch (err) {
+      console.error(err);
+      errorMsg.textContent = 'Verbindungsfehler zum Backend.';
+    }
+  });
+
+  async function fetchCsrfToken() {
+    return localStorage.getItem('csrfToken') || '';
+  }
+
+  async function fetchZeiten() {
+    try {
+      const res = await fetch(`${backendUrl}/api/zeiten`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'X-CSRF-Token': await fetchCsrfToken()
+        }
+      });
+      if (!res.ok) throw new Error('Fehler beim Laden der Zeiten');
+      return await res.json();
+    } catch (e) {
+      console.error(e);
+      return [];
+    }
+  }
+
+  async function fetchUsers() {
+    try {
+      const res = await fetch(`${backendUrl}/api/users`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'X-CSRF-Token': await fetchCsrfToken()
+        }
+      });
+      if (!res.ok) throw new Error('Fehler beim Laden der Benutzer');
+      return await res.json();
+    } catch (e) {
+      console.error(e);
+      document.getElementById('users-error').textContent = e.message;
+      return [];
+    }
+  }
+
+  async function setRole(userId, rolle) {
+    try {
+      const csrfToken = await fetchCsrfToken();
+      const res = await fetch(`${backendUrl}/set-role`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': csrfToken
+        },
+        body: JSON.stringify({ userId, rolle })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || data.message || 'Fehler beim Rollenwechsel');
+      alert(data.message);
+      loadUsers();
+    } catch (e) {
+      alert('Fehler: ' + e.message);
+    }
+  }
+
+  function renderZeiten(zeiten) {
+    const tbody = document.querySelector('#zeiten-table tbody');
+    tbody.innerHTML = '';
+    for (const z of zeiten) {
+      const tr = document.createElement('tr');
+      const name = `${z.vorname} ${z.nachname}`;
+      tr.innerHTML = `
+        <td>${z.id}</td>
+        <td>${name}</td>
+        <td>${z.aktion}</td>
+        <td>${new Date(z.zeit).toLocaleString()}</td>
+      `;
+      tbody.appendChild(tr);
+    }
+  }
+
+  function renderUsers(users) {
+    const tbody = document.querySelector('#users-table tbody');
+    tbody.innerHTML = '';
+    for (const u of users) {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${u.id}</td>
+        <td>${u.vorname} ${u.nachname}</td>
+        <td>${u.email}</td>
+        <td>
+          <select data-userid="${u.id}">
+            <option value="user" ${u.rolle === 'user' ? 'selected' : ''}>User</option>
+            <option value="vorarbeiter" ${u.rolle === 'vorarbeiter' ? 'selected' : ''}>Vorarbeiter</option>
+            <option value="admin" ${u.rolle === 'admin' ? 'selected' : ''}>Admin</option>
+          </select>
+        </td>
+        <td><button data-userid="${u.id}">Rolle ändern</button></td>
+      `;
+      tbody.appendChild(tr);
+    }
+    tbody.querySelectorAll('button').forEach(button => {
+      button.addEventListener('click', () => {
+        const userId = parseInt(button.getAttribute('data-userid'), 10);
+        const select = tbody.querySelector(`select[data-userid="${userId}"]`);
+        if (select) {
+          setRole(userId, select.value);
+        }
+      });
     });
-  </script>
+  }
+
+  async function loadZeiten() {
+    const zeiten = await fetchZeiten();
+    renderZeiten(zeiten);
+  }
+
+  async function loadUsers() {
+    const users = await fetchUsers();
+    renderUsers(users);
+  }
+</script>
+
 </body>
 </html>
+
