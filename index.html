@@ -280,6 +280,21 @@
     renderZeiten(zeiten);
   }
 
+async function ladeZeitenGefiltert(start, ende) {
+  const res = await fetch(`${backendUrl}/api/zeiten/filter?start=${encodeURIComponent(start)}&ende=${encodeURIComponent(ende)}`, {
+    method: 'GET',
+    credentials: 'include',
+    headers: {
+      'X-CSRF-Token': localStorage.getItem('csrfToken')
+    }
+  });
+
+  const data = await res.json();
+  console.log(data); // Zeige gefilterte Zeitstempel
+}
+
+  
+  
   async function loadUsers() {
     const users = await fetchUsers();
     renderUsers(users);
