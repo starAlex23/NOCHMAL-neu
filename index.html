@@ -29,47 +29,70 @@
       margin-top: 0.5rem;
     }
   </style>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <title>Admin Login</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body { font-family: sans-serif; max-width: 400px; margin: 5rem auto; }
+    input, button { display: block; width: 100%; margin: 1rem 0; padding: 0.8rem; }
+    .error { color: red; }
+  </style>
 </head>
 <body>
-  <div class="login-card">
-    <h2>Admin Login</h2>
-    <input type="email" id="email" placeholder="E-Mail" required />
-    <input type="password" id="password" placeholder="Passwort" required />
-    <button id="login-btn">Login</button>
-    <div id="error" class="error"></div>
-  </div>
+  <h2>Admin Login</h2>
+  <form id="login-form">
+    <input type="email" name="email" placeholder="E-Mail" required />
+    <input type="password" name="passwort" placeholder="Passwort" required />
+    <button type="submit">Login</button>
+    <p class="error" id="error-msg"></p>
+  </form>
 
   <script>
-    document.getElementById('login-btn').addEventListener('click', async () => {
-      const email = document.getElementById('email').value;
-      const passwort = document.getElementById('password').value;
-      const errorDiv = document.getElementById('error');
-      errorDiv.textContent = '';
+    const backendUrl = 'https://backend-869x.onrender.com';
+    const form = document.getElementById('login-form');
+    const errorMsg = document.getElementById('error-msg');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errorMsg.textContent = '';
+
+      const formData = new FormData(form);
+      const payload = {
+        email: formData.get('email'),
+        passwort: formData.get('passwort')
+      };
 
       try {
-        const res = await fetch('https://dein-backend.de/api/admin-login', {
+        const res = await fetch(`${backendUrl}/api/admin-login`, {
           method: 'POST',
-          credentials: 'include',
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ email, passwort })
+          credentials: 'include', // wichtig für Cookies!
+          body: JSON.stringify(payload)
         });
 
         const data = await res.json();
 
         if (!res.ok) {
-          throw new Error(data.error || 'Login fehlgeschlagen');
+          errorMsg.textContent = data.error || data.message || 'Fehler beim Login.';
+          return;
         }
 
-        // CSRF-Token ggf. im localStorage speichern
+        // CSRF Token für spätere Requests speichern
         if (data.csrfToken) {
           localStorage.setItem('csrfToken', data.csrfToken);
         }
 
-        window.location.href = '/admin-dashboard.html';
+        // Weiterleitung nach erfolgreichem Login
+        alert('Login erfolgreich!');
+        // window.location.href = "/admin-dashboard.html"; // später
+
       } catch (err) {
-        errorDiv.textContent = err.message;
+        console.error(err);
+        errorMsg.textContent = 'Verbindungsfehler zum Backend.';
       }
     });
   </script>
