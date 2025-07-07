@@ -79,7 +79,7 @@
 </div>
 
 <!-- DASHBOARD -->
-<div id="dashboard">
+<div id="dashboard" style="display:none;">
   <h1>Admin Dashboard</h1>
 
   <section id="zeiten-section">
@@ -91,10 +91,26 @@
           <th>Name</th>
           <th>Aktion</th>
           <th>Zeit</th>
+          <th>Aktionen</th>
         </tr>
       </thead>
       <tbody></tbody>
     </table>
+  </section>
+
+  <section id="zeit-manual">
+    <h3>Manuellen Zeitstempel hinzufügen</h3>
+    <form id="manual-form">
+      <input type="number" id="manual-user" placeholder="User ID" required />
+      <select id="manual-aktion">
+        <option value="start">Start</option>
+        <option value="stop">Stop</option>
+        <option value="pause">Pause</option>
+        <option value="resume">Resume</option>
+      </select>
+      <input type="datetime-local" id="manual-zeit" required />
+      <button type="submit">Hinzufügen</button>
+    </form>
   </section>
 
   <section id="users-section">
@@ -139,7 +155,7 @@
         headers: {
           'Content-Type': 'application/json'
         },
-        credentials: 'include', // wichtig für Cookies!
+        credentials: 'include',
         body: JSON.stringify(payload)
       });
 
@@ -154,11 +170,9 @@
         localStorage.setItem('csrfToken', data.csrfToken);
       }
 
-      // Login erfolgreich, Login-Form verstecken und Dashboard zeigen
       loginCard.style.display = 'none';
       dashboard.style.display = 'block';
 
-      // Daten laden
       loadZeiten();
       loadUsers();
 
@@ -228,17 +242,64 @@
     }
   }
 
+  async function manuellenStempelHinzufügen(userId, aktion, zeit) {
+    const res = await fetch(`${backendUrl}/api/zeit/manuell`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': localStorage.getItem('csrfToken')
+      },
+      body: JSON.stringify({ user_id: userId, aktion, zeit })
+    });
+    const data = await res.json();
+    alert(data.message || 'Manueller Stempel gesetzt');
+    loadZeiten();
+  }
+
+  async function stempelAktualisieren(id, aktion, zeit) {
+    const res = await fetch(`${backendUrl}/api/zeit/${id}`, {
+      method: 'PUT',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': localStorage.getItem('csrfToken')
+      },
+      body: JSON.stringify({ aktion, zeit })
+    });
+    const data = await res.json();
+    alert(data.message || 'Zeitstempel aktualisiert');
+    loadZeiten();
+  }
+
+  async function stempelLöschen(id) {
+    const res = await fetch(`${backendUrl}/api/zeit/${id}`, {
+      method: 'DELETE',
+      credentials: 'include',
+      headers: {
+        'X-CSRF-Token': localStorage.getItem('csrfToken')
+      }
+    });
+    const data = await res.json();
+    alert(data.message || 'Zeitstempel gelöscht');
+    loadZeiten();
+  }
+
   function renderZeiten(zeiten) {
     const tbody = document.querySelector('#zeiten-table tbody');
     tbody.innerHTML = '';
     for (const z of zeiten) {
-      const tr = document.createElement('tr');
       const name = `${z.vorname} ${z.nachname}`;
+      const tr = document.createElement('tr');
       tr.innerHTML = `
         <td>${z.id}</td>
         <td>${name}</td>
-        <td>${z.aktion}</td>
-        <td>${new Date(z.zeit).toLocaleString()}</td>
+        <td><input value="${z.aktion}" data-id="${z.id}" class="edit-aktion"></td>
+        <td><input type="datetime-local" value="${new Date(z.zeit).toISOString().slice(0,16)}" data-id="${z.id}" class="edit-zeit"></td>
+        <td>
+          <button onclick="stempelAktualisieren(${z.id}, document.querySelector('.edit-aktion[data-id="${z.id}"]').value, document.querySelector('.edit-zeit[data-id="${z.id}"]').value)">Speichern</button>
+          <button onclick="stempelLöschen(${z.id})">Löschen</button>
+        </td>
       `;
       tbody.appendChild(tr);
     }
@@ -280,25 +341,18 @@
     renderZeiten(zeiten);
   }
 
-async function ladeZeitenGefiltert(start, ende) {
-  const res = await fetch(`${backendUrl}/api/zeiten/filter?start=${encodeURIComponent(start)}&ende=${encodeURIComponent(ende)}`, {
-    method: 'GET',
-    credentials: 'include',
-    headers: {
-      'X-CSRF-Token': localStorage.getItem('csrfToken')
-    }
-  });
-
-  const data = await res.json();
-  console.log(data); // Zeige gefilterte Zeitstempel
-}
-
-  
-  
   async function loadUsers() {
     const users = await fetchUsers();
     renderUsers(users);
   }
+
+  document.getElementById('manual-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const userId = parseInt(document.getElementById('manual-user').value, 10);
+    const aktion = document.getElementById('manual-aktion').value;
+    const zeit = document.getElementById('manual-zeit').value;
+    manuellenStempelHinzufügen(userId, aktion, zeit);
+  });
 </script>
 
 </body>
