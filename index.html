@@ -221,6 +221,26 @@
     }
   }
 
+ async function deleteUser(userId) {
+    if (!confirm('Bist du sicher, dass du diesen Nutzer löschen möchtest?')) return;
+    try {
+      const csrfToken = await fetchCsrfToken();
+      const res = await fetch(`${backendUrl}/api/user/${userId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+        headers: {
+          'X-CSRF-Token': csrfToken
+        }
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || data.message || 'Fehler beim Löschen');
+      alert(data.message);
+      loadUsers();
+    } catch (e) {
+      alert('Fehler: ' + e.message);
+    }
+  }
+  
   async function setRole(userId, rolle) {
     try {
       const csrfToken = await fetchCsrfToken();
