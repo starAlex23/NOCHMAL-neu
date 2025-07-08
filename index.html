@@ -201,116 +201,156 @@
     }
   });
 
-  async function fetchCsrfToken() {
-    return localStorage.getItem('csrfToken') || '';
+async function apiFetch(path, options = {}) {
+  const method = (options.method || 'GET').toUpperCase();
+  const writeMethods = ['POST', 'PUT', 'DELETE', 'PATCH'];
+
+  options = { ...options };
+  options.headers = options.headers || {};
+  options.credentials = 'include';
+
+  const csrfToken = localStorage.getItem('csrfToken');
+  if (csrfToken && writeMethods.includes(method)) {
+    options.headers['X-CSRF-Token'] = csrfToken;
   }
 
-  async function fetchZeiten() {
-    try {
-      const res = await fetch(`${backendUrl}/api/zeiten`, {
-        method: 'GET',
-        credentials: 'include',
-        headers: {
-          'X-CSRF-Token': await fetchCsrfToken()
-        }
-      });
-      if (!res.ok) throw new Error('Fehler beim Laden der Zeiten');
-      return await res.json();
-    } catch (e) {
-      console.error(e);
-      return [];
+  let response = await fetch(`${backendUrl}${path}`, options);
+
+  // Wenn AccessToken abgelaufen: automatisch refreshen
+  if (response.status === 401) {
+    const refreshed = await tryTokenRefresh();
+    if (refreshed) {
+      // Neuen CSRF-Token aus localStorage erneut anhängen
+      const newCsrfToken = localStorage.getItem('csrfToken');
+      if (newCsrfToken && writeMethods.includes(method)) {
+        options.headers['X-CSRF-Token'] = newCsrfToken;
+      }
+
+      // Request nochmal senden
+      response = await fetch(`${backendUrl}${path}`, options);
     }
   }
 
-  async function fetchUsers() {
+  if (!response.ok) {
+    let message = `Fehler bei ${path}`;
     try {
-      const res = await fetch(`${backendUrl}/api/users`, {
-        method: 'GET',
-        credentials: 'include',
-        headers: {
-          'X-CSRF-Token': await fetchCsrfToken()
-        }
-      });
-      if (!res.ok) throw new Error('Fehler beim Laden der Benutzer');
-      return await res.json();
-    } catch (e) {
-      console.error(e);
-      document.getElementById('users-error').textContent = e.message;
-      return [];
-    }
+      const err = await response.json();
+      message = err.message || message;
+    } catch {}
+    throw new Error(message);
   }
 
- async function deleteUser(userId) {
-    if (!confirm('Bist du sicher, dass du diesen Nutzer löschen möchtest?')) return;
-    try {
-      const csrfToken = await fetchCsrfToken();
-      const res = await fetch(`${backendUrl}/api/user/${userId}`, {
-        method: 'DELETE',
-        credentials: 'include',
-        headers: {
-          'X-CSRF-Token': csrfToken
-        }
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || data.message || 'Fehler beim Löschen');
-      alert(data.message);
-      loadUsers();
-    } catch (e) {
-      alert('Fehler: ' + e.message);
-    }
+  try {
+    return await response.json();
+  } catch {
+    return {};
   }
-  
-  async function setRole(userId, rolle) {
-    try {
-      const csrfToken = await fetchCsrfToken();
-      const res = await fetch(`${backendUrl}/set-role`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-Token': csrfToken
-        },
-        body: JSON.stringify({ userId, rolle })
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || data.message || 'Fehler beim Rollenwechsel');
-      alert(data.message);
-      loadUsers();
-    } catch (e) {
-      alert('Fehler: ' + e.message);
-    }
-  }
+}
 
-  async function manuellenStempelHinzufügen(userId, aktion, zeit) {
-    const res = await fetch(`${backendUrl}/api/zeit/manuell`, {
+async function tryTokenRefresh() {
+  try {
+    const res = await fetch(`${backendUrl}/api/refresh`, {
       method: 'POST',
       credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRF-Token': localStorage.getItem('csrfToken')
-      },
+    });
+
+    if (!res.ok) {
+      console.warn('Token-Refresh fehlgeschlagen:', res.status);
+      return false;
+    }
+
+    const data = await res.json();
+    if (data.csrfToken) {
+      localStorage.setItem('csrfToken', data.csrfToken);
+    }
+
+    return true;
+  } catch (err) {
+    console.error('Token-Refresh Fehler:', err);
+    return false;
+  }
+}
+
+async function loadUsers() {
+  try {
+    const users = await apiFetch('/api/users');
+    renderUsers(users);
+  } catch (err) {
+    console.error('Fehler beim Laden der Benutzer:', err);
+    document.getElementById('users-error').textContent = err.message;
+  }
+}
+
+async function loadZeiten() {
+  try {
+    globalZeiten = await apiFetch('/api/zeiten');
+    renderZeiten(globalZeiten);
+  } catch (err) {
+    console.error('Fehler beim Laden der Zeiten:', err);
+    // Optional: Fehler anzeigen
+  }
+}
+
+async function deleteUser(userId) {
+  if (!confirm('Bist du sicher, dass du diesen Nutzer löschen möchtest?')) return;
+
+  try {
+    const res = await apiFetch(`/api/user/${userId}`, {
+      method: 'DELETE'
+    });
+
+    alert(res.message || 'Benutzer gelöscht');
+    await loadUsers();
+  } catch (e) {
+    alert('Fehler: ' + e.message);
+  }
+}
+
+async function setRole(userId, rolle) {
+  try {
+    const res = await apiFetch('/set-role', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, rolle })
+    });
+
+    alert(res.message || 'Rolle aktualisiert');
+    await loadUsers();
+  } catch (e) {
+    alert('Fehler: ' + e.message);
+  }
+}
+
+ async function manuellenStempelHinzufügen(userId, aktion, zeit) {
+  try {
+    const res = await apiFetch('/api/zeit/manuell', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ user_id: userId, aktion, zeit })
     });
-    const data = await res.json();
-    alert(data.message || 'Manueller Stempel gesetzt');
-    loadZeiten();
-  }
 
-  async function stempelAktualisieren(id, aktion, zeit) {
-    const res = await fetch(`${backendUrl}/api/zeit/${id}`, {
+    alert(res.message || 'Manueller Stempel gesetzt');
+    await loadZeiten();
+  } catch (e) {
+    alert('Fehler: ' + e.message);
+  }
+}
+
+ async function stempelAktualisieren(id, aktion, zeit) {
+  try {
+    const res = await apiFetch(`/api/zeit/${id}`, {
       method: 'PUT',
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRF-Token': localStorage.getItem('csrfToken')
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ aktion, zeit })
     });
-    const data = await res.json();
-    alert(data.message || 'Zeitstempel aktualisiert');
-    loadZeiten();
-  }
 
+    alert(res.message || 'Zeitstempel aktualisiert');
+    await loadZeiten();
+  } catch (e) {
+    alert('Fehler beim Aktualisieren: ' + e.message);
+  }
+}
+  
   //Zeiten durchsuchen
 function filterZeiten(suchbegriff, alleZeiten) {
   const begriffe = suchbegriff.trim().toLowerCase().split(/\s+/).filter(Boolean);
@@ -338,25 +378,24 @@ function filterZeiten(suchbegriff, alleZeiten) {
     return begriffe.every(term => {
       const suchDatum = parseLooseDate(term);
       const exaktUhr = parseUhrzeitSuche(term);
-      const lockerUhr = parseUhrzeitUnscharf(term); // gibt Objekt zurück
+      const lockerUhr = parseUhrzeitUnscharf(term);
 
-      return (
-        fuzzyMatch(name, term) ||
-        (suchDatum && datum === suchDatum) ||
-        (exaktUhr && uhrzeit === exaktUhr) ||
-        (
-          lockerUhr &&
-          (
-            lockerUhr.exaktSuche
-              ? Math.abs(zeitInMinuten - lockerUhr.minuten) <= 5
-              : parseInt(hh, 10) === lockerUhr.stunde
-          )
-        )
-      );
+      if (fuzzyMatch(name, term)) return true;
+      if (suchDatum && datum === suchDatum) return true;
+      if (exaktUhr && uhrzeit === exaktUhr) return true;
+
+      if (lockerUhr) {
+        if (lockerUhr.exaktSuche) {
+          return Math.abs(zeitInMinuten - lockerUhr.minuten) <= 5;
+        } else {
+          return parseInt(hh, 10) === lockerUhr.stunde;
+        }
+      }
+
+      return false;
     });
   });
 }
-
 
 function parseLooseDate(input) {
   const cleaned = input.replace(/[\.,\-]/g, '/');
@@ -435,20 +474,6 @@ function levenshteinDistance(a, b) {
   return null;
 }
 
-
-  async function stempelLöschen(id) {
-    const res = await fetch(`${backendUrl}/api/zeit/${id}`, {
-      method: 'DELETE',
-      credentials: 'include',
-      headers: {
-        'X-CSRF-Token': localStorage.getItem('csrfToken')
-      }
-    });
-    const data = await res.json();
-    alert(data.message || 'Zeitstempel gelöscht');
-    loadZeiten();
-  }
-
 function renderUsers(users) {
   const tbody = document.querySelector('#users-table tbody');
   tbody.innerHTML = '';
@@ -474,33 +499,34 @@ function renderUsers(users) {
     tbody.appendChild(tr);
   }
 
-  // Event-Handler: Rolle ändern
+  // Rolle ändern
   tbody.querySelectorAll('.role-btn').forEach(button => {
     button.addEventListener('click', async () => {
       const userId = parseInt(button.getAttribute('data-userid'), 10);
       const select = tbody.querySelector(`select[data-userid="${userId}"]`);
-      if (select) {
-        try {
-          const res = await apiFetch(`/api/users/${userId}/role`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ neueRolle: select.value })
-          });
-          if (res.success) {
-            alert('Rolle aktualisiert');
-            await loadUsers(); // optional: neu laden
-          } else {
-            alert('Fehler: ' + (res.message || 'Unbekannter Fehler'));
-          }
-        } catch (err) {
-          console.error('Fehler beim Ändern der Rolle:', err);
-          alert('Serverfehler beim Ändern der Rolle');
+      if (!select) return;
+
+      try {
+        const res = await apiFetch(`/api/users/${userId}/role`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ neueRolle: select.value })
+        });
+
+        if (res.success) {
+          alert('Rolle aktualisiert');
+          await loadUsers();
+        } else {
+          alert('Fehler: ' + (res.message || 'Unbekannter Fehler'));
         }
+      } catch (err) {
+        console.error('Fehler beim Ändern der Rolle:', err);
+        alert('Serverfehler beim Ändern der Rolle');
       }
     });
   });
 
-  // Event-Handler: Benutzer löschen
+  // Benutzer löschen
   tbody.querySelectorAll('.delete-btn').forEach(button => {
     button.addEventListener('click', async () => {
       const userId = parseInt(button.getAttribute('data-userid'), 10);
@@ -510,7 +536,7 @@ function renderUsers(users) {
         const res = await apiFetch(`/api/users/${userId}`, { method: 'DELETE' });
         if (res.success) {
           alert('Benutzer gelöscht');
-          await loadUsers(); // Tabelle neu laden
+          await loadUsers();
         } else {
           alert('Löschen fehlgeschlagen: ' + (res.message || 'Unbekannter Fehler'));
         }
@@ -522,7 +548,6 @@ function renderUsers(users) {
   });
 }
 
-  
 function renderZeiten(zeiten) {
   const tbody = document.querySelector('#zeiten-table tbody');
   tbody.innerHTML = '';
@@ -552,36 +577,40 @@ function renderZeiten(zeiten) {
     tbody.appendChild(tr);
   }
 
-  // Event-Handler für alle Delete-Buttons setzen
   tbody.querySelectorAll('.delete-button').forEach(button => {
     button.addEventListener('click', async () => {
       const zeitId = button.getAttribute('data-zeitid');
       if (!zeitId) return;
+      if (!confirm('Diesen Zeiteintrag wirklich löschen?')) return;
 
       try {
-        const res = await apiFetch(`/api/zeiten/${zeitId}`, { method: 'DELETE' });
+        const res = await apiFetch(`/api/zeit/${zeitId}`, { method: 'DELETE' });
         if (res.success) {
-          // Nach Löschen die Zeiten neu laden und rendern
           await loadZeiten();
         } else {
           alert('Löschen fehlgeschlagen: ' + (res.message || 'Unbekannter Fehler'));
         }
       } catch (err) {
-        console.error('Fehler beim Löschen:', err);
+        console.error('Fehler beim Löschen des Zeitstempels:', err);
         alert('Serverfehler beim Löschen');
       }
     });
   });
 }
 
-
 let globalZeiten = [];
+
 async function loadZeiten() {
-  globalZeiten = await fetchZeiten();
-  renderZeiten(globalZeiten);
+  try {
+    globalZeiten = await apiFetch('/api/zeiten');
+    renderZeiten(globalZeiten);
+  } catch (e) {
+    console.error('Fehler beim Laden der Zeiten:', e);
+  }
 }
 
   //QR code Passwort setzen
+// QR-Passwort speichern
 document.getElementById('qr-passwort-button').addEventListener('click', async () => {
   const pwInput = document.getElementById('qr-passwort-input');
   const msg = document.getElementById('qr-passwort-message');
@@ -596,10 +625,7 @@ document.getElementById('qr-passwort-button').addEventListener('click', async ()
   try {
     const res = await apiFetch('/api/set-qr-passwort', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRF-Token': getCsrfToken(),
-      },
+      headers: { 'Content-Type': 'application/json' }, // CSRF-Token wird von apiFetch gesetzt
       body: JSON.stringify({ neuesPasswort }),
     });
 
@@ -618,17 +644,13 @@ document.getElementById('qr-passwort-button').addEventListener('click', async ()
   }
 });
 
-  //QR Passwort laden
+// QR-Passwort laden
 document.getElementById('qr-passwort-laden').addEventListener('click', async () => {
   const p = document.getElementById('qr-passwort-aktuell');
   const msg = document.getElementById('qr-passwort-message');
 
   try {
-    const res = await apiFetch('/api/get-qr-passwort', {
-      method: 'GET',
-      headers: { 'X-CSRF-Token': getCsrfToken() }
-    });
-
+    const res = await apiFetch('/api/get-qr-passwort', { method: 'GET' });
     if (res.qrPasswort) {
       p.textContent = `Aktuelles QR-Passwort: ${res.qrPasswort}`;
       msg.textContent = '';
@@ -643,29 +665,40 @@ document.getElementById('qr-passwort-laden').addEventListener('click', async () 
   }
 });
 
- 
+// Zeitsuche
 document.getElementById('zeitensuche').addEventListener('input', async (e) => {
   const suchbegriff = e.target.value;
   if (!window.alleZeitenCache) {
-    window.alleZeitenCache = await fetchZeiten();
+    window.alleZeitenCache = await apiFetch('/api/zeiten');
   }
   const gefiltert = filterZeiten(suchbegriff, window.alleZeitenCache);
   renderZeiten(gefiltert);
 });
 
+// Beim Laden der Seite
+document.addEventListener('DOMContentLoaded', () => {
+  loadUsers();
+  loadZeiten();
+});
 
-  async function loadUsers() {
-    const users = await fetchUsers();
+// Benutzer laden
+async function loadUsers() {
+  try {
+    const users = await apiFetch('/api/users');
     renderUsers(users);
+  } catch (e) {
+    console.error('Fehler beim Laden der Benutzer:', e);
   }
+}
 
-  document.getElementById('manual-form').addEventListener('submit', (e) => {
-    e.preventDefault();
-    const userId = parseInt(document.getElementById('manual-user').value, 10);
-    const aktion = document.getElementById('manual-aktion').value;
-    const zeit = document.getElementById('manual-zeit').value;
-    manuellenStempelHinzufügen(userId, aktion, zeit);
-  });
+// Manuellen Stempel hinzufügen
+document.getElementById('manual-form').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const userId = parseInt(document.getElementById('manual-user').value, 10);
+  const aktion = document.getElementById('manual-aktion').value;
+  const zeit = document.getElementById('manual-zeit').value;
+  manuellenStempelHinzufügen(userId, aktion, zeit);
+});
 </script>
 
 </body>
