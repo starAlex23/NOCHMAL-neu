@@ -500,31 +500,31 @@ function renderUsers(users) {
   }
 
   // Rolle ändern
-  tbody.querySelectorAll('.role-btn').forEach(button => {
-    button.addEventListener('click', async () => {
-      const userId = parseInt(button.getAttribute('data-userid'), 10);
-      const select = tbody.querySelector(`select[data-userid="${userId}"]`);
-      if (!select) return;
+ tbody.querySelectorAll('.role-btn').forEach(button => {
+  button.addEventListener('click', async () => {
+    const userId = parseInt(button.getAttribute('data-userid'), 10);
+    const select = tbody.querySelector(`select[data-userid="${userId}"]`);
+    if (!select) return;
 
-      try {
-        const res = await apiFetch(`/api/user/${userId}/role`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ neueRolle: select.value })
-        });
+    try {
+      const res = await apiFetch('/api/set-role', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, rolle: select.value })
+      });
 
-        if (res.success) {
-          alert('Rolle aktualisiert');
-          await loadUsers();
-        } else {
-          alert('Fehler: ' + (res.message || 'Unbekannter Fehler'));
-        }
-      } catch (err) {
-        console.error('Fehler beim Ändern der Rolle:', err);
-        alert('Serverfehler beim Ändern der Rolle');
+      if (res.success) {
+        alert('Rolle aktualisiert');
+        await loadUsers();
+      } else {
+        alert('Fehler: ' + (res.message || 'Unbekannter Fehler'));
       }
-    });
+    } catch (err) {
+      console.error('Fehler beim Ändern der Rolle:', err);
+      alert('Serverfehler beim Ändern der Rolle');
+    }
   });
+});
 
   // Benutzer löschen
   tbody.querySelectorAll('.delete-btn').forEach(button => {
