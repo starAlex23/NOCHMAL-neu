@@ -473,6 +473,55 @@ function renderUsers(users) {
     `;
     tbody.appendChild(tr);
   }
+
+  // Event-Handler: Rolle ändern
+  tbody.querySelectorAll('.role-btn').forEach(button => {
+    button.addEventListener('click', async () => {
+      const userId = parseInt(button.getAttribute('data-userid'), 10);
+      const select = tbody.querySelector(`select[data-userid="${userId}"]`);
+      if (select) {
+        try {
+          const res = await apiFetch(`/api/users/${userId}/role`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ neueRolle: select.value })
+          });
+          if (res.success) {
+            alert('Rolle aktualisiert');
+            await loadUsers(); // optional: neu laden
+          } else {
+            alert('Fehler: ' + (res.message || 'Unbekannter Fehler'));
+          }
+        } catch (err) {
+          console.error('Fehler beim Ändern der Rolle:', err);
+          alert('Serverfehler beim Ändern der Rolle');
+        }
+      }
+    });
+  });
+
+  // Event-Handler: Benutzer löschen
+  tbody.querySelectorAll('.delete-btn').forEach(button => {
+    button.addEventListener('click', async () => {
+      const userId = parseInt(button.getAttribute('data-userid'), 10);
+      if (!confirm('Diesen Benutzer wirklich löschen?')) return;
+
+      try {
+        const res = await apiFetch(`/api/users/${userId}`, { method: 'DELETE' });
+        if (res.success) {
+          alert('Benutzer gelöscht');
+          await loadUsers(); // Tabelle neu laden
+        } else {
+          alert('Löschen fehlgeschlagen: ' + (res.message || 'Unbekannter Fehler'));
+        }
+      } catch (err) {
+        console.error('Fehler beim Löschen des Benutzers:', err);
+        alert('Serverfehler beim Löschen');
+      }
+    });
+  });
+}
+
   
 function renderZeiten(zeiten) {
   const tbody = document.querySelector('#zeiten-table tbody');
@@ -530,21 +579,6 @@ let globalZeiten = [];
 async function loadZeiten() {
   globalZeiten = await fetchZeiten();
   renderZeiten(globalZeiten);
-}
-
-  
-
-
-  // EventListener für Löschen-Buttons (falls du das nutzt)
-  document.querySelectorAll('.delete-button').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const id = btn.getAttribute('data-zeitid');
-      if (confirm('Zeitstempel wirklich löschen?')) {
-        await deleteZeit(id);
-        loadZeiten(); // neu laden nach Löschung
-      }
-    });
-  });
 }
 
   //QR code Passwort setzen
@@ -609,18 +643,7 @@ document.getElementById('qr-passwort-laden').addEventListener('click', async () 
   }
 });
 
-  
-  // Event-Handler: Rolle ändern
-  tbody.querySelectorAll('.role-btn').forEach(button => {
-    button.addEventListener('click', () => {
-      const userId = parseInt(button.getAttribute('data-userid'), 10);
-      const select = tbody.querySelector(`select[data-userid="${userId}"]`);
-      if (select) {
-        setRole(userId, select.value);
-      }
-    });
-  });
-
+ 
 document.getElementById('zeitensuche').addEventListener('input', async (e) => {
   const suchbegriff = e.target.value;
   if (!window.alleZeitenCache) {
