@@ -502,14 +502,36 @@ function renderZeiten(zeiten) {
     `;
     tbody.appendChild(tr);
   }
+
+  // Event-Handler für alle Delete-Buttons setzen
+  tbody.querySelectorAll('.delete-button').forEach(button => {
+    button.addEventListener('click', async () => {
+      const zeitId = button.getAttribute('data-zeitid');
+      if (!zeitId) return;
+
+      try {
+        const res = await apiFetch(`/api/zeiten/${zeitId}`, { method: 'DELETE' });
+        if (res.success) {
+          // Nach Löschen die Zeiten neu laden und rendern
+          await loadZeiten();
+        } else {
+          alert('Löschen fehlgeschlagen: ' + (res.message || 'Unbekannter Fehler'));
+        }
+      } catch (err) {
+        console.error('Fehler beim Löschen:', err);
+        alert('Serverfehler beim Löschen');
+      }
+    });
+  });
 }
 
 
-  let globalZeiten = [];
- async function loadZeiten() {
+let globalZeiten = [];
+async function loadZeiten() {
   globalZeiten = await fetchZeiten();
   renderZeiten(globalZeiten);
 }
+
   
 
 
@@ -598,17 +620,6 @@ document.getElementById('qr-passwort-laden').addEventListener('click', async () 
       }
     });
   });
-
-  // Event-Handler: Benutzer löschen
-  tbody.querySelectorAll('.delete-btn').forEach(button => {
-    button.addEventListener('click', () => {
-      const userId = parseInt(button.getAttribute('data-userid'), 10);
-      deleteUser(userId);
-    });
-  });
-
-
- 
 
 document.getElementById('zeitensuche').addEventListener('input', async (e) => {
   const suchbegriff = e.target.value;
