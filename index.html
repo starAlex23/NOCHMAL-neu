@@ -136,6 +136,13 @@
   <p class="error" id="users-error"></p>
 </section>
 
+<section id="qr-passwort-section" class="admin-section">
+  <h2>QR-Passwort ändern</h2>
+  <input type="password" id="qr-passwort-input" placeholder="Neues QR-Passwort" minlength="6" />
+  <button id="qr-passwort-button">Speichern</button>
+  <p id="qr-passwort-message"></p>
+</section>
+ 
 </div>
 
 <script>
@@ -479,8 +486,43 @@ function levenshteinDistance(a, b) {
   });
 }
 
+  //QR code Passwort setzen
+document.getElementById('qr-passwort-button').addEventListener('click', async () => {
+  const pwInput = document.getElementById('qr-passwort-input');
+  const msg = document.getElementById('qr-passwort-message');
+  const neuesPasswort = pwInput.value.trim();
 
-  
+  if (neuesPasswort.length < 6) {
+    msg.textContent = 'Bitte ein sicheres Passwort (mind. 6 Zeichen) eingeben.';
+    msg.style.color = 'red';
+    return;
+  }
+
+  try {
+    const res = await apiFetch('/api/set-qr-passwort', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': getCsrfToken(),
+      },
+      body: JSON.stringify({ neuesPasswort }),
+    });
+
+    if (res.success) {
+      msg.textContent = 'QR-Passwort erfolgreich gespeichert.';
+      msg.style.color = 'green';
+      pwInput.value = '';
+    } else {
+      msg.textContent = res.message || 'Fehler beim Speichern.';
+      msg.style.color = 'red';
+    }
+  } catch (err) {
+    console.error(err);
+    msg.textContent = 'Serverfehler.';
+    msg.style.color = 'red';
+  }
+});
+
 function renderUsers(users) {
   const tbody = document.querySelector('#users-table tbody');
   tbody.innerHTML = '';
