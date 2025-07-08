@@ -554,29 +554,6 @@ document.getElementById('qr-passwort-button').addEventListener('click', async ()
 });
 
   //QR Passwort laden
-document.getElementById('qr-passwort-laden').addEventListener('click', async () => {
-  const p = document.getElementById('qr-passwort-aktuell');
-  const msg = document.getElementById('qr-passwort-message');
-
-  try {
-    const res = await apiFetch('/api/get-qr-passwort', {
-      method: 'GET',
-      headers: { 'X-CSRF-Token': getCsrfToken() }
-    });
-
-    if (res.qrPasswort) {
-      p.textContent = `Aktuelles QR-Passwort: ${res.qrPasswort}`;
-      msg.textContent = '';
-    } else {
-      p.textContent = '';
-      msg.textContent = 'Kein QR-Passwort gefunden.';
-    }
-  } catch (err) {
-    console.error(err);
-    p.textContent = '';
-    msg.textContent = 'Fehler beim Abrufen des QR-Passworts.';
-  }
-});
 
   
   // Event-Handler: Rolle ändern
