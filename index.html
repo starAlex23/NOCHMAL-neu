@@ -321,23 +321,30 @@ function filterZeiten(suchbegriff, alleZeiten) {
     const hh = berlin.find(p => p.type === 'hour').value;
     const mm = berlin.find(p => p.type === 'minute').value;
     const uhrzeit = `${hh}:${mm}`;
-
     const zeitInMinuten = parseInt(hh, 10) * 60 + parseInt(mm, 10);
 
     return begriffe.every(term => {
       const suchDatum = parseLooseDate(term);
       const exaktUhr = parseUhrzeitSuche(term);
-      const ungefaehrUhr = parseUhrzeitUnscharf(term);
+      const lockerUhr = parseUhrzeitUnscharf(term); // gibt Objekt zurück
 
       return (
         fuzzyMatch(name, term) ||
         (suchDatum && datum === suchDatum) ||
         (exaktUhr && uhrzeit === exaktUhr) ||
-        (ungefaehrUhr && Math.abs(zeitInMinuten - ungefaehrUhr) <= 5)
+        (
+          lockerUhr &&
+          (
+            lockerUhr.exaktSuche
+              ? Math.abs(zeitInMinuten - lockerUhr.minuten) <= 5
+              : parseInt(hh, 10) === lockerUhr.stunde
+          )
+        )
       );
     });
   });
 }
+
 
 function parseLooseDate(input) {
   const cleaned = input.replace(/[\.,\-]/g, '/');
@@ -394,22 +401,28 @@ function levenshteinDistance(a, b) {
   return `${hh}:${mm}`;
 }
 
-  function parseUhrzeitUnscharf(term) {
+ function parseUhrzeitUnscharf(term) {
   const cleaned = term.replace(/[^\d]/g, '');
   if (cleaned.length === 2) {
-    // z.B. "19" → nur Stunde
-    const h = parseInt(cleaned, 10);
-    if (h >= 0 && h <= 23) return h * 60; // Minutenwert der Stunde
+    const stunde = parseInt(cleaned, 10);
+    if (stunde >= 0 && stunde <= 23) {
+      return { stunde, exaktSuche: false };
+    }
   } else if (cleaned.length === 3 || cleaned.length === 4) {
-    // z.B. "1924" oder "19.24"
     const hh = cleaned.length === 3 ? '0' + cleaned[0] : cleaned.slice(0, 2);
     const mm = cleaned.slice(-2);
     const h = parseInt(hh, 10);
     const m = parseInt(mm, 10);
-    if (h <= 23 && m <= 59) return h * 60 + m;
+    if (h <= 23 && m <= 59) {
+      return {
+        minuten: h * 60 + m,
+        exaktSuche: true
+      };
+    }
   }
   return null;
 }
+
 
   async function stempelLöschen(id) {
     const res = await fetch(`${backendUrl}/api/zeit/${id}`, {
