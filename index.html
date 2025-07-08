@@ -140,8 +140,13 @@
   <h2>QR-Passwort ändern</h2>
   <input type="password" id="qr-passwort-input" placeholder="Neues QR-Passwort" minlength="6" />
   <button id="qr-passwort-button">Speichern</button>
+
+  <hr />
+  <button id="qr-passwort-laden">Aktuelles Passwort anzeigen</button>
+  <p id="qr-passwort-aktuell" style="font-weight: bold;"></p>
   <p id="qr-passwort-message"></p>
 </section>
+
  
 </div>
 
@@ -444,6 +449,31 @@ function levenshteinDistance(a, b) {
     loadZeiten();
   }
 
+function renderUsers(users) {
+  const tbody = document.querySelector('#users-table tbody');
+  tbody.innerHTML = '';
+
+  for (const u of users) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${u.id}</td>
+      <td>${u.vorname} ${u.nachname}</td>
+      <td>${u.email}</td>
+      <td>
+        <select data-userid="${u.id}">
+          <option value="user" ${u.rolle === 'user' ? 'selected' : ''}>User</option>
+          <option value="vorarbeiter" ${u.rolle === 'vorarbeiter' ? 'selected' : ''}>Vorarbeiter</option>
+          <option value="admin" ${u.rolle === 'admin' ? 'selected' : ''}>Admin</option>
+        </select>
+      </td>
+      <td>
+        <button class="role-btn" data-userid="${u.id}">Rolle ändern</button>
+        <button class="delete-btn" data-userid="${u.id}">Löschen</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  }
+  
  function renderZeiten(zeiten) {
   const tbody = document.querySelector('#zeiten-table tbody');
   tbody.innerHTML = '';
@@ -523,31 +553,32 @@ document.getElementById('qr-passwort-button').addEventListener('click', async ()
   }
 });
 
-function renderUsers(users) {
-  const tbody = document.querySelector('#users-table tbody');
-  tbody.innerHTML = '';
+  //QR Passwort laden
+document.getElementById('qr-passwort-laden').addEventListener('click', async () => {
+  const p = document.getElementById('qr-passwort-aktuell');
+  const msg = document.getElementById('qr-passwort-message');
 
-  for (const u of users) {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${u.id}</td>
-      <td>${u.vorname} ${u.nachname}</td>
-      <td>${u.email}</td>
-      <td>
-        <select data-userid="${u.id}">
-          <option value="user" ${u.rolle === 'user' ? 'selected' : ''}>User</option>
-          <option value="vorarbeiter" ${u.rolle === 'vorarbeiter' ? 'selected' : ''}>Vorarbeiter</option>
-          <option value="admin" ${u.rolle === 'admin' ? 'selected' : ''}>Admin</option>
-        </select>
-      </td>
-      <td>
-        <button class="role-btn" data-userid="${u.id}">Rolle ändern</button>
-        <button class="delete-btn" data-userid="${u.id}">Löschen</button>
-      </td>
-    `;
-    tbody.appendChild(tr);
+  try {
+    const res = await apiFetch('/api/get-qr-passwort', {
+      method: 'GET',
+      headers: { 'X-CSRF-Token': getCsrfToken() }
+    });
+
+    if (res.qrPasswort) {
+      p.textContent = `Aktuelles QR-Passwort: ${res.qrPasswort}`;
+      msg.textContent = '';
+    } else {
+      p.textContent = '';
+      msg.textContent = 'Kein QR-Passwort gefunden.';
+    }
+  } catch (err) {
+    console.error(err);
+    p.textContent = '';
+    msg.textContent = 'Fehler beim Abrufen des QR-Passworts.';
   }
+});
 
+  
   // Event-Handler: Rolle ändern
   tbody.querySelectorAll('.role-btn').forEach(button => {
     button.addEventListener('click', () => {
