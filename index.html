@@ -88,21 +88,21 @@
   <input type="text" id="zeitensuche" placeholder="z. B. Müller 07.07.2025 13:00" />
 </section>
 
-  <section id="zeiten-section">
-    <h2>Zeiteinträge</h2>
-    <table id="zeiten-table">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Name</th>
-          <th>Aktion</th>
-          <th>Zeit</th>
-          <th>Aktionen</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </section>
+ <section id="zeiten-section">
+  <h2>Zeiteinträge</h2>
+  <table id="zeiten-table">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Aktion</th>
+        <th>Zeit</th>
+        <th>Aktionen</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</section>
 
   <section id="zeit-manual">
     <h3>Manuellen Zeitstempel hinzufügen</h3>
@@ -474,7 +474,7 @@ function renderUsers(users) {
     tbody.appendChild(tr);
   }
   
- function renderZeiten(zeiten) {
+function renderZeiten(zeiten) {
   const tbody = document.querySelector('#zeiten-table tbody');
   tbody.innerHTML = '';
 
@@ -482,7 +482,6 @@ function renderUsers(users) {
     const tr = document.createElement('tr');
     const name = `${z.vorname} ${z.nachname}`;
 
-    // Zeitstempel in deutsche Ortszeit (inkl. Sommerzeit) umwandeln
     const lokalZeit = new Date(z.zeit).toLocaleString('de-DE', {
       timeZone: 'Europe/Berlin',
       year: 'numeric',
@@ -503,6 +502,16 @@ function renderUsers(users) {
     `;
     tbody.appendChild(tr);
   }
+}
+
+
+  let globalZeiten = [];
+ async function loadZeiten() {
+  globalZeiten = await fetchZeiten();
+  renderZeiten(globalZeiten);
+}
+  
+  window.addEventListener('DOMContentLoaded', loadZeiten);
 
   // EventListener für Löschen-Buttons (falls du das nutzt)
   document.querySelectorAll('.delete-button').forEach(btn => {
@@ -554,6 +563,29 @@ document.getElementById('qr-passwort-button').addEventListener('click', async ()
 });
 
   //QR Passwort laden
+document.getElementById('qr-passwort-laden').addEventListener('click', async () => {
+  const p = document.getElementById('qr-passwort-aktuell');
+  const msg = document.getElementById('qr-passwort-message');
+
+  try {
+    const res = await apiFetch('/api/get-qr-passwort', {
+      method: 'GET',
+      headers: { 'X-CSRF-Token': getCsrfToken() }
+    });
+
+    if (res.qrPasswort) {
+      p.textContent = `Aktuelles QR-Passwort: ${res.qrPasswort}`;
+      msg.textContent = '';
+    } else {
+      p.textContent = '';
+      msg.textContent = 'Kein QR-Passwort gefunden.';
+    }
+  } catch (err) {
+    console.error(err);
+    p.textContent = '';
+    msg.textContent = 'Fehler beim Abrufen des QR-Passworts.';
+  }
+});
 
   
   // Event-Handler: Rolle ändern
@@ -577,11 +609,6 @@ document.getElementById('qr-passwort-button').addEventListener('click', async ()
 }
 
  
- let globalZeiten = [];
- async function loadZeiten() {
-  globalZeiten = await fetchZeiten();
-  renderZeiten(globalZeiten);
-}
 
 document.getElementById('zeitensuche').addEventListener('input', async (e) => {
   const suchbegriff = e.target.value;
