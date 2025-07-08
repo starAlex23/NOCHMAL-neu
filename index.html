@@ -273,7 +273,7 @@ async function tryTokenRefresh() {
 
 async function loadUsers() {
   try {
-    const users = await apiFetch('/api/users');
+    const users = await apiFetch('/api/user');
     renderUsers(users);
   } catch (err) {
     console.error('Fehler beim Laden der Benutzer:', err);
@@ -507,7 +507,7 @@ function renderUsers(users) {
       if (!select) return;
 
       try {
-        const res = await apiFetch(`/api/users/${userId}/role`, {
+        const res = await apiFetch(`/api/user/${userId}/role`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ neueRolle: select.value })
@@ -533,7 +533,7 @@ function renderUsers(users) {
       if (!confirm('Diesen Benutzer wirklich löschen?')) return;
 
       try {
-        const res = await apiFetch(`/api/users/${userId}`, { method: 'DELETE' });
+        const res = await apiFetch(`/api/user/${userId}`, { method: 'DELETE' });
         if (res.success) {
           alert('Benutzer gelöscht');
           await loadUsers();
