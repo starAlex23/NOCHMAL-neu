@@ -871,15 +871,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
   //Aktualisieren der Tabelle
 document.getElementById('zeiten-aktualisieren').addEventListener('click', async () => {
-  zeitenOffset = 0;
-  document.getElementById('zeiten-aktualisieren').textContent = '⏳ Lädt...';
+  zeitenIndex = 0;
+  const btn = document.getElementById('zeiten-aktualisieren');
+  btn.textContent = '⏳ Lädt...';
   try {
-    window.alleZeitenCache = await apiFetch(`/api/zeiten?offset=${zeitenOffset}&limit=${zeitenLimit}`);
-    renderZeiten(window.alleZeitenCache);
+    window.alleZeitenCache = await apiFetch(`/api/zeiten?offset=${zeitenIndex}&limit=${zeilenProSeite}`);
+    gefilterteZeiten = [...window.alleZeitenCache];
+    document.querySelector('#zeiten-table tbody').innerHTML = '';
+    renderZeitenChunk();
   } catch (err) {
     console.error(err);
   } finally {
-    document.getElementById('zeiten-aktualisieren').textContent = '🔄 Aktualisieren';
+    btn.textContent = '🔄 Aktualisieren';
   }
 });
 
