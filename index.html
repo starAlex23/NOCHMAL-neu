@@ -389,11 +389,10 @@ async function loadUsers() {
 
 async function loadZeiten() {
   try {
-    globalZeiten = await apiFetch('/api/zeiten');
-    renderZeiten(globalZeiten);
+    window.alleZeitenCache = await apiFetch('/api/zeiten');
+    renderZeiten(window.alleZeitenCache);
   } catch (err) {
     console.error('Fehler beim Laden der Zeiten:', err);
-    // Optional: Fehler anzeigen
   }
 }
 
@@ -779,6 +778,14 @@ async function loadZeiten() {
   }
 }
 
+  function debounce(fn, delay) {
+  let timer;
+  return (...args) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn(...args), delay);
+  };
+}
+
   //QR code Passwort setzen
 // QR-Passwort speichern
 document.getElementById('qr-passwort-button').addEventListener('click', async () => {
@@ -846,12 +853,14 @@ document.getElementById('zeitensuche').addEventListener('input', debounce(async 
   }
 
   if (suchbegriff === '') {
-    renderZeiten(window.alleZeitenCache);
-    return;
+    gefilterteZeiten = [...window.alleZeitenCache];
+  } else {
+    gefilterteZeiten = filterZeiten(suchbegriff, window.alleZeitenCache);
   }
 
-  const gefiltert = filterZeiten(suchbegriff, window.alleZeitenCache);
-  renderZeiten(gefiltert);
+  zeitenIndex = 0;
+  document.querySelector('#zeiten-table tbody').innerHTML = '';
+  renderZeitenChunk();
 }, 300));
 
 // Beim Laden der Seite
@@ -862,14 +871,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
   //Aktualisieren der Tabelle
 document.getElementById('zeiten-aktualisieren').addEventListener('click', async () => {
-  const btn = document.getElementById('zeiten-aktualisieren');
-  btn.disabled = true;
-  btn.textContent = '⏳ Lädt...';
-
-  await loadZeiten();
-
-  btn.textContent = '🔄 Aktualisieren';
-  btn.disabled = false;
+  zeitenOffset = 0;
+  document.getElementById('zeiten-aktualisieren').textContent = '⏳ Lädt...';
+  try {
+    window.alleZeitenCache = await apiFetch(`/api/zeiten?offset=${zeitenOffset}&limit=${zeitenLimit}`);
+    renderZeiten(window.alleZeitenCache);
+  } catch (err) {
+    console.error(err);
+  } finally {
+    document.getElementById('zeiten-aktualisieren').textContent = '🔄 Aktualisieren';
+  }
 });
 
   //Mehr laden button
