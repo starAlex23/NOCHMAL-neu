@@ -87,15 +87,18 @@
     }
 
     .section {
-      display: none;
-      max-width: 1000px;
-      margin: 2rem auto;
-      background: var(--bg-card);
-      padding: 2rem;
-      border-radius: 10px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-    }
+  display: none;
+  max-width: 1000px;
+  margin: 2rem auto;
+  background: var(--bg-card);
+  padding: 2rem;
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
 
+.section.active {
+  display: block;
+}
     table {
       width: 100%;
       border-collapse: collapse;
@@ -204,17 +207,14 @@
 <script>
   
 document.querySelectorAll('nav button').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
 
-        document.querySelectorAll('.section').forEach(sec => {
-          sec.classList.add('hidden');
-        });
-
-        document.getElementById(btn.dataset.target).classList.remove('hidden');
-      });
-    });
+    document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
+    document.getElementById(btn.dataset.target).classList.add('active');
+  });
+});
   
   const backendUrl = 'https://backend-869x.onrender.com';
 
