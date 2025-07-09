@@ -93,7 +93,6 @@
   <table id="zeiten-table">
     <thead>
       <tr>
-        <th>ID</th>
         <th>Name</th>
         <th>Aktion</th>
         <th>Zeit</th>
@@ -466,53 +465,52 @@ function levenshteinDistance(a, b) {
   const gruppiert = {};
 
   for (const z of zeitstempel) {
-    const userKey = `${z.user_id}|${z.vorname}|${z.nachname}`;
-    const date = new Date(z.zeit);
-    const datum = date.toLocaleDateString('de-DE', { timeZone: 'Europe/Berlin' });
+  const userKey = `${z.user_id ?? 'unbekannt'}|${z.vorname ?? ''}|${z.nachname ?? ''}`;
+  const date = new Date(z.zeit);
+  const datum = date.toLocaleDateString('de-DE', { timeZone: 'Europe/Berlin' });
 
-    const key = `${userKey}|${datum}`;
-    if (!gruppiert[key]) gruppiert[key] = [];
+  const key = `${userKey}|${datum}`;
+  if (!gruppiert[key]) gruppiert[key] = [];
 
-    gruppiert[key].push({ aktion: z.aktion, zeit: new Date(z.zeit) });
-  }
-
-  for (const key in gruppiert) {
-    const [user_id, vorname, nachname, datum] = key.split('|');
-    const einträge = gruppiert[key].sort((a, b) => a.zeit - b.zeit);
-
-    let startZeit = null;
-    let arbeitszeitMs = 0;
-    let ersteStart = null;
-    let letzteStop = null;
-
-    for (const e of einträge) {
-      if (e.aktion === 'start') {
-        startZeit = e.zeit;
-        if (!ersteStart) ersteStart = startZeit;
-      }
-      if (e.aktion === 'stop' && startZeit) {
-        arbeitszeitMs += e.zeit - startZeit;
-        letzteStop = e.zeit;
-        startZeit = null;
-      }
-    }
-
-    if (arbeitszeitMs > 0 && ersteStart && letzteStop) {
-      const stunden = Math.floor(arbeitszeitMs / (1000 * 60 * 60));
-      const minuten = Math.floor((arbeitszeitMs / (1000 * 60)) % 60);
-      result.push({
-        id: Number(user_id),
-        name: `${vorname} ${nachname}`,
-        datum,
-        start: ersteStart.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Berlin' }),
-        stop: letzteStop.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Berlin' }),
-        dauer: `${stunden}h ${minuten.toString().padStart(2, '0')}min`
-      });
-    }
-  }
-
-  return result;
+  gruppiert[key].push({ aktion: z.aktion, zeit: new Date(z.zeit) });
 }
+
+for (const key in gruppiert) {
+  const [user_id_raw, vorname, nachname, datum] = key.split('|');
+  const user_id = user_id_raw === 'unbekannt' ? '–' : Number(user_id_raw);
+  const einträge = gruppiert[key].sort((a, b) => a.zeit - b.zeit);
+
+  let startZeit = null;
+  let arbeitszeitMs = 0;
+  let ersteStart = null;
+  let letzteStop = null;
+
+  for (const e of einträge) {
+    if (e.aktion === 'start') {
+      startZeit = e.zeit;
+      if (!ersteStart) ersteStart = startZeit;
+    }
+    if (e.aktion === 'stop' && startZeit) {
+      arbeitszeitMs += e.zeit - startZeit;
+      letzteStop = e.zeit;
+      startZeit = null;
+    }
+  }
+
+  if (arbeitszeitMs > 0 && ersteStart && letzteStop) {
+    const stunden = Math.floor(arbeitszeitMs / (1000 * 60 * 60));
+    const minuten = Math.floor((arbeitszeitMs / (1000 * 60)) % 60);
+    result.push({
+      id: user_id,
+      name: `${vorname} ${nachname}`.trim(),
+      datum,
+      start: ersteStart.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Berlin' }),
+      stop: letzteStop.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Berlin' }),
+      dauer: `${stunden}h ${minuten.toString().padStart(2, '0')}min`
+    });
+  }
+}
+
 
 function renderArbeitszeiten(daten) {
   const tbody = document.querySelector('#arbeitszeiten-table tbody');
