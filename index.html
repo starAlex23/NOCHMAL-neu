@@ -5,152 +5,217 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Admin Login & Dashboard</title>
   <style>
-    body {
-      font-family: sans-serif;
-      max-width: 900px;
-      margin: 2rem auto;
-      padding: 1rem;
-      background: #f0f2f5;
+    :root {
+      --bg-main: #f4f6f9;
+      --bg-card: #ffffff;
+      --primary: #0052cc;
+      --primary-light: #e6f0ff;
+      --border-color: #dcdfe6;
+      --text-color: #333;
+      --muted: #888;
     }
-    /* Login Card */
-    #login-card {
+
+    body {
+      font-family: system-ui, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: var(--bg-main);
+      color: var(--text-color);
+    }
+
+    #login-card, .panel {
       max-width: 400px;
-      margin: 4rem auto;
-      background: white;
+      margin: 5rem auto;
+      background: var(--bg-card);
       padding: 2rem;
       border-radius: 12px;
-      box-shadow: 0 0 20px rgba(0,0,0,0.1);
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
     }
-    input, button {
+
+    input, button, select {
       width: 100%;
-      margin: 0.6rem 0;
       padding: 0.8rem;
+      margin: 0.5rem 0;
       font-size: 1rem;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
       box-sizing: border-box;
     }
+
+    button {
+      background-color: var(--primary);
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #003fa3;
+    }
+
     .error {
       color: red;
       margin-top: 0.5rem;
     }
-    /* Dashboard Styles */
+
     #dashboard {
       display: none;
     }
-    h1, h2 {
-      margin-bottom: 0.5rem;
+
+    nav {
+      background-color: var(--primary);
+      padding: 1rem;
+      color: white;
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
     }
+
+    nav button {
+      width: auto;
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
+      background: white;
+      color: var(--primary);
+      border: none;
+      border-radius: 4px;
+    }
+
+    nav button.active {
+      background: #003fa3;
+      color: white;
+    }
+
+    .section {
+      display: none;
+      max-width: 1000px;
+      margin: 2rem auto;
+      background: var(--bg-card);
+      padding: 2rem;
+      border-radius: 10px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    }
+
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-bottom: 2rem;
-      background: white;
-      border-radius: 8px;
-      overflow: hidden;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      margin-top: 1rem;
     }
+
     th, td {
-      padding: 0.5rem;
-      border: 1px solid #ccc;
+      padding: 0.6rem;
+      border: 1px solid var(--border-color);
       text-align: left;
     }
+
     th {
-      background: #f7f7f7;
+      background: var(--primary-light);
     }
-    select, button {
-      padding: 0.3rem;
-      font-size: 0.9rem;
+
+    h2 {
+      margin-bottom: 0.5rem;
     }
-    button {
-      cursor: pointer;
+
+    .hidden {
+      display: none;
     }
   </style>
 </head>
 <body>
+  <!-- LOGIN -->
+  <div id="login-card">
+    <h2>Admin Login</h2>
+    <form id="login-form">
+      <input type="email" name="email" placeholder="E-Mail" required />
+      <input type="password" name="passwort" placeholder="Passwort" required />
+      <button type="submit">Login</button>
+      <p class="error" id="error-msg"></p>
+    </form>
+  </div>
 
-<!-- LOGIN -->
-<div id="login-card">
-  <h2>Admin Login</h2>
-  <form id="login-form">
-    <input type="email" name="email" placeholder="E-Mail" required />
-    <input type="password" name="passwort" placeholder="Passwort" required />
-    <button type="submit">Login</button>
-    <p class="error" id="error-msg"></p>
-  </form>
-</div>
+  <!-- DASHBOARD -->
+  <div id="dashboard">
+    <nav>
+      <button data-target="arbeitszeiten-section" class="active">Arbeitszeiten</button>
+      <button data-target="users-section">Benutzer</button>
+      <button data-target="qr-passwort-section">QR-Passwort</button>
+      <button data-target="zeiten-section">Datenbank</button>
+    </nav>
 
-<!-- DASHBOARD -->
-<div id="dashboard" style="display:none;">
-  <h1>Admin Dashboard</h1>
+    <section id="arbeitszeiten-section" class="section">
+      <h2>Arbeitszeiten (pro Tag)</h2>
+      <table id="arbeitszeiten-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Datum</th>
+            <th>Start</th>
+            <th>Stop</th>
+            <th>Dauer</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
 
+    <section id="users-section" class="section hidden">
+      <h2>Benutzerverwaltung</h2>
+      <table id="users-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Rolle</th>
+            <th>Aktion</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <p class="error" id="users-error"></p>
+    </section>
 
-<section>
-  <h3>Suche (Name, Datum oder Uhrzeit)</h3>
-  <input type="text" id="zeitensuche" placeholder="z. B. Müller 07.07.2025 13:00" />
-</section>
+    <section id="qr-passwort-section" class="section hidden">
+      <h2>QR-Passwort ändern</h2>
+      <input type="password" id="qr-passwort-input" placeholder="Neues QR-Passwort" minlength="6" />
+      <button id="qr-passwort-button">Speichern</button>
+      <hr />
+      <button id="qr-passwort-laden">Aktuelles Passwort anzeigen</button>
+      <p id="qr-passwort-aktuell" style="font-weight: bold;"></p>
+      <p id="qr-passwort-message"></p>
+    </section>
 
-<section id="zeiten-section">
-  <h2>Zeiteinträge</h2>
-  <button id="zeiten-aktualisieren">🔄 Aktualisieren</button>
-  <table id="zeiten-table">
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Aktion</th>
-        <th>Zeit</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-</section>
-
-
-<section id="arbeitszeiten-section">
-  <h2>Arbeitszeiten (pro Tag)</h2>
-  <table id="arbeitszeiten-table">
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Datum</th>
-        <th>Start</th>
-        <th>Stop</th>
-        <th>Dauer</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-</section>
-  
- <section id="users-section">
-  <h2>Benutzerverwaltung</h2>
-  <table id="users-table">
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Email</th>
-        <th>Rolle</th>
-        <th>Aktion</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-  <p class="error" id="users-error"></p>
-</section>
-
-<section id="qr-passwort-section" class="admin-section">
-  <h2>QR-Passwort ändern</h2>
-  <input type="password" id="qr-passwort-input" placeholder="Neues QR-Passwort" minlength="6" />
-  <button id="qr-passwort-button">Speichern</button>
-
-  <hr />
-  <button id="qr-passwort-laden">Aktuelles Passwort anzeigen</button>
-  <p id="qr-passwort-aktuell" style="font-weight: bold;"></p>
-  <p id="qr-passwort-message"></p>
-</section>
-
- 
-</div>
+    <section id="zeiten-section" class="section hidden">
+      <h2>Datenbank</h2>
+      <input type="text" id="zeitensuche" placeholder="z. B. Müller 07.07.2025 13:00" />
+      <button id="zeiten-aktualisieren">🔄 Aktualisieren</button>
+      <table id="zeiten-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Aktion</th>
+            <th>Zeit</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+  </div>
 
 <script>
+  
+document.querySelectorAll('nav button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        document.querySelectorAll('.section').forEach(sec => {
+          sec.classList.add('hidden');
+        });
+
+        document.getElementById(btn.dataset.target).classList.remove('hidden');
+      });
+    });
+  
   const backendUrl = 'https://backend-869x.onrender.com';
 
   const loginForm = document.getElementById('login-form');
