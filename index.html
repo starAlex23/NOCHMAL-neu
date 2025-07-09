@@ -86,6 +86,25 @@
       color: white;
     }
 
+/* Tabellenzellen kompakter */
+th, td {
+  padding: 0.4rem 0.6rem;
+  font-size: 0.9rem;
+  max-width: 200px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Tabellencontainer mit Scroll */
+.table-container {
+  max-height: 400px;
+  overflow-y: auto;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  margin-top: 1rem;
+}
+    
     .section {
   display: none;
   max-width: 1000px;
@@ -145,21 +164,25 @@
       <button data-target="zeiten-section">Datenbank</button>
     </nav>
 
-    <section id="arbeitszeiten-section" class="section">
-      <h2>Arbeitszeiten (pro Tag)</h2>
-      <table id="arbeitszeiten-table">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Datum</th>
-            <th>Start</th>
-            <th>Stop</th>
-            <th>Dauer</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </section>
+ <section id="arbeitszeiten-section" class="section">
+  <h2>Arbeitszeiten (pro Tag)</h2>
+  <input type="text" id="arbeitszeiten-suche" placeholder="Suche nach Name oder Datum..." />
+
+  <div class="table-container">
+    <table id="arbeitszeiten-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Datum</th>
+          <th>Start</th>
+          <th>Stop</th>
+          <th>Dauer</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</section>
 
     <section id="users-section" class="section hidden">
       <h2>Benutzerverwaltung</h2>
@@ -187,22 +210,29 @@
       <p id="qr-passwort-message"></p>
     </section>
 
-    <section id="zeiten-section" class="section hidden">
-      <h2>Datenbank</h2>
-      <input type="text" id="zeitensuche" placeholder="z. B. Müller 07.07.2025 13:00" />
-      <button id="zeiten-aktualisieren">🔄 Aktualisieren</button>
-      <table id="zeiten-table">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Aktion</th>
-            <th>Zeit</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </section>
+   <section id="zeiten-section" class="section hidden">
+  <h2>Datenbank</h2>
+  
+  <input type="text" id="zeitensuche" placeholder="z. B. Müller 07.07.2025 13:00" />
+  
+  <button id="zeiten-aktualisieren">🔄 Aktualisieren</button>
+  
+  <div class="table-container">
+    <table id="zeiten-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Aktion</th>
+          <th>Zeit</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
   </div>
+
+  <button id="zeiten-mehrladen">⬇ Mehr laden</button>
+</section>
+
 
 <script>
   
@@ -215,7 +245,18 @@ document.querySelectorAll('nav button').forEach(btn => {
     document.getElementById(btn.dataset.target).classList.add('active');
   });
 });
-  
+
+  document.getElementById('arbeitszeiten-suche').addEventListener('input', (e) => {
+  const suchbegriff = e.target.value.toLowerCase();
+  const gefiltert = berechneArbeitszeiten(globalZeiten).filter(eintrag => {
+    return (
+      eintrag.name.toLowerCase().includes(suchbegriff) ||
+      eintrag.datum.toLowerCase().includes(suchbegriff)
+    );
+  });
+  renderArbeitszeiten(gefiltert);
+});
+
   const backendUrl = 'https://backend-869x.onrender.com';
 
   const loginForm = document.getElementById('login-form');
@@ -687,14 +728,13 @@ function renderUsers(users) {
   });
 }
 
-function renderZeiten(zeiten) {
+function renderZeitenChunk() {
   const tbody = document.querySelector('#zeiten-table tbody');
-  tbody.innerHTML = '';
+  const nextChunk = gefilterteZeiten.slice(zeitenIndex, zeitenIndex + zeilenProSeite);
 
-  for (const z of zeiten) {
+  for (const z of nextChunk) {
     const tr = document.createElement('tr');
     const name = `${z.vorname} ${z.nachname}`;
-
     const lokalZeit = new Date(z.zeit).toLocaleString('de-DE', {
       timeZone: 'Europe/Berlin',
       year: 'numeric',
@@ -709,17 +749,28 @@ function renderZeiten(zeiten) {
       <td>${z.aktion}</td>
       <td>${lokalZeit}</td>
     `;
-
     tbody.appendChild(tr);
   }
+
+  zeitenIndex += zeilenProSeite;
+
+  // "Mehr laden" Button ausblenden wenn alles angezeigt
+  const mehrBtn = document.getElementById('zeiten-mehrladen');
+  mehrBtn.style.display = zeitenIndex >= gefilterteZeiten.length ? 'none' : 'block';
 }
 
 let globalZeiten = [];
+let gefilterteZeiten = [];
+let zeitenIndex = 0;
+const zeilenProSeite = 20;
 
 async function loadZeiten() {
   try {
     globalZeiten = await apiFetch('/api/zeiten');
-    renderZeiten(globalZeiten);
+    gefilterteZeiten = [...globalZeiten];
+    zeitenIndex = 0;
+    document.querySelector('#zeiten-table tbody').innerHTML = '';
+    renderZeitenChunk();
 
     const berechnet = berechneArbeitszeiten(globalZeiten);
     renderArbeitszeiten(berechnet);
@@ -727,7 +778,6 @@ async function loadZeiten() {
     console.error('Fehler beim Laden der Zeiten:', e);
   }
 }
-
 
   //QR code Passwort setzen
 // QR-Passwort speichern
@@ -786,14 +836,23 @@ document.getElementById('qr-passwort-laden').addEventListener('click', async () 
 });
 
 // Zeitsuche
-document.getElementById('zeitensuche').addEventListener('input', async (e) => {
-  const suchbegriff = e.target.value;
+document.getElementById('zeitensuche').addEventListener('input', debounce(async (e) => {
+  const suchbegriff = e.target.value.trim().toLowerCase();
+
   if (!window.alleZeitenCache) {
+    document.getElementById('zeiten-aktualisieren').textContent = '⏳ Lädt...';
     window.alleZeitenCache = await apiFetch('/api/zeiten');
+    document.getElementById('zeiten-aktualisieren').textContent = '🔄 Aktualisieren';
   }
+
+  if (suchbegriff === '') {
+    renderZeiten(window.alleZeitenCache);
+    return;
+  }
+
   const gefiltert = filterZeiten(suchbegriff, window.alleZeitenCache);
   renderZeiten(gefiltert);
-});
+}, 300));
 
 // Beim Laden der Seite
 document.addEventListener('DOMContentLoaded', () => {
@@ -813,6 +872,10 @@ document.getElementById('zeiten-aktualisieren').addEventListener('click', async 
   btn.disabled = false;
 });
 
+  //Mehr laden button
+document.getElementById('zeiten-mehrladen').addEventListener('click', () => {
+  renderZeitenChunk();
+});
   
 // Benutzer laden
 async function loadUsers() {
