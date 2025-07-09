@@ -691,14 +691,10 @@ function renderZeiten(zeiten) {
   const tbody = document.querySelector('#zeiten-table tbody');
   tbody.innerHTML = '';
 
-  if (!zeiten || zeiten.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="3">Keine Zeiteinträge gefunden.</td></tr>';
-    return;
-  }
-
   for (const z of zeiten) {
     const tr = document.createElement('tr');
     const name = `${z.vorname} ${z.nachname}`;
+
     const lokalZeit = new Date(z.zeit).toLocaleString('de-DE', {
       timeZone: 'Europe/Berlin',
       year: 'numeric',
@@ -713,6 +709,7 @@ function renderZeiten(zeiten) {
       <td>${z.aktion}</td>
       <td>${lokalZeit}</td>
     `;
+
     tbody.appendChild(tr);
   }
 }
