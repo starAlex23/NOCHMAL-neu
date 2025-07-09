@@ -593,6 +593,7 @@ function renderArbeitszeiten(daten) {
 
   for (const eintrag of daten) {
     const tr = document.createElement('tr');
+    tr.classList.add('fade-in');
     tr.innerHTML = `
       <td>${eintrag.name}</td>
       <td>${eintrag.datum}</td>
@@ -611,52 +612,51 @@ function renderUsers(users) {
 
   for (const u of users) {
     const tr = document.createElement('tr');
+    tr.classList.add('fade-in');
     tr.innerHTML = `
       <td>${u.vorname} ${u.nachname}</td>
       <td>${u.email}</td>
       <td>
-        <select data-userid="${u.id}">
+        <select data-userid="${u.id}" class="role-select">
           <option value="user" ${u.rolle === 'user' ? 'selected' : ''}>User</option>
           <option value="vorarbeiter" ${u.rolle === 'vorarbeiter' ? 'selected' : ''}>Vorarbeiter</option>
           <option value="admin" ${u.rolle === 'admin' ? 'selected' : ''}>Admin</option>
         </select>
       </td>
       <td>
-        <button class="role-btn" data-userid="${u.id}">Rolle ändern</button>
-        <button class="delete-btn" data-userid="${u.id}">Löschen</button>
+        <button class="role-btn btn-secondary" data-userid="${u.id}">Rolle ändern</button>
+        <button class="delete-btn btn-danger" data-userid="${u.id}">Löschen</button>
       </td>
     `;
     tbody.appendChild(tr);
   }
 
-  // Rolle ändern
- tbody.querySelectorAll('.role-btn').forEach(button => {
-  button.addEventListener('click', async () => {
-    const userId = parseInt(button.getAttribute('data-userid'), 10);
-    const select = tbody.querySelector(`select[data-userid="${userId}"]`);
-    if (!select) return;
+  tbody.querySelectorAll('.role-btn').forEach(button => {
+    button.addEventListener('click', async () => {
+      const userId = parseInt(button.getAttribute('data-userid'), 10);
+      const select = tbody.querySelector(`select[data-userid="${userId}"]`);
+      if (!select) return;
 
-    try {
-      const res = await apiFetch('/api/set-role', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, rolle: select.value })
-      });
+      try {
+        const res = await apiFetch('/api/set-role', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId, rolle: select.value })
+        });
 
-      if (res.success) {
-        alert('Rolle aktualisiert');
-        await loadUsers();
-      } else {
-        alert('Fehler: ' + (res.message || 'Unbekannter Fehler'));
+        if (res.success) {
+          alert('Rolle aktualisiert');
+          await loadUsers();
+        } else {
+          alert('Fehler: ' + (res.message || 'Unbekannter Fehler'));
+        }
+      } catch (err) {
+        console.error('Fehler beim Ändern der Rolle:', err);
+        alert('Serverfehler beim Ändern der Rolle');
       }
-    } catch (err) {
-      console.error('Fehler beim Ändern der Rolle:', err);
-      alert('Serverfehler beim Ändern der Rolle');
-    }
+    });
   });
-});
 
-  // Benutzer löschen
   tbody.querySelectorAll('.delete-btn').forEach(button => {
     button.addEventListener('click', async () => {
       const userId = parseInt(button.getAttribute('data-userid'), 10);
@@ -684,6 +684,7 @@ function renderZeiten(zeiten) {
 
   for (const z of zeiten) {
     const tr = document.createElement('tr');
+    tr.classList.add('fade-in');
     const name = `${z.vorname} ${z.nachname}`;
 
     const lokalZeit = new Date(z.zeit).toLocaleString('de-DE', {
