@@ -338,12 +338,19 @@ async function setRole(userId, rolle) {
   }
 }
 
- async function manuellenStempelHinzufügen(userId, aktion, zeit) {
+async function manuellenStempelHinzufügen(userId, aktion, zeit) {
   try {
+    // Eingabe: lokale Zeit (z. B. "2025-07-08T06:00")
+    // Umwandeln in Date-Objekt (als lokale Zeit)
+    const localDate = new Date(zeit);
+
+    // In echte UTC-Zeit umwandeln (ISO-String)
+    const utcString = localDate.toISOString(); // z. B. "2025-07-08T04:00:00.000Z"
+
     const res = await apiFetch('/api/zeit/manuell', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user_id: userId, aktion, zeit })
+      body: JSON.stringify({ user_id: userId, aktion, zeit: utcString })
     });
 
     alert(res.message || 'Manueller Stempel gesetzt');
@@ -352,6 +359,7 @@ async function setRole(userId, rolle) {
     alert('Fehler: ' + e.message);
   }
 }
+
 
  async function stempelAktualisieren(id, aktion, zeit) {
   try {
