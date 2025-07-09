@@ -121,21 +121,6 @@
   </table>
 </section>
   
-  <section id="zeit-manual">
-    <h3>Manuellen Zeitstempel hinzufügen</h3>
-    <form id="manual-form">
-      <input type="number" id="manual-user" placeholder="User ID" required />
-      <select id="manual-aktion">
-        <option value="start">Start</option>
-        <option value="stop">Stop</option>
-        <option value="pause">Pause</option>
-        <option value="resume">Resume</option>
-      </select>
-      <input type="datetime-local" id="manual-zeit" required />
-      <button type="submit">Hinzufügen</button>
-    </form>
-  </section>
-
  <section id="users-section">
   <h2>Benutzerverwaltung</h2>
   <table id="users-table">
@@ -337,29 +322,6 @@ async function setRole(userId, rolle) {
     alert('Fehler: ' + e.message);
   }
 }
-
-async function manuellenStempelHinzufügen(userId, aktion, zeit) {
-  try {
-    // Eingabe: lokale Zeit (z. B. "2025-07-08T06:00")
-    // Umwandeln in Date-Objekt (als lokale Zeit)
-    const localDate = new Date(zeit);
-
-    // In echte UTC-Zeit umwandeln (ISO-String)
-    const utcString = localDate.toISOString(); // z. B. "2025-07-08T04:00:00.000Z"
-
-    const res = await apiFetch('/api/zeit/manuell', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user_id: userId, aktion, zeit: utcString })
-    });
-
-    alert(res.message || 'Manueller Stempel gesetzt');
-    await loadZeiten();
-  } catch (e) {
-    alert('Fehler: ' + e.message);
-  }
-}
-
 
  async function stempelAktualisieren(id, aktion, zeit) {
   try {
@@ -668,32 +630,9 @@ function renderZeiten(zeiten) {
       <td>${name}</td>
       <td>${z.aktion}</td>
       <td>${lokalZeit}</td>
-      <td>
-        <button data-zeitid="${z.id}" class="delete-button">Löschen</button>
-      </td>
     `;
     tbody.appendChild(tr);
   }
-
-  tbody.querySelectorAll('.delete-button').forEach(button => {
-    button.addEventListener('click', async () => {
-      const zeitId = button.getAttribute('data-zeitid');
-      if (!zeitId) return;
-      if (!confirm('Diesen Zeiteintrag wirklich löschen?')) return;
-
-      try {
-        const res = await apiFetch(`/api/zeit/${zeitId}`, { method: 'DELETE' });
-        if (res.success) {
-          await loadZeiten();
-        } else {
-          alert('Löschen fehlgeschlagen: ' + (res.message || 'Unbekannter Fehler'));
-        }
-      } catch (err) {
-        console.error('Fehler beim Löschen des Zeitstempels:', err);
-        alert('Serverfehler beim Löschen');
-      }
-    });
-  });
 }
 
 let globalZeiten = [];
@@ -792,15 +731,6 @@ async function loadUsers() {
     console.error('Fehler beim Laden der Benutzer:', e);
   }
 }
-
-// Manuellen Stempel hinzufügen
-document.getElementById('manual-form').addEventListener('submit', (e) => {
-  e.preventDefault();
-  const userId = parseInt(document.getElementById('manual-user').value, 10);
-  const aktion = document.getElementById('manual-aktion').value;
-  const zeit = document.getElementById('manual-zeit').value;
-  manuellenStempelHinzufügen(userId, aktion, zeit);
-});
 </script>
 
 </body>
