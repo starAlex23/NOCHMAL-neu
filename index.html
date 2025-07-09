@@ -90,6 +90,7 @@
 
 <section id="zeiten-section">
   <h2>Zeiteinträge</h2>
+  <button id="zeiten-aktualisieren">🔄 Aktualisieren</button>
   <table id="zeiten-table">
     <thead>
       <tr>
@@ -101,6 +102,7 @@
     <tbody></tbody>
   </table>
 </section>
+
 
 <section id="arbeitszeiten-section">
   <h2>Arbeitszeiten (pro Tag)</h2>
@@ -724,6 +726,19 @@ document.addEventListener('DOMContentLoaded', () => {
   loadZeiten();
 });
 
+  //Aktualisieren der Tabelle
+document.getElementById('zeiten-aktualisieren').addEventListener('click', async () => {
+  const btn = document.getElementById('zeiten-aktualisieren');
+  btn.disabled = true;
+  btn.textContent = '⏳ Lädt...';
+
+  await loadZeiten();
+
+  btn.textContent = '🔄 Aktualisieren';
+  btn.disabled = false;
+});
+
+  
 // Benutzer laden
 async function loadUsers() {
   try {
