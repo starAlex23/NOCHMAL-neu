@@ -303,7 +303,6 @@ const backendUrl = 'https://backend-869x.onrender.com';
   }
 });
 
-
 async function apiFetch(path, options = {}) {
   const method = (options.method || 'GET').toUpperCase();
   const writeMethods = ['POST', 'PUT', 'DELETE', 'PATCH'];
@@ -433,21 +432,6 @@ async function setRole(userId, rolle) {
     await loadUsers();
   } catch (e) {
     alert('Fehler: ' + e.message);
-  }
-}
-
-async function stempelAktualisieren(aktion) {
-  try {
-    const res = await apiFetch('/api/zeit', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ aktion })
-    });
-
-    alert(res.message || 'Zeitstempel gesetzt');
-    await loadZeiten(); // neu laden, um aktuelle Daten zu sehen
-  } catch (e) {
-    alert('Fehler beim Zeitstempeln: ' + e.message);
   }
 }
 
@@ -877,6 +861,7 @@ document.getElementById('zeiten-aktualisieren').addEventListener('click', async 
   zeitenIndex = 0;
   const btn = document.getElementById('zeiten-aktualisieren');
   btn.textContent = '⏳ Lädt...';
+  
   try {
     window.alleZeitenCache = await apiFetch(`/api/zeiten?offset=${zeitenIndex}&limit=${zeilenProSeite}`);
     gefilterteZeiten = [...window.alleZeitenCache];
@@ -884,6 +869,7 @@ document.getElementById('zeiten-aktualisieren').addEventListener('click', async 
     renderZeitenChunk();
   } catch (err) {
     console.error(err);
+    alert('Fehler beim Aktualisieren: ' + err.message);
   } finally {
     btn.textContent = '🔄 Aktualisieren';
   }
