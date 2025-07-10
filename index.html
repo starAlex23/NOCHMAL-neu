@@ -424,21 +424,21 @@ async function setRole(userId, rolle) {
   }
 }
 
- async function stempelAktualisieren(id, aktion, zeit) {
+async function stempelAktualisieren(aktion) {
   try {
-    const res = await apiFetch(`/api/zeit/${id}`, {
-      method: 'PUT',
+    const res = await apiFetch('/api/zeit', {
+      method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ aktion, zeit })
+      body: JSON.stringify({ aktion })
     });
 
-    alert(res.message || 'Zeitstempel aktualisiert');
-    await loadZeiten();
+    alert(res.message || 'Zeitstempel gesetzt');
+    await loadZeiten(); // neu laden, um aktuelle Daten zu sehen
   } catch (e) {
-    alert('Fehler beim Aktualisieren: ' + e.message);
+    alert('Fehler beim Zeitstempeln: ' + e.message);
   }
 }
-  
+
   //Zeiten durchsuchen
 function filterZeiten(suchbegriff, alleZeiten) {
   const begriffe = suchbegriff.trim().toLowerCase().split(/\s+/).filter(Boolean);
