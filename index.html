@@ -88,7 +88,6 @@
       color: white;
     }
 
-    /* Tabellenzellen kompakter */
     th, td {
       padding: 0.4rem 0.6rem;
       font-size: 0.9rem;
@@ -98,7 +97,6 @@
       text-overflow: ellipsis;
     }
 
-    /* Tabellencontainer mit Scroll */
     .table-container {
       max-height: 400px;
       overflow-y: auto;
@@ -139,7 +137,6 @@
       display: none;
     }
 
-    /* Aktualisieren-Button über allen Bereichen */
     #top-controls {
       max-width: 1000px;
       margin: 1.5rem auto 0 auto;
@@ -156,7 +153,6 @@
   </style>
 </head>
 <body>
-  <!-- LOGIN -->
   <div id="login-card">
     <h2>Admin Login</h2>
     <form id="login-form">
@@ -167,7 +163,6 @@
     </form>
   </div>
 
-  <!-- DASHBOARD -->
   <div id="dashboard">
     <nav>
       <button data-target="arbeitszeiten-section" class="active">Arbeitszeiten</button>
@@ -176,7 +171,6 @@
       <button data-target="zeiten-section">Datenbank</button>
     </nav>
 
-    <!-- Globaler Button für vollständige Aktualisierung -->
     <div id="top-controls">
       <button id="daten-aktualisieren">🔄 Alle Daten aktualisieren</button>
     </div>
@@ -198,14 +192,17 @@
           <tbody></tbody>
         </table>
       </div>
+      <button id="arbeitszeiten-mehrladen">⬇ Mehr laden</button>
     </section>
 
     <section id="users-section" class="section hidden">
       <h2>Benutzerverwaltung</h2>
+      <button id="benutzer-auswahl-loeschen">❌ Ausgewählte löschen</button>
       <div class="table-container">
         <table id="users-table">
           <thead>
             <tr>
+              <th><input type="checkbox" id="select-all-users" /></th>
               <th>Name</th>
               <th>Email</th>
               <th>Rolle</th>
@@ -215,6 +212,7 @@
           <tbody></tbody>
         </table>
       </div>
+      <button id="users-mehrladen">⬇ Mehr laden</button>
       <p class="error" id="users-error"></p>
     </section>
 
