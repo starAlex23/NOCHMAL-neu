@@ -319,17 +319,13 @@ async function apiFetch(path, options = {}) {
 
   let response = await fetch(`${backendUrl}${path}`, options);
 
-  // Wenn AccessToken abgelaufen: automatisch refreshen
   if (response.status === 401) {
     const refreshed = await tryTokenRefresh();
     if (refreshed) {
-      // Neuen CSRF-Token aus localStorage erneut anhängen
       const newCsrfToken = localStorage.getItem('csrfToken');
       if (newCsrfToken && writeMethods.includes(method)) {
         options.headers['X-CSRF-Token'] = newCsrfToken;
       }
-
-      // Request nochmal senden
       response = await fetch(`${backendUrl}${path}`, options);
     }
   }
@@ -337,22 +333,32 @@ async function apiFetch(path, options = {}) {
   if (!response.ok) {
     let message = `Fehler bei ${path}`;
     try {
-      const err = await response.json();
-      message = err.message || message;
-    } catch {}
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        const err = await response.json();
+        message = err.message || message;
+      } else {
+        const text = await response.text();
+        message = text || message;
+      }
+    } catch {
+      // ignorieren
+    }
     throw new Error(message);
   }
 
- try {
-  const contentType = response.headers.get('content-type');
-  if (contentType && contentType.includes('application/json')) {
-    return await response.json();
-  } else {
-    const text = await response.text();
-    throw new Error(text || 'Antwort ist kein JSON.');
+  // ✅ Hier passiert der Fix
+  try {
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      return await response.json();
+    } else {
+      const text = await response.text();
+      throw new Error(text || 'Antwort ist kein JSON.');
+    }
+  } catch (err) {
+    throw new Error(err.message || 'Fehler beim Verarbeiten der Antwort.');
   }
-} catch (err) {
-  throw new Error(err.message || 'Fehler beim Verarbeiten der Antwort.');
 }
 
 
