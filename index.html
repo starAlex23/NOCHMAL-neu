@@ -248,32 +248,15 @@
   </div>
 
 <script>
-  
-document.querySelectorAll('nav button').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-
-    document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
-    document.getElementById(btn.dataset.target).classList.add('active');
-  });
-});
-
-  document.getElementById('arbeitszeiten-suche').addEventListener('input', (e) => {
-  const suchbegriff = e.target.value.toLowerCase();
-  const gefiltert = berechneArbeitszeiten(globalZeiten).filter(eintrag => {
-    return (
-      eintrag.name.toLowerCase().includes(suchbegriff) ||
-      eintrag.datum.toLowerCase().includes(suchbegriff)
-    );
-  });
-  renderArbeitszeiten(gefiltert);
-});
-
+//Für Zeiten-Tabelle
 let editMode = false;
 let globalZeiten = [];
 let gefilterteZeiten = [];
 let zeitenIndex = 0;
+//Für Benutzer-Tabelle
+let allUsers = [];
+let usersIndex = 0;
+const benutzerProSeite = 20;
 const zeilenProSeite = 20;
 const backendUrl = 'https://backend-869x.onrender.com';
 
@@ -739,6 +722,7 @@ function renderUsers(users) {
   });
 }
 
+//Laden der Tabelle Zeiten nach mehrladen Button
 function renderZeitenChunk() {
   const tbody = document.querySelector('#zeiten-table tbody');
   const nextChunk = gefilterteZeiten.slice(zeitenIndex, zeitenIndex + zeilenProSeite);
@@ -770,6 +754,44 @@ function renderZeitenChunk() {
   mehrBtn.style.display = zeitenIndex >= gefilterteZeiten.length ? 'none' : 'block';
 }
 
+//Laden der Tabelle Users nach mehrladen Button
+  function renderUserChunk() {
+  const tbody = document.querySelector('#users-table tbody');
+  const nextChunk = allUsers.slice(usersIndex, usersIndex + benutzerProSeite);
+
+  for (const u of nextChunk) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>
+        <input type="checkbox" class="user-checkbox" data-userid="${u.id}" style="display: none;" />
+      </td>
+      <td>${u.vorname} ${u.nachname}</td>
+      <td>${u.email}</td>
+      <td>
+        <select data-userid="${u.id}">
+          <option value="user" ${u.rolle === 'user' ? 'selected' : ''}>User</option>
+          <option value="vorarbeiter" ${u.rolle === 'vorarbeiter' ? 'selected' : ''}>Vorarbeiter</option>
+          <option value="admin" ${u.rolle === 'admin' ? 'selected' : ''}>Admin</option>
+        </select>
+      </td>
+      <td>
+        <button class="role-btn" data-userid="${u.id}">Rolle ändern</button>
+        <button class="delete-btn" data-userid="${u.id}" style="display: none;">Löschen</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  }
+
+  usersIndex += benutzerProSeite;
+
+  // "Mehr laden" Button ausblenden wenn alles angezeigt
+  const mehrBtn = document.getElementById('users-mehrladen');
+  mehrBtn.style.display = usersIndex >= allUsers.length ? 'none' : 'block';
+
+  // EventListener für neue Elemente
+  addUserRowListeners();
+}
+
 async function loadZeiten() {
   try {
     globalZeiten = await apiFetch('/api/zeiten');
@@ -793,6 +815,56 @@ async function loadZeiten() {
   };
 }
 
+// Funktionen zu function renderUserChunk() {
+async function loadAllUsers() {
+  try {
+    const users = await apiFetch('/api/users');
+    allUsers = users;
+    usersIndex = 0;
+    document.querySelector('#users-table tbody').innerHTML = '';
+    renderUserChunk();
+  } catch (err) {
+    console.error('Fehler beim Laden der Benutzer:', err);
+  }
+}
+
+function addUserRowListeners() {
+  const tbody = document.querySelector('#users-table tbody');
+
+  tbody.querySelectorAll('.role-btn').forEach(button => {
+    button.onclick = async () => {
+      const userId = button.dataset.userid;
+      const select = tbody.querySelector(`select[data-userid="${userId}"]`);
+      try {
+        await apiFetch('/api/set-role', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId, rolle: select.value }),
+        });
+        alert('Rolle aktualisiert');
+      } catch (e) {
+        console.error('Fehler:', e);
+        alert('Rolle konnte nicht geändert werden.');
+      }
+    };
+  });
+
+  tbody.querySelectorAll('.delete-btn').forEach(button => {
+    button.onclick = async () => {
+      const userId = button.dataset.userid;
+      if (!confirm('Benutzer wirklich löschen?')) return;
+      try {
+        await apiFetch(`/api/user/${userId}`, { method: 'DELETE' });
+        alert('Benutzer gelöscht');
+        await loadAllUsers(); // neu laden
+      } catch (e) {
+        console.error('Fehler:', e);
+        alert('Löschen fehlgeschlagen.');
+      }
+    };
+  });
+}
+  
   async function reloadZeitenTabelle() {
   zeitenIndex = 0;
   const daten = await apiFetch(`/api/zeiten?offset=${zeitenIndex}&limit=${zeilenProSeite}`);
@@ -933,12 +1005,37 @@ document.getElementById('delete-selected-btn').addEventListener('click', async (
 
   await loadUsers();
 });
+
+document.querySelectorAll('nav button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
+    document.getElementById(btn.dataset.target).classList.add('active');
+  });
+});
+
+  document.getElementById('arbeitszeiten-suche').addEventListener('input', (e) => {
+  const suchbegriff = e.target.value.toLowerCase();
+  const gefiltert = berechneArbeitszeiten(globalZeiten).filter(eintrag => {
+    return (
+      eintrag.name.toLowerCase().includes(suchbegriff) ||
+      eintrag.datum.toLowerCase().includes(suchbegriff)
+    );
+  });
+  renderArbeitszeiten(gefiltert);
+});
   
   //Mehr laden button
 document.getElementById('zeiten-mehrladen').addEventListener('click', () => {
   renderZeitenChunk();
 });
-  
+
+  document.getElementById('users-mehrladen').addEventListener('click', () => {
+  renderUserChunk();
+});
+
 </script>
 
 </body>
