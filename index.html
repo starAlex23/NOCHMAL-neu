@@ -974,6 +974,10 @@ document.getElementById('daten-aktualisieren').addEventListener('click', async (
       reloadArbeitszeitenTabelle(),
       loadUsers()
     ]);
+
+    // 👇 Button nach Aktualisierung wieder einblenden
+    document.getElementById('users-mehrladen').style.display = 'block';
+
   } catch (err) {
     console.error('Fehler beim Aktualisieren:', err);
     alert('Fehler beim Aktualisieren: ' + err.message);
@@ -981,6 +985,7 @@ document.getElementById('daten-aktualisieren').addEventListener('click', async (
     btn.textContent = '🔄 Alle Daten aktualisieren';
   }
 });
+
 
 document.getElementById('edit-users-btn').addEventListener('click', () => {
   editMode = !editMode;
