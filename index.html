@@ -196,19 +196,21 @@
     </section>
 
     <section id="users-section" class="section hidden">
-      <h2>Benutzerverwaltung</h2>
-      <button id="benutzer-auswahl-loeschen">❌ Ausgewählte löschen</button>
+    <h2>Benutzerverwaltung
+  <button id="edit-users-btn" style="float:right;">✏️ Bearbeiten</button>
+</h2>
+<button id="delete-selected-btn" class="hidden">❌ Ausgewählte löschen</button>
       <div class="table-container">
         <table id="users-table">
-          <thead>
-            <tr>
-              <th><input type="checkbox" id="select-all-users" /></th>
-              <th>Name</th>
-              <th>Email</th>
-              <th>Rolle</th>
-              <th>Aktion</th>
-            </tr>
-          </thead>
+         <thead>
+  <tr>
+    <th></th> <!-- Hier kommt der Platz für Checkbox -->
+    <th>Name</th>
+    <th>Email</th>
+    <th>Rolle</th>
+    <th>Aktion</th>
+  </tr>
+</thead>
           <tbody></tbody>
         </table>
       </div>
@@ -268,6 +270,7 @@ document.querySelectorAll('nav button').forEach(btn => {
   renderArbeitszeiten(gefiltert);
 });
 
+let editMode = false;
 let globalZeiten = [];
 let gefilterteZeiten = [];
 let zeitenIndex = 0;
@@ -655,13 +658,16 @@ function renderUsers(users) {
   tbody.innerHTML = '';
 
   if (!users || users.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="4">Keine Benutzer vorhanden.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="5">Keine Benutzer vorhanden.</td></tr>';
     return;
   }
 
   for (const u of users) {
     const tr = document.createElement('tr');
     tr.innerHTML = `
+      <td>
+        <input type="checkbox" class="user-checkbox" data-userid="${u.id}" style="display: none;" />
+      </td>
       <td>${u.vorname} ${u.nachname}</td>
       <td>${u.email}</td>
       <td>
@@ -673,12 +679,18 @@ function renderUsers(users) {
       </td>
       <td>
         <button class="role-btn" data-userid="${u.id}">Rolle ändern</button>
-        <button class="delete-btn" data-userid="${u.id}">Löschen</button>
+        <button class="delete-btn" data-userid="${u.id}" style="display: none;">Löschen</button>
       </td>
     `;
     tbody.appendChild(tr);
   }
 
+  // Checkboxen und Delete-Buttons anzeigen, wenn editMode aktiv
+  const editMode = document.body.classList.contains('edit-mode');
+  tbody.querySelectorAll('.user-checkbox').forEach(cb => cb.style.display = editMode ? 'inline' : 'none');
+  tbody.querySelectorAll('.delete-btn').forEach(btn => btn.style.display = editMode ? 'inline-block' : 'none');
+
+  // Rollen-Änderung
   tbody.querySelectorAll('.role-btn').forEach(button => {
     button.addEventListener('click', async () => {
       const userId = parseInt(button.getAttribute('data-userid'), 10);
@@ -705,6 +717,7 @@ function renderUsers(users) {
     });
   });
 
+  // Einzelnes Löschen (nur im Edit-Modus sichtbar)
   tbody.querySelectorAll('.delete-btn').forEach(button => {
     button.addEventListener('click', async () => {
       const userId = parseInt(button.getAttribute('data-userid'), 10);
@@ -897,7 +910,30 @@ document.getElementById('daten-aktualisieren').addEventListener('click', async (
   }
 });
 
+document.getElementById('edit-users-btn').addEventListener('click', () => {
+  editMode = !editMode;
+  document.body.classList.toggle('edit-mode', editMode);
+  document.querySelectorAll('.user-checkbox').forEach(cb => cb.style.display = editMode ? 'inline' : 'none');
+  document.getElementById('delete-selected-btn').classList.toggle('hidden', !editMode);
+});
 
+document.getElementById('delete-selected-btn').addEventListener('click', async () => {
+  const ids = [...document.querySelectorAll('.user-checkbox:checked')].map(cb => cb.dataset.userid);
+  if (ids.length === 0) return alert('Keine Benutzer ausgewählt.');
+
+  if (!confirm(`${ids.length} Benutzer wirklich löschen?`)) return;
+
+  for (const id of ids) {
+    try {
+      await apiFetch(`/api/user/${id}`, { method: 'DELETE' });
+    } catch (e) {
+      console.error('Fehler beim Löschen von ID ' + id, e);
+    }
+  }
+
+  await loadUsers();
+});
+  
   //Mehr laden button
 document.getElementById('zeiten-mehrladen').addEventListener('click', () => {
   renderZeitenChunk();
