@@ -47,6 +47,7 @@
       color: white;
       font-weight: bold;
       cursor: pointer;
+      transition: background-color 0.2s ease;
     }
 
     button:hover {
@@ -69,6 +70,7 @@
       display: flex;
       gap: 1rem;
       justify-content: center;
+      flex-wrap: wrap;
     }
 
     nav button {
@@ -86,48 +88,43 @@
       color: white;
     }
 
-/* Tabellenzellen kompakter */
-th, td {
-  padding: 0.4rem 0.6rem;
-  font-size: 0.9rem;
-  max-width: 200px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
+    /* Tabellenzellen kompakter */
+    th, td {
+      padding: 0.4rem 0.6rem;
+      font-size: 0.9rem;
+      max-width: 200px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
 
-/* Tabellencontainer mit Scroll */
-.table-container {
-  max-height: 400px;
-  overflow-y: auto;
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  margin-top: 1rem;
-}
-    
+    /* Tabellencontainer mit Scroll */
+    .table-container {
+      max-height: 400px;
+      overflow-y: auto;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      margin-top: 1rem;
+    }
+
     .section {
-  display: none;
-  max-width: 1000px;
-  margin: 2rem auto;
-  background: var(--bg-card);
-  padding: 2rem;
-  border-radius: 10px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-}
+      display: none;
+      max-width: 1000px;
+      margin: 2rem auto;
+      background: var(--bg-card);
+      padding: 2rem;
+      border-radius: 10px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    }
 
-.section.active {
-  display: block;
-}
+    .section.active {
+      display: block;
+    }
+
     table {
       width: 100%;
       border-collapse: collapse;
       margin-top: 1rem;
-    }
-
-    th, td {
-      padding: 0.6rem;
-      border: 1px solid var(--border-color);
-      text-align: left;
     }
 
     th {
@@ -140,6 +137,21 @@ th, td {
 
     .hidden {
       display: none;
+    }
+
+    /* Aktualisieren-Button über allen Bereichen */
+    #top-controls {
+      max-width: 1000px;
+      margin: 1.5rem auto 0 auto;
+      display: flex;
+      justify-content: flex-end;
+      padding: 0 2rem;
+    }
+
+    #daten-aktualisieren {
+      max-width: 200px;
+      background: #0073e6;
+      font-size: 0.95rem;
     }
   </style>
 </head>
@@ -164,39 +176,45 @@ th, td {
       <button data-target="zeiten-section">Datenbank</button>
     </nav>
 
- <section id="arbeitszeiten-section" class="section">
-  <h2>Arbeitszeiten (pro Tag)</h2>
-  <input type="text" id="arbeitszeiten-suche" placeholder="Suche nach Name oder Datum..." />
+    <!-- Globaler Button für vollständige Aktualisierung -->
+    <div id="top-controls">
+      <button id="daten-aktualisieren">🔄 Alle Daten aktualisieren</button>
+    </div>
 
-  <div class="table-container">
-    <table id="arbeitszeiten-table">
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Datum</th>
-          <th>Start</th>
-          <th>Stop</th>
-          <th>Dauer</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </div>
-</section>
+    <section id="arbeitszeiten-section" class="section">
+      <h2>Arbeitszeiten (pro Tag)</h2>
+      <input type="text" id="arbeitszeiten-suche" placeholder="Suche nach Name oder Datum..." />
+      <div class="table-container">
+        <table id="arbeitszeiten-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Datum</th>
+              <th>Start</th>
+              <th>Stop</th>
+              <th>Dauer</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
 
     <section id="users-section" class="section hidden">
       <h2>Benutzerverwaltung</h2>
-      <table id="users-table">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Rolle</th>
-            <th>Aktion</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
+      <div class="table-container">
+        <table id="users-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Rolle</th>
+              <th>Aktion</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
       <p class="error" id="users-error"></p>
     </section>
 
@@ -210,29 +228,25 @@ th, td {
       <p id="qr-passwort-message"></p>
     </section>
 
-   <section id="zeiten-section" class="section hidden">
-  <h2>Datenbank</h2>
-  
-  <input type="text" id="zeitensuche" placeholder="z. B. Müller 07.07.2025 13:00" />
-  
-  <button id="zeiten-aktualisieren">🔄 Aktualisieren</button>
-  
-  <div class="table-container">
-    <table id="zeiten-table">
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Aktion</th>
-          <th>Zeit</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
+    <section id="zeiten-section" class="section hidden">
+      <h2>Datenbank</h2>
+      <input type="text" id="zeitensuche" placeholder="z. B. Müller 07.07.2025 13:00" />
+      <button id="zeiten-aktualisieren">🔄 Aktualisieren</button>
+      <div class="table-container">
+        <table id="zeiten-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Aktion</th>
+              <th>Zeit</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <button id="zeiten-mehrladen">⬇ Mehr laden</button>
+    </section>
   </div>
-
-  <button id="zeiten-mehrladen">⬇ Mehr laden</button>
-</section>
-
 
 <script>
   
@@ -406,17 +420,13 @@ async function loadZeiten() {
 }
 
 async function deleteUser(userId) {
-  if (!confirm('Bist du sicher, dass du diesen Nutzer löschen möchtest?')) return;
-
+  if (!confirm('Benutzer wirklich löschen?')) return;
   try {
-    const res = await apiFetch(`/api/user/${userId}`, {
-      method: 'DELETE'
-    });
-
-    alert(res.message || 'Benutzer gelöscht');
-    await loadUsers();
-  } catch (e) {
-    alert('Fehler: ' + e.message);
+    await apiFetch(`/api/users/${userId}`, { method: 'DELETE' });
+    await loadUsers(); // direkt neu laden
+  } catch (err) {
+    console.error('Fehler beim Löschen:', err);
+    alert('Löschen fehlgeschlagen: ' + err.message);
   }
 }
 
@@ -773,6 +783,21 @@ async function loadZeiten() {
   };
 }
 
+  async function reloadZeitenTabelle() {
+  zeitenIndex = 0;
+  const daten = await apiFetch(`/api/zeiten?offset=${zeitenIndex}&limit=${zeilenProSeite}`);
+  window.alleZeitenCache = [...daten];
+  gefilterteZeiten = [...daten];
+  document.querySelector('#zeiten-table tbody').innerHTML = '';
+  renderZeitenChunk();
+}
+
+async function reloadArbeitszeitenTabelle() {
+  const daten = await apiFetch('/api/zeiten');
+  const berechnet = berechneArbeitszeiten(daten);
+  renderArbeitszeiten(berechnet);
+}
+
   //QR code Passwort setzen
 // QR-Passwort speichern
 document.getElementById('qr-passwort-button').addEventListener('click', async () => {
@@ -856,24 +881,25 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('dashboard').style.display = 'none';
 });
 
-  //Aktualisieren der Tabelle
-document.getElementById('zeiten-aktualisieren').addEventListener('click', async () => {
-  zeitenIndex = 0;
-  const btn = document.getElementById('zeiten-aktualisieren');
+  //Aktualisieren der Tabellen
+document.getElementById('daten-aktualisieren').addEventListener('click', async () => {
+  const btn = document.getElementById('daten-aktualisieren');
   btn.textContent = '⏳ Lädt...';
-  
+
   try {
-    window.alleZeitenCache = await apiFetch(`/api/zeiten?offset=${zeitenIndex}&limit=${zeilenProSeite}`);
-    gefilterteZeiten = [...window.alleZeitenCache];
-    document.querySelector('#zeiten-table tbody').innerHTML = '';
-    renderZeitenChunk();
+    await Promise.all([
+      reloadZeitenTabelle(),
+      reloadArbeitszeitenTabelle(),
+      loadUsers()
+    ]);
   } catch (err) {
-    console.error(err);
+    console.error('Fehler beim Aktualisieren:', err);
     alert('Fehler beim Aktualisieren: ' + err.message);
   } finally {
-    btn.textContent = '🔄 Aktualisieren';
+    btn.textContent = '🔄 Alle Daten aktualisieren';
   }
 });
+
 
   //Mehr laden button
 document.getElementById('zeiten-mehrladen').addEventListener('click', () => {
