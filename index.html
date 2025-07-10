@@ -257,7 +257,11 @@ document.querySelectorAll('nav button').forEach(btn => {
   renderArbeitszeiten(gefiltert);
 });
 
-  const backendUrl = 'https://backend-869x.onrender.com';
+let globalZeiten = [];
+let gefilterteZeiten = [];
+let zeitenIndex = 0;
+const zeilenProSeite = 20;
+const backendUrl = 'https://backend-869x.onrender.com';
 
   const loginForm = document.getElementById('login-form');
   const errorMsg = document.getElementById('error-msg');
@@ -265,47 +269,40 @@ document.querySelectorAll('nav button').forEach(btn => {
   const dashboard = document.getElementById('dashboard');
 
   loginForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    errorMsg.textContent = '';
+  e.preventDefault();
+  errorMsg.textContent = '...';
 
-    const formData = new FormData(loginForm);
-    const payload = {
-      email: formData.get('email'),
-      passwort: formData.get('passwort')
-    };
+  const formData = new FormData(loginForm);
+  const payload = {
+    email: formData.get('email'),
+    passwort: formData.get('passwort')
+  };
 
-    try {
-      const res = await fetch(`${backendUrl}/api/admin-login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include',
-        body: JSON.stringify(payload)
-      });
+  try {
+    const res = await fetch(`${backendUrl}/api/admin-login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(payload)
+    });
 
-      const data = await res.json();
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Fehler beim Login.');
 
-      if (!res.ok) {
-        errorMsg.textContent = data.error || data.message || 'Fehler beim Login.';
-        return;
-      }
-
-      if (data.csrfToken) {
-        localStorage.setItem('csrfToken', data.csrfToken);
-      }
-
-      loginCard.style.display = 'none';
-      dashboard.style.display = 'block';
-
-      loadZeiten();
-      loadUsers();
-
-    } catch (err) {
-      console.error(err);
-      errorMsg.textContent = 'Verbindungsfehler zum Backend.';
+    if (data.csrfToken) {
+      localStorage.setItem('csrfToken', data.csrfToken);
     }
-  });
+
+    loginCard.style.display = 'none';
+    dashboard.style.display = 'block';
+    await Promise.all([loadZeiten(), loadUsers()]);
+
+  } catch (err) {
+    errorMsg.textContent = err.message;
+    console.error('Loginfehler:', err);
+  }
+});
+
 
 async function apiFetch(path, options = {}) {
   const method = (options.method || 'GET').toUpperCase();
@@ -379,13 +376,14 @@ async function tryTokenRefresh() {
 
 async function loadUsers() {
   try {
-    const users = await apiFetch('/api/user');
+    const users = await apiFetch('/api/users'); // nicht: /api/user
     renderUsers(users);
   } catch (err) {
     console.error('Fehler beim Laden der Benutzer:', err);
     document.getElementById('users-error').textContent = err.message;
   }
 }
+
 
 async function loadZeiten() {
   try {
@@ -649,8 +647,6 @@ function renderArbeitszeiten(daten) {
   }
 }
 
-
-  
 function renderUsers(users) {
   const tbody = document.querySelector('#users-table tbody');
   tbody.innerHTML = '';
@@ -758,11 +754,6 @@ function renderZeitenChunk() {
   mehrBtn.style.display = zeitenIndex >= gefilterteZeiten.length ? 'none' : 'block';
 }
 
-let globalZeiten = [];
-let gefilterteZeiten = [];
-let zeitenIndex = 0;
-const zeilenProSeite = 20;
-
 async function loadZeiten() {
   try {
     globalZeiten = await apiFetch('/api/zeiten');
@@ -865,8 +856,8 @@ document.getElementById('zeitensuche').addEventListener('input', debounce(async 
 
 // Beim Laden der Seite
 document.addEventListener('DOMContentLoaded', () => {
-  loadUsers();
-  loadZeiten();
+  document.getElementById('login-card').style.display = 'block';
+  document.getElementById('dashboard').style.display = 'none';
 });
 
   //Aktualisieren der Tabelle
@@ -891,16 +882,6 @@ document.getElementById('zeiten-mehrladen').addEventListener('click', () => {
   renderZeitenChunk();
 });
   
-// Benutzer laden
-async function loadUsers() {
-  try {
-    const users = await apiFetch('/api/users');
-    renderUsers(users);
-  } catch (e) {
-    console.error('Fehler beim Laden der Benutzer:', e);
-  }
-}
-   
 </script>
 
 </body>
