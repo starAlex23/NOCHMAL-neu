@@ -258,6 +258,10 @@ let allUsers = [];
 let usersIndex = 0;
 const benutzerProSeite = 20;
 const zeilenProSeite = 20;
+//Für Arbeitszeiten pro Tag-Tabelle
+let arbeitszeitenIndex = 0;
+const arbeitszeitenProSeite = 20;
+let alleArbeitszeiten = [];
 const backendUrl = 'https://backend-869x.onrender.com';
 
   const loginForm = document.getElementById('login-form');
@@ -782,14 +786,37 @@ function renderZeitenChunk() {
     tbody.appendChild(tr);
   }
 
-  usersIndex += benutzerProSeite;
-
+  usersIndex += benutzerProSeite; 
   // "Mehr laden" Button ausblenden wenn alles angezeigt
   const mehrBtn = document.getElementById('users-mehrladen');
   mehrBtn.style.display = usersIndex >= allUsers.length ? 'none' : 'block';
 
   // EventListener für neue Elemente
   addUserRowListeners();
+}
+
+//Laden der Tabelle Arbeitszeiten nach mehrladen Button
+function renderArbeitszeitenChunk() {
+  const tbody = document.querySelector('#arbeitszeiten-table tbody');
+  const next = alleArbeitszeiten.slice(arbeitszeitenIndex, arbeitszeitenIndex + arbeitszeitenProSeite);
+
+  for (const eintrag of next) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${eintrag.name}</td>
+      <td>${eintrag.datum}</td>
+      <td>${eintrag.start}</td>
+      <td>${eintrag.stop}</td>
+      <td>${eintrag.dauer}</td>
+    `;
+    tbody.appendChild(tr);
+  }
+
+  arbeitszeitenIndex += arbeitszeitenProSeite;
+
+  // Button ausblenden wenn alle geladen sind
+  const btn = document.getElementById('arbeitszeiten-mehrladen');
+  btn.style.display = arbeitszeitenIndex >= alleArbeitszeiten.length ? 'none' : 'block';
 }
 
 async function loadZeiten() {
@@ -825,6 +852,24 @@ async function loadAllUsers() {
     renderUserChunk();
   } catch (err) {
     console.error('Fehler beim Laden der Benutzer:', err);
+  }
+}
+
+async function reloadArbeitszeitenTabelle() {
+  try {
+    const daten = await apiFetch('/api/zeiten');
+    alleArbeitszeiten = berechneArbeitszeiten(daten); // nutzt deine bestehende Logik
+    arbeitszeitenIndex = 0;
+
+    const tbody = document.querySelector('#arbeitszeiten-table tbody');
+    tbody.innerHTML = '';
+
+    renderArbeitszeitenChunk();
+
+    // Button anzeigen (zurücksetzen)
+    document.getElementById('arbeitszeiten-mehrladen').style.display = 'block';
+  } catch (e) {
+    console.error('Fehler beim Laden der Arbeitszeiten:', e);
   }
 }
 
@@ -975,8 +1020,9 @@ document.getElementById('daten-aktualisieren').addEventListener('click', async (
       loadUsers()
     ]);
 
-    // 👇 Button nach Aktualisierung wieder einblenden
+    // Buttons wieder anzeigen
     document.getElementById('users-mehrladen').style.display = 'block';
+    document.getElementById('arbeitszeiten-mehrladen').style.display = 'block';
 
   } catch (err) {
     console.error('Fehler beim Aktualisieren:', err);
@@ -985,7 +1031,6 @@ document.getElementById('daten-aktualisieren').addEventListener('click', async (
     btn.textContent = '🔄 Alle Daten aktualisieren';
   }
 });
-
 
 document.getElementById('edit-users-btn').addEventListener('click', () => {
   editMode = !editMode;
@@ -1032,13 +1077,17 @@ document.querySelectorAll('nav button').forEach(btn => {
   renderArbeitszeiten(gefiltert);
 });
   
-  //Mehr laden button
+  //Mehr laden buttons
 document.getElementById('zeiten-mehrladen').addEventListener('click', () => {
   renderZeitenChunk();
 });
 
   document.getElementById('users-mehrladen').addEventListener('click', () => {
   renderUserChunk();
+});
+
+  document.getElementById('arbeitszeiten-mehrladen').addEventListener('click', () => {
+  renderArbeitszeitenChunk();
 });
 
 </script>
