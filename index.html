@@ -304,11 +304,6 @@ const dashboard = document.getElementById('dashboard');
       loadUsers()
     ]);
 
-    // ▶️ "Mehr laden"-Buttons anzeigen
-    document.getElementById('zeiten-mehrladen')?.style.display = 'block';
-    document.getElementById('arbeitszeiten-mehrladen')?.style.display = 'block';
-    document.getElementById('users-mehrladen')?.style.display = 'block';
-
   } catch (err) {
     errorMsg.textContent = err.message;
     console.error('Loginfehler:', err);
