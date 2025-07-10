@@ -264,10 +264,10 @@ const arbeitszeitenProSeite = 20;
 let alleArbeitszeiten = [];
 const backendUrl = 'https://backend-869x.onrender.com';
 
-  const loginForm = document.getElementById('login-form');
-  const errorMsg = document.getElementById('error-msg');
-  const loginCard = document.getElementById('login-card');
-  const dashboard = document.getElementById('dashboard');
+const loginForm = document.getElementById('login-form');
+const errorMsg = document.getElementById('error-msg');
+const loginCard = document.getElementById('login-card');
+const dashboard = document.getElementById('dashboard');
 
   loginForm.addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -296,7 +296,18 @@ const backendUrl = 'https://backend-869x.onrender.com';
 
     loginCard.style.display = 'none';
     dashboard.style.display = 'block';
-    await Promise.all([loadZeiten(), loadUsers()]);
+
+    // 🔄 Tabellen und Benutzer laden
+    await Promise.all([
+      reloadZeitenTabelle(),
+      reloadArbeitszeitenTabelle(),
+      loadUsers()
+    ]);
+
+    // ▶️ "Mehr laden"-Buttons anzeigen
+    document.getElementById('zeiten-mehrladen')?.style.display = 'block';
+    document.getElementById('arbeitszeiten-mehrladen')?.style.display = 'block';
+    document.getElementById('users-mehrladen')?.style.display = 'block';
 
   } catch (err) {
     errorMsg.textContent = err.message;
