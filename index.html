@@ -1151,8 +1151,15 @@ document.querySelectorAll('nav button').forEach(btn => {
 });
   
   //Mehr laden buttons
-document.getElementById('zeiten-mehrladen').addEventListener('click', () => {
-  renderZeitenChunk();
+document.addEventListener('DOMContentLoaded', () => {
+  const btn = document.getElementById('zeiten-mehrladen');
+  if (btn) {
+    btn.addEventListener('click', () => {
+      renderZeitenChunk();
+    });
+  } else {
+    console.warn('Button mit ID "zeiten-mehrladen" nicht gefunden');
+  }
 });
 
   document.getElementById('users-mehrladen').addEventListener('click', () => {
