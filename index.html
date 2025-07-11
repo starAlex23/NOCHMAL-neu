@@ -145,11 +145,72 @@
       padding: 0 2rem;
     }
 
-    #daten-aktualisieren {
-      max-width: 200px;
-      background: #0073e6;
-      font-size: 0.95rem;
-    }
+    /* Dark Mode Styles */
+body.dark-mode {
+  --bg-main: #121212;
+  --bg-card: #1e1e1e;
+  --primary: #1b5e20;        /* Dunkelgrün */
+  --primary-light: #2e7d32;
+  --border-color: #333;
+  --text-color: #eee;
+  --muted: #aaa;
+}
+
+body.dark-mode {
+  background-color: var(--bg-main);
+  color: var(--text-color);
+}
+
+body.dark-mode #login-card,
+body.dark-mode .panel,
+body.dark-mode .section {
+  background-color: var(--bg-card);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.8);
+}
+
+body.dark-mode button {
+  background-color: var(--primary);
+  color: white;
+  border-color: var(--primary-light);
+}
+
+body.dark-mode button:hover {
+  background-color: var(--primary-light);
+}
+
+body.dark-mode nav {
+  background-color: var(--primary);
+  color: white;
+}
+
+body.dark-mode nav button {
+  background: white;
+  color: var(--primary);
+}
+
+body.dark-mode nav button.active {
+  background: var(--primary-light);
+  color: white;
+}
+
+/* Aktualisieren-Button woanders */
+#daten-aktualisieren {
+  max-width: 200px;
+  background: #0073e6;
+  font-size: 0.95rem;
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1000;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+body.dark-mode #daten-aktualisieren {
+  background-color: var(--primary);
+  box-shadow: 0 0 10px var(--primary-light);
+}
   </style>
 </head>
 <body>
@@ -164,12 +225,15 @@
   </div>
 
   <div id="dashboard">
-    <nav>
-      <button data-target="arbeitszeiten-section" class="active">Arbeitszeiten</button>
-      <button data-target="users-section">Benutzer</button>
-      <button data-target="qr-passwort-section">QR-Passwort</button>
-      <button data-target="zeiten-section">Datenbank</button>
-    </nav>
+   <nav>
+  <button data-target="arbeitszeiten-section" class="active">Arbeitszeiten</button>
+  <button data-target="users-section">Benutzer</button>
+  <button data-target="qr-passwort-section">QR-Passwort</button>
+  <button data-target="zeiten-section">Datenbank</button>
+  <button id="dark-mode-toggle" style="margin-left:auto; background: transparent; color: inherit; border:none; cursor:pointer;">
+    🌙 Dark Mode
+  </button>
+</nav>
 
     <div id="top-controls">
       <button id="daten-aktualisieren">🔄 Alle Daten aktualisieren</button>
@@ -1093,6 +1157,17 @@ document.getElementById('zeiten-mehrladen').addEventListener('click', () => {
   renderArbeitszeitenChunk();
 });
 
+document.getElementById('dark-mode-toggle').addEventListener('click', () => {
+  document.body.classList.toggle('dark-mode');
+
+  // Toggle Text ändern
+  const btn = document.getElementById('dark-mode-toggle');
+  if (document.body.classList.contains('dark-mode')) {
+    btn.textContent = '☀️ Hellmodus';
+  } else {
+    btn.textContent = '🌙 Dark Mode';
+  }
+});
 </script>
 
 </body>
