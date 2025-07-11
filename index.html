@@ -583,46 +583,43 @@ function berechneArbeitszeiten(zeitstempel) {
     const einträge = gruppiert[key].sort((a, b) => a.zeit - b.zeit);
 
     let startZeit = null;
-    let arbeitszeitMs = 0;
-    let ersteStart = null;
-    let letzteStop = null;
 
     for (const e of einträge) {
       if (e.aktion === 'start') {
+        // Startzeit merken
         startZeit = e.zeit;
-        if (!ersteStart) ersteStart = startZeit;
-      }
-      if (e.aktion === 'stop' && startZeit) {
-        arbeitszeitMs += e.zeit - startZeit;
-        letzteStop = e.zeit;
+      } else if (e.aktion === 'stop' && startZeit) {
+        // Stopzeit gefunden, Differenz berechnen und Ergebnis speichern
+        const arbeitszeitMs = e.zeit - startZeit;
+        const stunden = Math.floor(arbeitszeitMs / (1000 * 60 * 60));
+        const minuten = Math.floor((arbeitszeitMs / (1000 * 60)) % 60);
+
+        result.push({
+          id: user_id,
+          name: `${vorname} ${nachname}`.trim(),
+          datum,
+          start: startZeit.toLocaleTimeString('de-DE', {
+            hour: '2-digit',
+            minute: '2-digit',
+            timeZone: 'Europe/Berlin'
+          }),
+          stop: e.zeit.toLocaleTimeString('de-DE', {
+            hour: '2-digit',
+            minute: '2-digit',
+            timeZone: 'Europe/Berlin'
+          }),
+          dauer: `${stunden}h ${minuten.toString().padStart(2, '0')}min`
+        });
+
+        // Start zurücksetzen für den nächsten Abschnitt
         startZeit = null;
       }
-    }
-
-    if (arbeitszeitMs > 0 && ersteStart && letzteStop) {
-      const stunden = Math.floor(arbeitszeitMs / (1000 * 60 * 60));
-      const minuten = Math.floor((arbeitszeitMs / (1000 * 60)) % 60);
-      result.push({
-        id: user_id,
-        name: `${vorname} ${nachname}`.trim(),
-        datum,
-        start: ersteStart.toLocaleTimeString('de-DE', {
-          hour: '2-digit',
-          minute: '2-digit',
-          timeZone: 'Europe/Berlin'
-        }),
-        stop: letzteStop.toLocaleTimeString('de-DE', {
-          hour: '2-digit',
-          minute: '2-digit',
-          timeZone: 'Europe/Berlin'
-        }),
-        dauer: `${stunden}h ${minuten.toString().padStart(2, '0')}min`
-      });
     }
   }
 
   return result;
 }
+
 
 function renderArbeitszeiten(daten) {
   const tbody = document.querySelector('#arbeitszeiten-table tbody');
