@@ -1128,14 +1128,19 @@ document.querySelectorAll('nav button').forEach(btn => {
     document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
 
-    document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
+    document.querySelectorAll('.section').forEach(sec => {
+      sec.classList.remove('active');
+      sec.classList.add('hidden');  // Sektionen verstecken
+    });
 
-    const targetSection = document.getElementById(btn.dataset.target);
-    if (targetSection) {
-      targetSection.classList.add('active');
-    } else {
-      console.warn(`Section mit ID '${btn.dataset.target}' nicht gefunden.`);
-    }
+    const targetId = btn.dataset.target;
+    if (!targetId) return;
+
+    const section = document.getElementById(targetId);
+    if (!section) return;
+
+    section.classList.remove('hidden');  // Sichtbar machen
+    section.classList.add('active');
   });
 });
 
