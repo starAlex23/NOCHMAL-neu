@@ -1129,7 +1129,13 @@ document.querySelectorAll('nav button').forEach(btn => {
     btn.classList.add('active');
 
     document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
-    document.getElementById(btn.dataset.target).classList.add('active');
+
+    const targetSection = document.getElementById(btn.dataset.target);
+    if (targetSection) {
+      targetSection.classList.add('active');
+    } else {
+      console.warn(`Section mit ID '${btn.dataset.target}' nicht gefunden.`);
+    }
   });
 });
 
