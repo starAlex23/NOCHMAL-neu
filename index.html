@@ -628,6 +628,7 @@ async function ladeLocationsDropdown() {
 // =================== Arbeitspläne ===================
 
 // Locations für Dropdown laden
+// Locations für Dropdown laden
 async function ladeLocations() {
   try {
     const locations = await apiFetch('/api/locations'); // direkt JSON
@@ -644,17 +645,38 @@ async function ladeLocations() {
   }
 }
 
+// Mitarbeiter für Dropdown laden (Mehrfachauswahl)
+async function ladeMitarbeiterDropdown() {
+  try {
+    const users = await apiFetch('/api/users'); // bestehende Route für User
+    const select = document.getElementById('plan-mitarbeiter');
+    select.innerHTML = '';
+    users.forEach(u => {
+      if(u.rolle === 'user'){ // nur normale Mitarbeiter
+        const opt = document.createElement('option');
+        opt.value = u.id;
+        opt.textContent = `${u.vorname} ${u.nachname} (${u.rolle})`;
+        select.appendChild(opt);
+      }
+    });
+  } catch (err) {
+    console.error("Fehler beim Laden der Mitarbeiter", err);
+  }
+}
+
 // Arbeitspläne laden und Tabelle füllen
 async function ladeArbeitsplaene() {
   try {
-    const plaene = await apiFetch('/api/workplans');
+    const plaene = await apiFetch('/api/workplans'); // JSON direkt
     const tbody = document.getElementById('arbeitsplan-tbody');
     tbody.innerHTML = '';
 
     plaene.forEach(plan => {
       const tr = document.createElement('tr');
 
-      const mitarbeiterText = plan.mitarbeiter ? plan.mitarbeiter.map(m => `${m.vorname} ${m.nachname} (${m.rolle})`).join(', ') : '';
+      const mitarbeiterText = plan.mitarbeiter && plan.mitarbeiter.length > 0
+        ? plan.mitarbeiter.map(m => `${m.vorname} ${m.nachname} (${m.rolle})`).join(', ')
+        : '';
 
       tr.innerHTML = `
         <td>${plan.datum}</td>
@@ -673,35 +695,6 @@ async function ladeArbeitsplaene() {
   }
 }
 
-// Plan nur ausblenden
-async function loescheArbeitsplan(planId) {
-  if (!confirm("Plan wirklich ausblenden?")) return;
-  try {
-    await apiFetch(`/api/workplans/${planId}`, { method: 'DELETE' });
-    await ladeArbeitsplaene();
-  } catch (err) {
-    console.error('Fehler beim Löschen des Plans', err);
-  }
-}
-
-async function ladeMitarbeiterDropdown() {
-  try {
-    const users = await apiFetch('/api/users'); // bestehende Route für User
-    const select = document.getElementById('plan-mitarbeiter');
-    select.innerHTML = '';
-    users.forEach(u => {
-      if(u.rolle === 'user'){ // nur normale Mitarbeiter
-        const opt = document.createElement('option');
-        opt.value = u.id;
-        opt.textContent = `${u.vorname} ${u.nachname}`;
-        select.appendChild(opt);
-      }
-    });
-  } catch (err) {
-    console.error("Fehler beim Laden der Mitarbeiter", err);
-  }
-}
-  
 // Neuen Arbeitsplan erstellen
 document.getElementById('arbeitsplan-erstellen').addEventListener('click', async () => {
   const datum = document.getElementById('plan-datum').value;
@@ -728,11 +721,21 @@ document.getElementById('arbeitsplan-erstellen').addEventListener('click', async
   }
 });
 
+// Plan nur ausblenden
+async function loescheArbeitsplan(planId) {
+  if (!confirm("Plan wirklich ausblenden?")) return;
+  try {
+    await apiFetch(`/api/workplans/${planId}`, { method: 'DELETE' });
+    await ladeArbeitsplaene();
+  } catch (err) {
+    console.error('Fehler beim Löschen des Plans', err);
+  }
+}
+
 // Detailansicht eines Arbeitsplans
 async function zeigeArbeitsplanDetail(planId) {
   try {
-    const res = await apiFetch(`/api/workplans/${planId}`);
-    const plan = await res.json();
+    const plan = await apiFetch(`/api/workplans/${planId}`); // bereits JSON
 
     let text = `Datum: ${plan.datum}\nStandort: ${plan.location_name}\nBeschreibung: ${plan.beschreibung || ''}\n\nMitarbeiter:\n`;
     plan.mitarbeiter.forEach(m => {
@@ -748,12 +751,11 @@ async function zeigeArbeitsplanDetail(planId) {
   }
 }
 
-// Initial laden wenn Section aktiviert wird
-document.querySelector('[data-target="arbeitsplan-section"]').addEventListener('click', async () => {
-  await ladeLocationsDropdown();
-  await ladeLocationsTabelle();
-  await ladeArbeitsplaene();
+// Initialisierung beim Laden der Seite
+window.addEventListener('DOMContentLoaded', async () => {
+  await ladeLocations();
   await ladeMitarbeiterDropdown();
+  await ladeArbeitsplaene();
 });
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   
