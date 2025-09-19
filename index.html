@@ -192,6 +192,25 @@ body.dark-mode nav button.active {
   color: white;
 }
 
+.dropdown { position: relative; display: inline-block; }
+  .dropdown-content {
+    display: none;
+    position: absolute;
+    right: 0;
+    background: white;
+    border: 1px solid #ccc;
+    z-index: 10;
+    min-width: 100px;
+  }
+  .dropdown-content a {
+    display: block;
+    padding: 5px 10px;
+    text-decoration: none;
+    color: black;
+  }
+  .dropdown-content a:hover { background: #eee; }
+  .dropdown:hover .dropdown-content { display: block; }
+    
 /* Aktualisieren-Button woanders */
 #daten-aktualisieren {
   max-width: 200px;
@@ -265,22 +284,28 @@ body.dark-mode #daten-aktualisieren {
 <section id="arbeitsplan-section" class="section hidden">
   <h2>Arbeitspläne</h2>
 
-<div id="arbeitsplan-form">
-  <input type="date" id="plan-datum" required />
-  <select id="plan-location"></select>
-  <input type="text" id="plan-beschreibung" placeholder="Beschreibung (optional)" />
+  <!-- Toggle-Button für Formular -->
+  <button id="arbeitsplan-toggle">▼ Plan erstellen</button>
 
-  <label for="plan-mitarbeiter">Mitarbeiter zuweisen:</label>
-  <select id="plan-mitarbeiter" multiple style="width: 100%; height: 100px;"></select>
+  <!-- Erstellungsformular (einklappbar) -->
+  <div id="arbeitsplan-form" style="display:none; margin-top:1rem;">
+    <input type="date" id="plan-datum" required />
+    <input type="time" id="plan-uhrzeit" required />
+    <select id="plan-location"></select>
+    <input type="text" id="plan-beschreibung" placeholder="Beschreibung (optional)" />
 
-  <button id="arbeitsplan-erstellen">➕ Plan erstellen</button>
-</div>
+    <label>Mitarbeiter zuweisen:</label>
+    <div id="plan-mitarbeiter-container" style="max-height:150px; overflow-y:auto; border:1px solid #ccc; padding:5px;"></div>
 
+    <button id="arbeitsplan-erstellen">➕ Plan erstellen</button>
+  </div>
+
+  <!-- Tabellenansicht -->
   <div id="arbeitsplan-liste" class="table-container" style="margin-top:1rem;">
     <table>
       <thead>
         <tr>
-          <th>Datum</th>
+          <th>Datum / Uhrzeit</th>
           <th>Standort</th>
           <th>Mitarbeiter</th>
           <th>Aktionen</th>
@@ -630,7 +655,7 @@ async function ladeLocationsDropdown() {
 // Locations für Dropdown laden
 async function ladeLocations() {
   try {
-    const locations = await apiFetch('/api/locations'); // direkt JSON
+    const locations = await apiFetch('/api/locations'); 
     const select = document.getElementById('plan-location');
     select.innerHTML = '';
     locations.forEach(loc => {
@@ -644,18 +669,43 @@ async function ladeLocations() {
   }
 }
 
-// Mitarbeiter für Dropdown laden (Mehrfachauswahl)
-async function ladeMitarbeiterDropdown() {
+// === Mitarbeiter mit Checkboxen + Suche laden (NEU) ===
+async function ladeMitarbeiterCheckboxen() {
   try {
     const users = await apiFetch('/api/users'); 
-    const select = document.getElementById('plan-mitarbeiter');
-    select.innerHTML = '';
+    const container = document.getElementById('plan-mitarbeiter-container');
+    container.innerHTML = '';
+
+    // Suchfeld
+    const suchfeld = document.createElement('input');
+    suchfeld.type = 'text';
+    suchfeld.placeholder = 'Mitarbeiter suchen...';
+    suchfeld.style.width = '100%';
+    suchfeld.addEventListener('input', () => {
+      const filter = suchfeld.value.toLowerCase();
+      Array.from(container.querySelectorAll('.mitarbeiter-item')).forEach(div => {
+        div.style.display = div.textContent.toLowerCase().includes(filter) ? '' : 'none';
+      });
+    });
+    container.appendChild(suchfeld);
+
     users.forEach(u => {
-      if(u.rolle === 'user'){ 
-        const opt = document.createElement('option');
-        opt.value = u.id;
-        opt.textContent = `${u.vorname} ${u.nachname} (${u.rolle})`;
-        select.appendChild(opt);
+      if (u.rolle === 'user' || u.rolle === 'vorarbeiter') {
+        const div = document.createElement('div');
+        div.classList.add('mitarbeiter-item');
+
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.value = u.id;
+        cb.id = `mitarbeiter-${u.id}`;
+
+        const label = document.createElement('label');
+        label.setAttribute('for', `mitarbeiter-${u.id}`);
+        label.textContent = `${u.vorname} ${u.nachname} (${u.rolle})`;
+
+        div.appendChild(cb);
+        div.appendChild(label);
+        container.appendChild(div);
       }
     });
   } catch (err) {
@@ -663,7 +713,7 @@ async function ladeMitarbeiterDropdown() {
   }
 }
 
-// Arbeitspläne laden und Tabelle füllen
+// === Arbeitspläne laden + tabellarisch anzeigen (angepasst) ===
 async function ladeArbeitsplaene() {
   try {
     const plaene = await apiFetch('/api/workplans');
@@ -673,17 +723,23 @@ async function ladeArbeitsplaene() {
     plaene.forEach(plan => {
       const tr = document.createElement('tr');
 
-      const mitarbeiterText = plan.mitarbeiter && plan.mitarbeiter.length > 0
-        ? plan.mitarbeiter.map(m => `${m.vorname} ${m.nachname} (${m.rolle}) [${m.status}]`).join(', ')
+      const mitarbeiterBlock = plan.mitarbeiter && plan.mitarbeiter.length > 0
+        ? plan.mitarbeiter.map(m => `
+            <div>${m.rolle === 'vorarbeiter' ? '⭐ ' : ''}${m.vorname} ${m.nachname} (${m.rolle}) [${m.status}]</div>
+          `).join('')
         : '-';
 
       tr.innerHTML = `
-        <td>${plan.datum}</td>
+        <td>${plan.datum} ${plan.uhrzeit || ''}</td>
         <td>${plan.location_name || '-'}</td>
-        <td>${mitarbeiterText}</td>
+        <td>${mitarbeiterBlock}</td>
         <td>
-          <button onclick="zeigeArbeitsplanDetail(${plan.id})">📋 Details</button>
-          <button onclick="loescheArbeitsplan(${plan.id})">❌ Löschen</button>
+          <div class="dropdown">
+            <button class="menu-btn">⋮</button>
+            <div class="dropdown-content">
+              <a href="#" onclick="loescheArbeitsplan(${plan.id})">❌ Löschen</a>
+            </div>
+          </div>
         </td>
       `;
 
@@ -694,23 +750,24 @@ async function ladeArbeitsplaene() {
   }
 }
 
-// Neuen Arbeitsplan erstellen
+// === Plan erstellen (angepasst für Checkboxen + Uhrzeit) ===
 document.getElementById('arbeitsplan-erstellen').addEventListener('click', async () => {
   const datum = document.getElementById('plan-datum').value;
+  const uhrzeit = document.getElementById('plan-uhrzeit').value;
   const location_id = document.getElementById('plan-location').value;
   const beschreibung = document.getElementById('plan-beschreibung').value;
 
-  const mitarbeiterSelect = document.getElementById('plan-mitarbeiter');
-  const mitarbeiter = Array.from(mitarbeiterSelect.selectedOptions).map(opt => parseInt(opt.value));
+  const mitarbeiter = Array.from(document.querySelectorAll('#plan-mitarbeiter-container input[type="checkbox"]:checked'))
+    .map(cb => parseInt(cb.value));
 
-  if (!datum || !location_id) return alert("Datum und Standort auswählen!");
+  if (!datum || !uhrzeit || !location_id) return alert("Datum, Uhrzeit und Standort auswählen!");
   if (mitarbeiter.length === 0) return alert("Bitte mindestens einen Mitarbeiter auswählen!");
 
   try {
     await apiFetch('/api/workplans', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ datum, location_id, beschreibung, mitarbeiter })
+      body: JSON.stringify({ datum, uhrzeit, location_id, beschreibung, mitarbeiter })
     });
 
     alert("Arbeitsplan erstellt!");
@@ -720,9 +777,9 @@ document.getElementById('arbeitsplan-erstellen').addEventListener('click', async
   }
 });
 
-// Plan ausblenden
+// === Plan löschen (unverändert) ===
 async function loescheArbeitsplan(planId) {
-  if (!confirm("Plan wirklich ausblenden?")) return;
+  if (!confirm("Plan wirklich löschen?")) return;
   try {
     await apiFetch(`/api/workplans/${planId}`, { method: 'DELETE' });
     await ladeArbeitsplaene();
@@ -730,6 +787,12 @@ async function loescheArbeitsplan(planId) {
     console.error('Fehler beim Löschen des Plans', err);
   }
 }
+
+// === Formular einklappbar machen (NEU) ===
+document.getElementById('arbeitsplan-toggle').addEventListener('click', () => {
+  const form = document.getElementById('arbeitsplan-form');
+  form.style.display = form.style.display === 'none' ? 'block' : 'none';
+});
 
 // Detailansicht eines Arbeitsplans
 async function zeigeArbeitsplanDetail(planId) {
