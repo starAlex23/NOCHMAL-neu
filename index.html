@@ -669,6 +669,25 @@ async function ladeLocations() {
   }
 }
 
+// Mitarbeiter für Dropdown laden (nicht löschen!)
+async function ladeMitarbeiterDropdown() {
+  try {
+    const users = await apiFetch('/api/users'); 
+    const select = document.getElementById('plan-mitarbeiter');
+    select.innerHTML = '';
+    users.forEach(u => {
+      if(u.rolle === 'user'){ 
+        const opt = document.createElement('option');
+        opt.value = u.id;
+        opt.textContent = `${u.vorname} ${u.nachname} (${u.rolle})`;
+        select.appendChild(opt);
+      }
+    });
+  } catch (err) {
+    console.error("Fehler beim Laden der Mitarbeiter", err);
+  }
+}
+  
 // === Mitarbeiter mit Checkboxen + Suche laden (NEU) ===
 async function ladeMitarbeiterCheckboxen() {
   try {
