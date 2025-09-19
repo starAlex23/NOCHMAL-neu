@@ -674,21 +674,27 @@ async function ladeLocations() {
   }
 }
 
-// Mitarbeiter für Dropdown laden (nicht löschen!)
+// Mitarbeiter für Arbeitsplan laden (Checkboxen)
 async function ladeMitarbeiterDropdown() {
-  const select = document.getElementById('plan-mitarbeiter');
-  if (!select) return console.warn('Element #plan-mitarbeiter nicht gefunden!');
-  
+  const container = document.getElementById('plan-mitarbeiter-container');
+  if (!container) {
+    console.error('Element #plan-mitarbeiter-container nicht gefunden!');
+    return;
+  }
   try {
     const users = await apiFetch('/api/users'); 
-    select.innerHTML = '';
-    users.forEach(u => {
-      if(u.rolle === 'user'){ 
-        const opt = document.createElement('option');
-        opt.value = u.id;
-        opt.textContent = `${u.vorname} ${u.nachname} (${u.rolle})`;
-        select.appendChild(opt);
-      }
+    container.innerHTML = '';
+
+    users.filter(u => u.rolle === 'user').forEach(u => {
+      const label = document.createElement('label');
+      label.style.display = 'block';
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.value = u.id;
+      checkbox.dataset.name = `${u.vorname} ${u.nachname}`;
+      label.appendChild(checkbox);
+      label.appendChild(document.createTextNode(` ${u.vorname} ${u.nachname} (${u.rolle})`));
+      container.appendChild(label);
     });
   } catch (err) {
     console.error("Fehler beim Laden der Mitarbeiter", err);
