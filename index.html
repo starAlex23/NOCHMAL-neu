@@ -671,9 +671,11 @@ async function ladeLocations() {
 
 // Mitarbeiter für Dropdown laden (nicht löschen!)
 async function ladeMitarbeiterDropdown() {
+  const select = document.getElementById('plan-mitarbeiter');
+  if (!select) return console.warn('Element #plan-mitarbeiter nicht gefunden!');
+  
   try {
     const users = await apiFetch('/api/users'); 
-    const select = document.getElementById('plan-mitarbeiter');
     select.innerHTML = '';
     users.forEach(u => {
       if(u.rolle === 'user'){ 
