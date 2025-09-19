@@ -789,8 +789,9 @@ document.getElementById('arbeitsplan-erstellen').addEventListener('click', async
   const location_id = document.getElementById('plan-location').value;
   const beschreibung = document.getElementById('plan-beschreibung').value;
 
-  const mitarbeiter = Array.from(document.querySelectorAll('#plan-mitarbeiter-container input[type="checkbox"]:checked'))
-    .map(cb => parseInt(cb.value));
+  const mitarbeiter = Array.from(
+  document.querySelectorAll('#plan-mitarbeiter-container input[type="checkbox"]:checked')
+).map(cb => parseInt(cb.value));
 
   if (!datum || !uhrzeit || !location_id) return alert("Datum, Uhrzeit und Standort auswählen!");
   if (mitarbeiter.length === 0) return alert("Bitte mindestens einen Mitarbeiter auswählen!");
