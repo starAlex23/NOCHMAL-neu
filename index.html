@@ -628,7 +628,6 @@ async function ladeLocationsDropdown() {
 // =================== Arbeitspläne ===================
 
 // Locations für Dropdown laden
-// Locations für Dropdown laden
 async function ladeLocations() {
   try {
     const locations = await apiFetch('/api/locations'); // direkt JSON
@@ -648,11 +647,11 @@ async function ladeLocations() {
 // Mitarbeiter für Dropdown laden (Mehrfachauswahl)
 async function ladeMitarbeiterDropdown() {
   try {
-    const users = await apiFetch('/api/users'); // bestehende Route für User
+    const users = await apiFetch('/api/users'); 
     const select = document.getElementById('plan-mitarbeiter');
     select.innerHTML = '';
     users.forEach(u => {
-      if(u.rolle === 'user'){ // nur normale Mitarbeiter
+      if(u.rolle === 'user'){ 
         const opt = document.createElement('option');
         opt.value = u.id;
         opt.textContent = `${u.vorname} ${u.nachname} (${u.rolle})`;
@@ -667,7 +666,7 @@ async function ladeMitarbeiterDropdown() {
 // Arbeitspläne laden und Tabelle füllen
 async function ladeArbeitsplaene() {
   try {
-    const plaene = await apiFetch('/api/workplans'); // JSON direkt
+    const plaene = await apiFetch('/api/workplans');
     const tbody = document.getElementById('arbeitsplan-tbody');
     tbody.innerHTML = '';
 
@@ -675,8 +674,8 @@ async function ladeArbeitsplaene() {
       const tr = document.createElement('tr');
 
       const mitarbeiterText = plan.mitarbeiter && plan.mitarbeiter.length > 0
-        ? plan.mitarbeiter.map(m => `${m.vorname} ${m.nachname} (${m.rolle})`).join(', ')
-        : '';
+        ? plan.mitarbeiter.map(m => `${m.vorname} ${m.nachname} (${m.rolle}) [${m.status}]`).join(', ')
+        : '-';
 
       tr.innerHTML = `
         <td>${plan.datum}</td>
@@ -721,7 +720,7 @@ document.getElementById('arbeitsplan-erstellen').addEventListener('click', async
   }
 });
 
-// Plan nur ausblenden
+// Plan ausblenden
 async function loescheArbeitsplan(planId) {
   if (!confirm("Plan wirklich ausblenden?")) return;
   try {
@@ -735,11 +734,11 @@ async function loescheArbeitsplan(planId) {
 // Detailansicht eines Arbeitsplans
 async function zeigeArbeitsplanDetail(planId) {
   try {
-    const plan = await apiFetch(`/api/workplans/${planId}`); // bereits JSON
+    const plan = await apiFetch(`/api/workplans/${planId}`);
 
     let text = `Datum: ${plan.datum}\nStandort: ${plan.location_name}\nBeschreibung: ${plan.beschreibung || ''}\n\nMitarbeiter:\n`;
     plan.mitarbeiter.forEach(m => {
-      let statusSymbol = '⚪'; // wartend
+      let statusSymbol = '⚪'; 
       if (m.status === 'zugesagt') statusSymbol = '🟢';
       if (m.status === 'abgelehnt') statusSymbol = '🔴';
       text += `- ${m.vorname} ${m.nachname} (${m.rolle}) ${statusSymbol}\n`;
@@ -757,6 +756,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   await ladeMitarbeiterDropdown();
   await ladeArbeitsplaene();
 });
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   
   //Zeiten durchsuchen
