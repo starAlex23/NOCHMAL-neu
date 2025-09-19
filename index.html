@@ -229,6 +229,7 @@ body.dark-mode #daten-aktualisieren {
   <button data-target="users-section">Benutzer</button>
   <button data-target="qr-passwort-section">QR-Passwort</button>
   <button data-target="zeiten-section">Datenbank</button>
+  <button data-target="arbeitsplan-section">Arbeitspläne</button>
   <button id="dark-mode-toggle" style="margin-left:auto; background: transparent; color: inherit; border:none; cursor:pointer;">
     🌙 Dark Mode
   </button>
@@ -257,6 +258,31 @@ body.dark-mode #daten-aktualisieren {
       </div>
       <button id="arbeitszeiten-mehrladen">⬇ Mehr laden</button>
     </section>
+
+<section id="arbeitsplan-section" class="section hidden">
+  <h2>Arbeitspläne</h2>
+
+  <div id="arbeitsplan-form">
+    <input type="date" id="plan-datum" required />
+    <select id="plan-location"></select>
+    <input type="text" id="plan-beschreibung" placeholder="Beschreibung (optional)" />
+    <button id="arbeitsplan-erstellen">➕ Plan erstellen</button>
+  </div>
+
+  <div id="arbeitsplan-liste" class="table-container" style="margin-top:1rem;">
+    <table>
+      <thead>
+        <tr>
+          <th>Datum</th>
+          <th>Standort</th>
+          <th>Mitarbeiter</th>
+          <th>Aktionen</th>
+        </tr>
+      </thead>
+      <tbody id="arbeitsplan-tbody"></tbody>
+    </table>
+  </div>
+</section>
 
     <section id="users-section" class="section hidden">
     <h2>Benutzerverwaltung
@@ -501,6 +527,111 @@ async function setRole(userId, rolle) {
   }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// =================== Arbeitspläne ===================
+
+// Locations für Dropdown laden
+async function ladeLocations() {
+  try {
+    const res = await apiFetch('/api/locations');
+    const locations = await res.json();
+    const select = document.getElementById('plan-location');
+    select.innerHTML = '';
+    locations.forEach(loc => {
+      const opt = document.createElement('option');
+      opt.value = loc.id;
+      opt.textContent = loc.name;
+      select.appendChild(opt);
+    });
+  } catch (err) {
+    console.error('Fehler beim Laden der Locations', err);
+  }
+}
+
+// Arbeitspläne laden und Tabelle füllen
+async function ladeArbeitsplaene() {
+  try {
+    const res = await apiFetch('/api/workplans');
+    const plaene = await res.json();
+    const tbody = document.getElementById('arbeitsplan-tbody');
+    tbody.innerHTML = '';
+
+    plaene.forEach(plan => {
+      const tr = document.createElement('tr');
+
+      tr.innerHTML = `
+        <td>${plan.datum}</td>
+        <td>${plan.location_name || '-'}</td>
+        <td>${plan.mitarbeiter_count}</td>
+        <td>
+          <button onclick="zeigeArbeitsplanDetail(${plan.id})">📋 Details</button>
+        </td>
+      `;
+
+      tbody.appendChild(tr);
+    });
+  } catch (err) {
+    console.error('Fehler beim Laden der Arbeitspläne', err);
+  }
+}
+
+// Neuen Arbeitsplan erstellen
+document.getElementById('arbeitsplan-erstellen').addEventListener('click', async () => {
+  const datum = document.getElementById('plan-datum').value;
+  const location_id = document.getElementById('plan-location').value;
+  const beschreibung = document.getElementById('plan-beschreibung').value;
+
+  if (!datum || !location_id) {
+    alert('Datum und Standort auswählen!');
+    return;
+  }
+
+  try {
+    const res = await apiFetch('/api/workplans', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ datum, location_id, beschreibung })
+    });
+
+    if (res.ok) {
+      alert('Plan erstellt!');
+      ladeArbeitsplaene();
+    } else {
+      const errData = await res.json();
+      alert('Fehler: ' + errData.error);
+    }
+  } catch (err) {
+    console.error('Fehler beim Erstellen des Plans', err);
+  }
+});
+
+// Detailansicht eines Arbeitsplans
+async function zeigeArbeitsplanDetail(planId) {
+  try {
+    const res = await apiFetch(`/api/workplans/${planId}`);
+    const plan = await res.json();
+
+    let text = `Datum: ${plan.datum}\nStandort: ${plan.location_name}\nBeschreibung: ${plan.beschreibung || ''}\n\nMitarbeiter:\n`;
+    plan.mitarbeiter.forEach(m => {
+      let statusSymbol = '⚪';
+      if (m.status === 'zugesagt') statusSymbol = '🟢';
+      if (m.status === 'abgelehnt') statusSymbol = '🔴';
+      text += `- ${m.vorname} ${m.nachname} ${statusSymbol}\n`;
+    });
+
+    alert(text);
+  } catch (err) {
+    console.error('Fehler beim Laden der Plan-Details', err);
+  }
+}
+
+// Initial laden wenn Section aktiviert wird
+document.querySelector('[data-target="arbeitsplan-section"]').addEventListener('click', () => {
+  ladeLocations();
+  ladeArbeitsplaene();
+});
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  
   //Zeiten durchsuchen
 function filterZeiten(suchbegriff, alleZeiten) {
   const begriffe = suchbegriff.trim().toLowerCase().split(/\s+/).filter(Boolean);
