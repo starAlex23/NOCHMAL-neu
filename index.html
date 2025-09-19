@@ -647,19 +647,22 @@ async function ladeLocations() {
 // Arbeitspläne laden und Tabelle füllen
 async function ladeArbeitsplaene() {
   try {
-    const plaene = await apiFetch('/api/workplans'); // direkt JSON
+    const plaene = await apiFetch('/api/workplans');
     const tbody = document.getElementById('arbeitsplan-tbody');
     tbody.innerHTML = '';
 
     plaene.forEach(plan => {
       const tr = document.createElement('tr');
 
+      const mitarbeiterText = plan.mitarbeiter ? plan.mitarbeiter.map(m => `${m.vorname} ${m.nachname} (${m.rolle})`).join(', ') : '';
+
       tr.innerHTML = `
         <td>${plan.datum}</td>
         <td>${plan.location_name || '-'}</td>
-        <td>${plan.mitarbeiter_count}</td>
+        <td>${mitarbeiterText}</td>
         <td>
           <button onclick="zeigeArbeitsplanDetail(${plan.id})">📋 Details</button>
+          <button onclick="loescheArbeitsplan(${plan.id})">❌ Löschen</button>
         </td>
       `;
 
@@ -667,6 +670,17 @@ async function ladeArbeitsplaene() {
     });
   } catch (err) {
     console.error('Fehler beim Laden der Arbeitspläne', err);
+  }
+}
+
+// Plan nur ausblenden
+async function loescheArbeitsplan(planId) {
+  if (!confirm("Plan wirklich ausblenden?")) return;
+  try {
+    await apiFetch(`/api/workplans/${planId}`, { method: 'DELETE' });
+    await ladeArbeitsplaene();
+  } catch (err) {
+    console.error('Fehler beim Löschen des Plans', err);
   }
 }
 
@@ -698,6 +712,7 @@ document.getElementById('arbeitsplan-erstellen').addEventListener('click', async
   const mitarbeiter = Array.from(mitarbeiterSelect.selectedOptions).map(opt => parseInt(opt.value));
 
   if (!datum || !location_id) return alert("Datum und Standort auswählen!");
+  if (mitarbeiter.length === 0) return alert("Bitte mindestens einen Mitarbeiter auswählen!");
 
   try {
     await apiFetch('/api/workplans', {
@@ -721,10 +736,10 @@ async function zeigeArbeitsplanDetail(planId) {
 
     let text = `Datum: ${plan.datum}\nStandort: ${plan.location_name}\nBeschreibung: ${plan.beschreibung || ''}\n\nMitarbeiter:\n`;
     plan.mitarbeiter.forEach(m => {
-      let statusSymbol = '⚪';
+      let statusSymbol = '⚪'; // wartend
       if (m.status === 'zugesagt') statusSymbol = '🟢';
       if (m.status === 'abgelehnt') statusSymbol = '🔴';
-      text += `- ${m.vorname} ${m.nachname} ${statusSymbol}\n`;
+      text += `- ${m.vorname} ${m.nachname} (${m.rolle}) ${statusSymbol}\n`;
     });
 
     alert(text);
