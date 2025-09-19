@@ -230,6 +230,7 @@ body.dark-mode #daten-aktualisieren {
   <button data-target="qr-passwort-section">QR-Passwort</button>
   <button data-target="zeiten-section">Datenbank</button>
   <button data-target="arbeitsplan-section">Arbeitspläne</button>
+  <button data-target="locations-section">Standorte</button>
   <button id="dark-mode-toggle" style="margin-left:auto; background: transparent; color: inherit; border:none; cursor:pointer;">
     🌙 Dark Mode
   </button>
@@ -239,6 +240,7 @@ body.dark-mode #daten-aktualisieren {
       <button id="daten-aktualisieren">🔄 Alle Daten aktualisieren</button>
     </div>
 
+    
     <section id="arbeitszeiten-section" class="section">
       <h2>Arbeitszeiten (pro Tag)</h2>
       <input type="text" id="arbeitszeiten-suche" placeholder="Suche nach Name oder Datum..." />
@@ -259,15 +261,20 @@ body.dark-mode #daten-aktualisieren {
       <button id="arbeitszeiten-mehrladen">⬇ Mehr laden</button>
     </section>
 
+    
 <section id="arbeitsplan-section" class="section hidden">
   <h2>Arbeitspläne</h2>
 
-  <div id="arbeitsplan-form">
-    <input type="date" id="plan-datum" required />
-    <select id="plan-location"></select>
-    <input type="text" id="plan-beschreibung" placeholder="Beschreibung (optional)" />
-    <button id="arbeitsplan-erstellen">➕ Plan erstellen</button>
-  </div>
+<div id="arbeitsplan-form">
+  <input type="date" id="plan-datum" required />
+  <select id="plan-location"></select>
+  <input type="text" id="plan-beschreibung" placeholder="Beschreibung (optional)" />
+
+  <label for="plan-mitarbeiter">Mitarbeiter zuweisen:</label>
+  <select id="plan-mitarbeiter" multiple style="width: 100%; height: 100px;"></select>
+
+  <button id="arbeitsplan-erstellen">➕ Plan erstellen</button>
+</div>
 
   <div id="arbeitsplan-liste" class="table-container" style="margin-top:1rem;">
     <table>
@@ -284,6 +291,33 @@ body.dark-mode #daten-aktualisieren {
   </div>
 </section>
 
+    
+<section id="locations-section" class="section hidden">
+  <h2>Standorte verwalten</h2>
+
+  <form id="location-form">
+    <input type="text" id="loc-name" placeholder="Standortname" required />
+    <input type="text" id="loc-adresse" placeholder="Adresse (optional)" />
+    <input type="text" id="loc-google" placeholder="Google Maps Link (optional)" />
+    <button type="submit">➕ Standort speichern</button>
+  </form>
+
+  <hr />
+
+  <div class="table-container">
+    <table id="locations-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Adresse</th>
+          <th>Google Link</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</section>
+    
     <section id="users-section" class="section hidden">
     <h2>Benutzerverwaltung
   <button id="edit-users-btn" style="float:right;">✏️ Bearbeiten</button>
@@ -527,6 +561,69 @@ async function setRole(userId, rolle) {
   }
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Standort erstellen
+document.getElementById('location-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  try {
+    const name = document.getElementById('loc-name').value.trim();
+    const adresse = document.getElementById('loc-adresse').value.trim();
+    const google_maps_link = document.getElementById('loc-google').value.trim();
+
+    if (!name) return alert("Name ist erforderlich!");
+
+    await apiFetch('/api/locations', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, adresse, google_maps_link })
+    });
+
+    document.getElementById('location-form').reset();
+    await ladeLocationsTabelle();
+    await ladeLocationsDropdown(); // Arbeitsplan-Form aktualisieren
+  } catch (err) {
+    console.error("Fehler beim Speichern des Standorts", err);
+  }
+});
+
+// Alle Standorte laden
+async function ladeLocationsTabelle() {
+  try {
+    const locations = await apiFetch('/api/locations');
+    const tbody = document.querySelector('#locations-table tbody');
+    tbody.innerHTML = '';
+
+    locations.forEach(loc => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${loc.name}</td>
+        <td>${loc.adresse || '-'}</td>
+        <td>${loc.google_maps_link ? `<a href="${loc.google_maps_link}" target="_blank">Link</a>` : '-'}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  } catch (err) {
+    console.error("Fehler beim Laden der Standorte", err);
+  }
+}
+
+// Locations für Dropdown in Arbeitsplan-Form laden
+async function ladeLocationsDropdown() {
+  try {
+    const locations = await apiFetch('/api/locations');
+    const select = document.getElementById('plan-location');
+    select.innerHTML = '';
+    locations.forEach(loc => {
+      const opt = document.createElement('option');
+      opt.value = loc.id;
+      opt.textContent = loc.name;
+      select.appendChild(opt);
+    });
+  } catch (err) {
+    console.error("Fehler beim Laden der Locations für Dropdown", err);
+  }
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // =================== Arbeitspläne ===================
 
@@ -573,33 +670,46 @@ async function ladeArbeitsplaene() {
   }
 }
 
+async function ladeMitarbeiterDropdown() {
+  try {
+    const users = await apiFetch('/api/users'); // bestehende Route für User
+    const select = document.getElementById('plan-mitarbeiter');
+    select.innerHTML = '';
+    users.forEach(u => {
+      if(u.rolle === 'user'){ // nur normale Mitarbeiter
+        const opt = document.createElement('option');
+        opt.value = u.id;
+        opt.textContent = `${u.vorname} ${u.nachname}`;
+        select.appendChild(opt);
+      }
+    });
+  } catch (err) {
+    console.error("Fehler beim Laden der Mitarbeiter", err);
+  }
+}
+  
 // Neuen Arbeitsplan erstellen
 document.getElementById('arbeitsplan-erstellen').addEventListener('click', async () => {
   const datum = document.getElementById('plan-datum').value;
   const location_id = document.getElementById('plan-location').value;
   const beschreibung = document.getElementById('plan-beschreibung').value;
 
-  if (!datum || !location_id) {
-    alert('Datum und Standort auswählen!');
-    return;
-  }
+  const mitarbeiterSelect = document.getElementById('plan-mitarbeiter');
+  const mitarbeiter = Array.from(mitarbeiterSelect.selectedOptions).map(opt => parseInt(opt.value));
+
+  if (!datum || !location_id) return alert("Datum und Standort auswählen!");
 
   try {
-    const res = await apiFetch('/api/workplans', {
+    await apiFetch('/api/workplans', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ datum, location_id, beschreibung })
+      body: JSON.stringify({ datum, location_id, beschreibung, mitarbeiter })
     });
 
-    if (res.ok) {
-      alert('Plan erstellt!');
-      ladeArbeitsplaene();
-    } else {
-      const errData = await res.json();
-      alert('Fehler: ' + errData.error);
-    }
+    alert("Arbeitsplan erstellt!");
+    await ladeArbeitsplaene();
   } catch (err) {
-    console.error('Fehler beim Erstellen des Plans', err);
+    console.error("Fehler beim Erstellen des Plans", err);
   }
 });
 
@@ -624,9 +734,11 @@ async function zeigeArbeitsplanDetail(planId) {
 }
 
 // Initial laden wenn Section aktiviert wird
-document.querySelector('[data-target="arbeitsplan-section"]').addEventListener('click', () => {
-  ladeLocations();
-  ladeArbeitsplaene();
+document.querySelector('[data-target="arbeitsplan-section"]').addEventListener('click', async () => {
+  await ladeLocationsDropdown();
+  await ladeLocationsTabelle();
+  await ladeArbeitsplaene();
+  await ladeMitarbeiterDropdown();
 });
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   
