@@ -533,8 +533,7 @@ async function setRole(userId, rolle) {
 // Locations für Dropdown laden
 async function ladeLocations() {
   try {
-    const res = await apiFetch('/api/locations');
-    const locations = await res.json();
+    const locations = await apiFetch('/api/locations'); // direkt JSON
     const select = document.getElementById('plan-location');
     select.innerHTML = '';
     locations.forEach(loc => {
@@ -551,8 +550,7 @@ async function ladeLocations() {
 // Arbeitspläne laden und Tabelle füllen
 async function ladeArbeitsplaene() {
   try {
-    const res = await apiFetch('/api/workplans');
-    const plaene = await res.json();
+    const plaene = await apiFetch('/api/workplans'); // direkt JSON
     const tbody = document.getElementById('arbeitsplan-tbody');
     tbody.innerHTML = '';
 
