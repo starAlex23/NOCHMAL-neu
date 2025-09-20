@@ -360,32 +360,34 @@ body.dark-mode #daten-aktualisieren {
 <section id="locations-section" class="section hidden">
   <h2>Standorte verwalten</h2>
 
-  <!-- Top-Kontrollen -->
-  <div id="top-controls">
-    <button id="toggle-form-btn">➕ Neuer Standort</button>
-    <div id="locations-menu" style="position:relative; display:inline-block;">
-      <button id="menu-btn">⋮ Optionen</button>
-      <div id="menu-dropdown" style="display:none; position:absolute; right:0; background:#fff; border:1px solid #ccc; padding:5px; z-index:10;">
-        <button id="edit-location-btn">Bearbeiten</button>
-        <button id="delete-location-btn">Löschen</button>
-      </div>
-    </div>
-  </div>
+  <!-- Button zum Einklappen/Ausklappen -->
+  <button id="toggle-add-form-btn">➕ Standort hinzufügen</button>
 
-  <!-- Eingabeformular einklappbar -->
-  <form id="location-form" class="hidden">
+  <!-- Formular zum Anlegen (initial versteckt) -->
+  <form id="location-form" style="display:none; margin-top:10px;">
     <input type="text" id="loc-name" placeholder="Standortname" required />
     <input type="text" id="loc-adresse" placeholder="Adresse (optional)" />
     <input type="text" id="loc-google" placeholder="Google Maps Link (optional)" />
     <button type="submit">Speichern</button>
   </form>
 
-  <!-- Tabelle -->
+  <hr />
+
+  <!-- Menü für Bearbeiten/Löschen (einmal pro Section) -->
+  <div id="locations-menu" style="position:relative; margin-bottom:5px;">
+    <button id="menu-btn">⋮ Optionen</button>
+    <div id="menu-dropdown" style="display:none; position:absolute; right:0; background:#fff; border:1px solid #ccc; padding:5px; z-index:10;">
+      <button id="edit-location-btn">Bearbeiten</button>
+      <button id="delete-location-btn">Löschen</button>
+    </div>
+  </div>
+
+  <!-- Tabelle mit Checkboxen -->
   <div class="table-container">
     <table id="locations-table">
       <thead>
         <tr>
-          <th></th> <!-- Keine Kopfzeilen-Checkbox -->
+          <th></th>
           <th>Name</th>
           <th>Adresse</th>
           <th>Google Link</th>
@@ -395,7 +397,7 @@ body.dark-mode #daten-aktualisieren {
     </table>
   </div>
 
-  <!-- Bearbeitungsformular -->
+  <!-- Bearbeitungsformular (initial versteckt) -->
   <div id="edit-form" style="display:none; margin-top:10px;">
     <input type="text" id="edit-name" placeholder="Name">
     <input type="text" id="edit-adresse" placeholder="Adresse">
@@ -731,6 +733,42 @@ menuBtn.addEventListener('click', () => {
 // Klick außerhalb → Menü schließen + Checkboxen ausblenden
 document.addEventListener('click', e => {
   if (!menuBtn.contains(e.target) && !menuDropdown.contains(e.target)) {
+    menuDropdown.style.display = 'none';
+    document.querySelectorAll('.checkbox-cell').forEach(td => td.style.display = 'none');
+    document.querySelectorAll('.loc-checkbox').forEach(cb => cb.checked = false);
+  }
+});
+
+// ==========================
+// Einklappbares Formular
+// ==========================
+const toggleAddFormBtn = document.getElementById('toggle-add-form-btn');
+const locationForm = document.getElementById('location-form');
+
+toggleAddFormBtn.addEventListener('click', () => {
+  locationForm.style.display = locationForm.style.display === 'none' ? 'block' : 'none';
+});
+
+// Optional: Auto-Close beim Menü öffnen
+const menuBtn = document.getElementById('menu-btn');
+const menuDropdown = document.getElementById('menu-dropdown');
+
+menuBtn.addEventListener('click', () => {
+  // Formular beim Menü öffnen schließen
+  locationForm.style.display = 'none';
+
+  // Checkboxen sichtbar machen
+  document.querySelectorAll('.checkbox-cell').forEach(td => {
+    td.style.display = td.style.display === 'table-cell' ? 'none' : 'table-cell';
+  });
+
+  // Dropdown ein-/ausblenden
+  menuDropdown.style.display = menuDropdown.style.display === 'block' ? 'none' : 'block';
+});
+
+// Klick außerhalb → Menü schließen + Checkboxen ausblenden
+document.addEventListener('click', e => {
+  if (!menuBtn.contains(e.target) && !menuDropdown.contains(e.target) && !toggleAddFormBtn.contains(e.target) && !locationForm.contains(e.target)) {
     menuDropdown.style.display = 'none';
     document.querySelectorAll('.checkbox-cell').forEach(td => td.style.display = 'none');
     document.querySelectorAll('.loc-checkbox').forEach(cb => cb.checked = false);
