@@ -613,6 +613,7 @@ document.getElementById('location-form').addEventListener('submit', async (e) =>
 });
 
 // Tabelle mit Locations laden
+// Tabelle mit Locations laden
 async function ladeLocationsTabelle() {
   try {
     const locations = await apiFetch('/api/locations');
@@ -621,12 +622,79 @@ async function ladeLocationsTabelle() {
 
     locations.forEach(loc => {
       const tr = document.createElement('tr');
+
       tr.innerHTML = `
         <td>${loc.name}</td>
         <td>${loc.adresse || '-'}</td>
         <td>${loc.google_maps_link ? `<a href="${loc.google_maps_link}" target="_blank">Link</a>` : '-'}</td>
+        <td>
+          <button class="more-btn">⋮</button>
+          <div class="more-menu" style="display:none; position:absolute; background:#fff; border:1px solid #ccc; padding:5px;">
+            <button class="edit-btn">Bearbeiten</button>
+            <button class="delete-btn">Löschen</button>
+          </div>
+        </td>
       `;
+
       tbody.appendChild(tr);
+
+      const moreBtn = tr.querySelector('.more-btn');
+      const moreMenu = tr.querySelector('.more-menu');
+      moreBtn.addEventListener('click', () => {
+        moreMenu.style.display = moreMenu.style.display === 'none' ? 'block' : 'none';
+      });
+
+      // Bearbeiten
+      const editBtn = tr.querySelector('.edit-btn');
+      editBtn.addEventListener('click', () => {
+        // Eingabefelder für die Zeile anzeigen
+        tr.innerHTML = `
+          <td><input type="text" class="edit-name" value="${loc.name}"></td>
+          <td><input type="text" class="edit-adresse" value="${loc.adresse || ''}"></td>
+          <td><input type="text" class="edit-link" value="${loc.google_maps_link || ''}"></td>
+          <td>
+            <button class="save-btn">Speichern</button>
+            <button class="cancel-btn">Abbrechen</button>
+          </td>
+        `;
+
+        tr.querySelector('.save-btn').addEventListener('click', async () => {
+          const name = tr.querySelector('.edit-name').value.trim();
+          const adresse = tr.querySelector('.edit-adresse').value.trim();
+          const google_maps_link = tr.querySelector('.edit-link').value.trim();
+
+          if (!name) return alert("Name ist erforderlich!");
+
+          try {
+            await apiFetch(`/api/locations/${loc.id}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ name, adresse, google_maps_link })
+            });
+            await ladeLocationsTabelle();
+            await ladeLocationsDropdown();
+          } catch (err) {
+            console.error("Fehler beim Bearbeiten des Standorts", err);
+          }
+        });
+
+        tr.querySelector('.cancel-btn').addEventListener('click', async () => {
+          await ladeLocationsTabelle();
+        });
+      });
+
+      // Löschen
+      const deleteBtn = tr.querySelector('.delete-btn');
+      deleteBtn.addEventListener('click', async () => {
+        if (!confirm(`Standort "${loc.name}" wirklich löschen?`)) return;
+        try {
+          await apiFetch(`/api/locations/${loc.id}`, { method: 'DELETE' });
+          await ladeLocationsTabelle();
+          await ladeLocationsDropdown();
+        } catch (err) {
+          console.error("Fehler beim Löschen des Standorts", err);
+        }
+      });
     });
   } catch (err) {
     console.error("Fehler beim Laden der Standorte", err);
