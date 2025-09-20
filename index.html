@@ -465,14 +465,13 @@ const dashboard = document.getElementById('dashboard');
 
 async function apiFetch(path, options = {}) {
   const method = (options.method || 'GET').toUpperCase();
-  const writeMethods = ['POST', 'PUT', 'DELETE', 'PATCH'];
 
   options = { ...options };
   options.headers = options.headers || {};
   options.credentials = 'include';
 
   const csrfToken = localStorage.getItem('csrfToken');
-  if (csrfToken && writeMethods.includes(method)) {
+  if (csrfToken) {
     options.headers['X-CSRF-Token'] = csrfToken;
   }
 
@@ -482,7 +481,7 @@ async function apiFetch(path, options = {}) {
     const refreshed = await tryTokenRefresh();
     if (refreshed) {
       const newCsrfToken = localStorage.getItem('csrfToken');
-      if (newCsrfToken && writeMethods.includes(method)) {
+      if (newCsrfToken) {
         options.headers['X-CSRF-Token'] = newCsrfToken;
       }
       response = await fetch(`${backendUrl}${path}`, options);
@@ -500,13 +499,10 @@ async function apiFetch(path, options = {}) {
         const text = await response.text();
         message = text || message;
       }
-    } catch {
-      // ignorieren
-    }
+    } catch {}
     throw new Error(message);
   }
 
-  // ✅ Hier passiert der Fix
   try {
     const contentType = response.headers.get('content-type');
     if (contentType && contentType.includes('application/json')) {
@@ -519,7 +515,6 @@ async function apiFetch(path, options = {}) {
     throw new Error(err.message || 'Fehler beim Verarbeiten der Antwort.');
   }
 }
-
 
 async function tryTokenRefresh() {
   try {
@@ -609,14 +604,15 @@ document.getElementById('location-form').addEventListener('submit', async (e) =>
     });
 
     document.getElementById('location-form').reset();
+    // ✅ Nach dem Anlegen neu laden
     await ladeLocationsTabelle();
-    await ladeLocationsDropdown(); // Arbeitsplan-Form aktualisieren
+    await ladeLocationsDropdown();
   } catch (err) {
     console.error("Fehler beim Speichern des Standorts", err);
   }
 });
 
-// Alle Standorte laden
+// Tabelle mit Locations laden
 async function ladeLocationsTabelle() {
   try {
     const locations = await apiFetch('/api/locations');
@@ -637,12 +633,13 @@ async function ladeLocationsTabelle() {
   }
 }
 
-// Locations für Dropdown in Arbeitsplan-Form laden
+// Dropdown für Arbeitsplan laden
 async function ladeLocationsDropdown() {
   try {
     const locations = await apiFetch('/api/locations');
     const select = document.getElementById('plan-location');
     select.innerHTML = '';
+
     locations.forEach(loc => {
       const opt = document.createElement('option');
       opt.value = loc.id;
@@ -656,23 +653,6 @@ async function ladeLocationsDropdown() {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // =================== Arbeitspläne ===================
-
-// Locations für Dropdown laden
-async function ladeLocations() {
-  try {
-    const locations = await apiFetch('/api/locations'); 
-    const select = document.getElementById('plan-location');
-    select.innerHTML = '';
-    locations.forEach(loc => {
-      const opt = document.createElement('option');
-      opt.value = loc.id;
-      opt.textContent = loc.name;
-      select.appendChild(opt);
-    });
-  } catch (err) {
-    console.error('Fehler beim Laden der Locations', err);
-  }
-}
 
 // Mitarbeiter für Arbeitsplan laden (Checkboxen)
 async function ladeMitarbeiterDropdown() {
@@ -848,11 +828,11 @@ async function zeigeArbeitsplanDetail(planId) {
 
 // Initialisierung beim Laden der Seite
 window.addEventListener('DOMContentLoaded', async () => {
-  await ladeLocations();
+  await ladeLocationsTabelle();
+  await ladeLocationsDropdown();
   await ladeMitarbeiterDropdown();
   await ladeArbeitsplaene();
 });
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   
   //Zeiten durchsuchen
