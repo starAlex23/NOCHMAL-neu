@@ -915,8 +915,7 @@ async function zeigeArbeitsplanDetail(planId) {
 
 // Initialisierung beim Laden der Seite
 window.addEventListener('DOMContentLoaded', async () => {
-  await ladeLocationsTabelle();
-  await ladeLocationsDropdown();
+  await ladeLocationsGesamt();
   await ladeMitarbeiterDropdown();
   await ladeArbeitsplaene();
 });
