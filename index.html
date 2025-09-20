@@ -319,30 +319,52 @@ body.dark-mode #daten-aktualisieren {
   </section>
 
   <!-- Standorte -->
-  <section id="locations-section" class="section hidden">
-    <h2>Standorte verwalten</h2>
-    <form id="location-form">
-      <input type="text" id="loc-name" placeholder="Standortname" required />
-      <input type="text" id="loc-adresse" placeholder="Adresse (optional)" />
-      <input type="text" id="loc-google" placeholder="Google Maps Link (optional)" />
-      <button type="submit">➕ Standort speichern</button>
-    </form>
+ <section id="locations-section" class="section hidden">
+  <h2>Standorte verwalten</h2>
 
-    <hr />
+  <!-- Formular zum Anlegen -->
+  <form id="location-form">
+    <input type="text" id="loc-name" placeholder="Standortname" required />
+    <input type="text" id="loc-adresse" placeholder="Adresse (optional)" />
+    <input type="text" id="loc-google" placeholder="Google Maps Link (optional)" />
+    <button type="submit">➕ Standort speichern</button>
+  </form>
 
-    <div class="table-container">
-      <table id="locations-table">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Adresse</th>
-            <th>Google Link</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
+  <hr />
+
+  <!-- Menü für Bearbeiten/Löschen (einmal pro Section) -->
+  <div id="locations-menu" style="position:relative; margin-bottom:5px;">
+    <button id="menu-btn">⋮ Optionen</button>
+    <div id="menu-dropdown" style="display:none; position:absolute; right:0; background:#fff; border:1px solid #ccc; padding:5px; z-index:10;">
+      <button id="edit-location-btn">Bearbeiten</button>
+      <button id="delete-location-btn">Löschen</button>
     </div>
-  </section>
+  </div>
+
+  <!-- Tabelle mit Checkboxen -->
+  <div class="table-container">
+    <table id="locations-table">
+      <thead>
+        <tr>
+          <th><input type="checkbox" id="select-all" /></th>
+          <th>Name</th>
+          <th>Adresse</th>
+          <th>Google Link</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <!-- Bearbeitungsformular (initial versteckt) -->
+  <div id="edit-form" style="display:none; margin-top:10px;">
+    <input type="text" id="edit-name" placeholder="Name">
+    <input type="text" id="edit-adresse" placeholder="Adresse">
+    <input type="text" id="edit-link" placeholder="Google Maps Link">
+    <button id="save-edit-btn">Speichern</button>
+    <button id="cancel-edit-btn">Abbrechen</button>
+  </div>
+</section>
 
   <!-- Benutzerverwaltung -->
   <section id="users-section" class="section hidden">
@@ -468,8 +490,9 @@ async function apiFetch(path, options = {}) {
 
   options = { ...options };
   options.headers = options.headers || {};
-  options.credentials = 'include';
+  options.credentials = 'include'; // Cookies immer mitschicken
 
+  // CSRF-Token aus localStorage
   const csrfToken = localStorage.getItem('csrfToken');
   if (csrfToken) {
     options.headers['X-CSRF-Token'] = csrfToken;
@@ -477,6 +500,7 @@ async function apiFetch(path, options = {}) {
 
   let response = await fetch(`${backendUrl}${path}`, options);
 
+  // 401 → Token ggf. refreshen und Request erneut senden
   if (response.status === 401) {
     const refreshed = await tryTokenRefresh();
     if (refreshed) {
@@ -488,6 +512,7 @@ async function apiFetch(path, options = {}) {
     }
   }
 
+  // Fehlerbehandlung
   if (!response.ok) {
     let message = `Fehler bei ${path}`;
     try {
@@ -503,13 +528,13 @@ async function apiFetch(path, options = {}) {
     throw new Error(message);
   }
 
+  // JSON oder Text zurückgeben
   try {
     const contentType = response.headers.get('content-type');
     if (contentType && contentType.includes('application/json')) {
       return await response.json();
     } else {
-      const text = await response.text();
-      throw new Error(text || 'Antwort ist kein JSON.');
+      return await response.text();
     }
   } catch (err) {
     throw new Error(err.message || 'Fehler beim Verarbeiten der Antwort.');
@@ -613,101 +638,27 @@ document.getElementById('location-form').addEventListener('submit', async (e) =>
 });
 
 // Tabelle mit Locations laden
-// Tabelle mit Locations laden
-async function ladeLocationsTabelle() {
+async function ladeLocationsGesamt() {
   try {
     const locations = await apiFetch('/api/locations');
+
     const tbody = document.querySelector('#locations-table tbody');
     tbody.innerHTML = '';
 
     locations.forEach(loc => {
       const tr = document.createElement('tr');
-
       tr.innerHTML = `
+        <td><input type="checkbox" class="loc-checkbox" data-id="${loc.id}"></td>
         <td>${loc.name}</td>
         <td>${loc.adresse || '-'}</td>
         <td>${loc.google_maps_link ? `<a href="${loc.google_maps_link}" target="_blank">Link</a>` : '-'}</td>
-        <td>
-          <button class="more-btn">⋮</button>
-          <div class="more-menu" style="display:none; position:absolute; background:#fff; border:1px solid #ccc; padding:5px;">
-            <button class="edit-btn">Bearbeiten</button>
-            <button class="delete-btn">Löschen</button>
-          </div>
-        </td>
       `;
-
       tbody.appendChild(tr);
-
-      const moreBtn = tr.querySelector('.more-btn');
-      const moreMenu = tr.querySelector('.more-menu');
-      moreBtn.addEventListener('click', () => {
-        moreMenu.style.display = moreMenu.style.display === 'none' ? 'block' : 'none';
-      });
-
-      // Bearbeiten
-      const editBtn = tr.querySelector('.edit-btn');
-      editBtn.addEventListener('click', () => {
-        // Eingabefelder für die Zeile anzeigen
-        tr.innerHTML = `
-          <td><input type="text" class="edit-name" value="${loc.name}"></td>
-          <td><input type="text" class="edit-adresse" value="${loc.adresse || ''}"></td>
-          <td><input type="text" class="edit-link" value="${loc.google_maps_link || ''}"></td>
-          <td>
-            <button class="save-btn">Speichern</button>
-            <button class="cancel-btn">Abbrechen</button>
-          </td>
-        `;
-
-        tr.querySelector('.save-btn').addEventListener('click', async () => {
-          const name = tr.querySelector('.edit-name').value.trim();
-          const adresse = tr.querySelector('.edit-adresse').value.trim();
-          const google_maps_link = tr.querySelector('.edit-link').value.trim();
-
-          if (!name) return alert("Name ist erforderlich!");
-
-          try {
-            await apiFetch(`/api/locations/${loc.id}`, {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ name, adresse, google_maps_link })
-            });
-            await ladeLocationsTabelle();
-            await ladeLocationsDropdown();
-          } catch (err) {
-            console.error("Fehler beim Bearbeiten des Standorts", err);
-          }
-        });
-
-        tr.querySelector('.cancel-btn').addEventListener('click', async () => {
-          await ladeLocationsTabelle();
-        });
-      });
-
-      // Löschen
-      const deleteBtn = tr.querySelector('.delete-btn');
-      deleteBtn.addEventListener('click', async () => {
-        if (!confirm(`Standort "${loc.name}" wirklich löschen?`)) return;
-        try {
-          await apiFetch(`/api/locations/${loc.id}`, { method: 'DELETE' });
-          await ladeLocationsTabelle();
-          await ladeLocationsDropdown();
-        } catch (err) {
-          console.error("Fehler beim Löschen des Standorts", err);
-        }
-      });
     });
-  } catch (err) {
-    console.error("Fehler beim Laden der Standorte", err);
-  }
-}
 
-// Dropdown für Arbeitsplan laden
-async function ladeLocationsDropdown() {
-  try {
-    const locations = await apiFetch('/api/locations');
+    // Dropdown für Arbeitsplan
     const select = document.getElementById('plan-location');
     select.innerHTML = '';
-
     locations.forEach(loc => {
       const opt = document.createElement('option');
       opt.value = loc.id;
@@ -715,10 +666,78 @@ async function ladeLocationsDropdown() {
       select.appendChild(opt);
     });
   } catch (err) {
-    console.error("Fehler beim Laden der Locations für Dropdown", err);
+    console.error("Fehler beim Laden der Locations", err);
   }
 }
 
+// Drei-Punkte-Menü öffnen / schließen
+const menuBtn = document.getElementById('menu-btn');
+const menuDropdown = document.getElementById('menu-dropdown');
+menuBtn.addEventListener('click', () => {
+  menuDropdown.style.display = menuDropdown.style.display === 'none' ? 'block' : 'none';
+});
+
+// Klick außerhalb → Menü schließen
+document.addEventListener('click', e => {
+  if (!menuBtn.contains(e.target) && !menuDropdown.contains(e.target)) {
+    menuDropdown.style.display = 'none';
+  }
+});
+
+// Bearbeiten
+document.getElementById('edit-location-btn').addEventListener('click', () => {
+  const checked = Array.from(document.querySelectorAll('.loc-checkbox:checked'));
+  if (checked.length !== 1) return alert("Bitte genau eine Location zum Bearbeiten auswählen!");
+  
+  const locId = checked[0].dataset.id;
+  const row = checked[0].closest('tr');
+  const name = row.children[1].textContent;
+  const adresse = row.children[2].textContent === '-' ? '' : row.children[2].textContent;
+  const link = row.children[3].textContent === 'Link' ? row.children[3].querySelector('a').href : '';
+
+  const editForm = document.getElementById('edit-form');
+  editForm.style.display = 'block';
+  document.getElementById('edit-name').value = name;
+  document.getElementById('edit-adresse').value = adresse;
+  document.getElementById('edit-link').value = link;
+
+  const saveBtn = document.getElementById('save-edit-btn');
+  const cancelBtn = document.getElementById('cancel-edit-btn');
+
+  saveBtn.onclick = async () => {
+    const newName = document.getElementById('edit-name').value.trim();
+    const newAdresse = document.getElementById('edit-adresse').value.trim();
+    const newLink = document.getElementById('edit-link').value.trim();
+    if (!newName) return alert("Name ist erforderlich!");
+
+    await apiFetch(`/api/locations/${locId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: newName, adresse: newAdresse, google_maps_link: newLink })
+    });
+    editForm.style.display = 'none';
+    await ladeLocationsGesamt();
+  };
+
+  cancelBtn.onclick = () => {
+    editForm.style.display = 'none';
+  };
+});
+
+// Löschen
+document.getElementById('delete-location-btn').addEventListener('click', async () => {
+  const checked = Array.from(document.querySelectorAll('.loc-checkbox:checked'));
+  if (checked.length === 0) return alert("Bitte mindestens eine Location zum Löschen auswählen!");
+
+  if (!confirm(`Willst du die ausgewählten ${checked.length} Location(s) wirklich löschen?`)) return;
+
+  for (const cb of checked) {
+    await apiFetch(`/api/locations/${cb.dataset.id}`, { method: 'DELETE' });
+  }
+
+  await ladeLocationsGesamt();
+});
+  
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // =================== Arbeitspläne ===================
 
