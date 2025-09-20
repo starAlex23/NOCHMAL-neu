@@ -144,6 +144,63 @@
       padding: 0 2rem;
     }
 
+.dropdown { position: relative; display: inline-block; }
+  .dropdown-content {
+    display: none;
+    position: absolute;
+    right: 0;
+    background: white;
+    border: 1px solid #ccc;
+    z-index: 10;
+    min-width: 100px;
+  }
+  .dropdown-content a {
+    display: block;
+    padding: 5px 10px;
+    text-decoration: none;
+    color: black;
+  }
+  .dropdown-content a:hover { background: #eee; }
+  .dropdown:hover .dropdown-content { display: block; }
+
+/* Entfernt Kopfzeilen-Kästchen */
+#locations-table thead th:first-child {
+  display: none;
+}
+
+/* Checkbox-Zellen */
+.checkbox-cell {
+  width: 30px;
+  text-align: center;
+}
+
+/* Dropdown-Menü */
+#menu-dropdown {
+  display: none;
+  position: absolute;
+  right: 0;
+  background: white;
+  border: 1px solid #ccc;
+  z-index: 10;
+  min-width: 120px;
+}
+
+#menu-dropdown a {
+  display: block;
+  padding: 6px 10px;
+  text-decoration: none;
+  color: black;
+}
+
+#menu-dropdown a:hover {
+  background: #eee;
+}
+
+/* Formular panel einklappbar */
+#location-form.hidden {
+  display: none;
+}
+    
     /* Dark Mode Styles */
 body.dark-mode {
   --bg-main: #121212;
@@ -192,25 +249,6 @@ body.dark-mode nav button.active {
   color: white;
 }
 
-.dropdown { position: relative; display: inline-block; }
-  .dropdown-content {
-    display: none;
-    position: absolute;
-    right: 0;
-    background: white;
-    border: 1px solid #ccc;
-    z-index: 10;
-    min-width: 100px;
-  }
-  .dropdown-content a {
-    display: block;
-    padding: 5px 10px;
-    text-decoration: none;
-    color: black;
-  }
-  .dropdown-content a:hover { background: #eee; }
-  .dropdown:hover .dropdown-content { display: block; }
-    
 /* Aktualisieren-Button woanders */
 #daten-aktualisieren {
   max-width: 200px;
@@ -319,34 +357,35 @@ body.dark-mode #daten-aktualisieren {
   </section>
 
   <!-- Standorte -->
- <section id="locations-section" class="section hidden">
+<section id="locations-section" class="section hidden">
   <h2>Standorte verwalten</h2>
 
-  <!-- Formular zum Anlegen -->
-  <form id="location-form">
-    <input type="text" id="loc-name" placeholder="Standortname" required />
-    <input type="text" id="loc-adresse" placeholder="Adresse (optional)" />
-    <input type="text" id="loc-google" placeholder="Google Maps Link (optional)" />
-    <button type="submit">➕ Standort speichern</button>
-  </form>
-
-  <hr />
-
-  <!-- Menü für Bearbeiten/Löschen (einmal pro Section) -->
-  <div id="locations-menu" style="position:relative; margin-bottom:5px;">
-    <button id="menu-btn">⋮ Optionen</button>
-    <div id="menu-dropdown" style="display:none; position:absolute; right:0; background:#fff; border:1px solid #ccc; padding:5px; z-index:10;">
-      <button id="edit-location-btn">Bearbeiten</button>
-      <button id="delete-location-btn">Löschen</button>
+  <!-- Top-Kontrollen -->
+  <div id="top-controls">
+    <button id="toggle-form-btn">➕ Neuer Standort</button>
+    <div id="locations-menu" style="position:relative; display:inline-block;">
+      <button id="menu-btn">⋮ Optionen</button>
+      <div id="menu-dropdown" style="display:none; position:absolute; right:0; background:#fff; border:1px solid #ccc; padding:5px; z-index:10;">
+        <button id="edit-location-btn">Bearbeiten</button>
+        <button id="delete-location-btn">Löschen</button>
+      </div>
     </div>
   </div>
 
-  <!-- Tabelle mit Checkboxen -->
+  <!-- Eingabeformular einklappbar -->
+  <form id="location-form" class="hidden">
+    <input type="text" id="loc-name" placeholder="Standortname" required />
+    <input type="text" id="loc-adresse" placeholder="Adresse (optional)" />
+    <input type="text" id="loc-google" placeholder="Google Maps Link (optional)" />
+    <button type="submit">Speichern</button>
+  </form>
+
+  <!-- Tabelle -->
   <div class="table-container">
     <table id="locations-table">
       <thead>
         <tr>
-          <th><input type="checkbox" id="select-all" /></th>
+          <th></th> <!-- Keine Kopfzeilen-Checkbox -->
           <th>Name</th>
           <th>Adresse</th>
           <th>Google Link</th>
@@ -356,7 +395,7 @@ body.dark-mode #daten-aktualisieren {
     </table>
   </div>
 
-  <!-- Bearbeitungsformular (initial versteckt) -->
+  <!-- Bearbeitungsformular -->
   <div id="edit-form" style="display:none; margin-top:10px;">
     <input type="text" id="edit-name" placeholder="Name">
     <input type="text" id="edit-adresse" placeholder="Adresse">
@@ -613,32 +652,9 @@ async function setRole(userId, rolle) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Standort erstellen
-document.getElementById('location-form').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  try {
-    const name = document.getElementById('loc-name').value.trim();
-    const adresse = document.getElementById('loc-adresse').value.trim();
-    const google_maps_link = document.getElementById('loc-google').value.trim();
-
-    if (!name) return alert("Name ist erforderlich!");
-
-    await apiFetch('/api/locations', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, adresse, google_maps_link })
-    });
-
-    document.getElementById('location-form').reset();
-    // ✅ Nach dem Anlegen neu laden
-    await ladeLocationsTabelle();
-    await ladeLocationsDropdown();
-  } catch (err) {
-    console.error("Fehler beim Speichern des Standorts", err);
-  }
-});
-
-// Tabelle mit Locations laden
-// Hauptfunktion zum Laden der Locations (Tabelle + Dropdown)
+// ==========================
+// Laden der Locations (Tabelle + Dropdown)
+// ==========================
 async function ladeLocationsGesamt() {
   try {
     const locations = await apiFetch('/api/locations');
@@ -648,7 +664,7 @@ async function ladeLocationsGesamt() {
     locations.forEach(loc => {
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td class="checkbox-cell" style="display:none;"><input type="checkbox" class="loc-checkbox" data-id="${loc.id}"></td>
+        <td class="checkbox-cell"><input type="checkbox" class="loc-checkbox" data-id="${loc.id}"></td>
         <td>${loc.name}</td>
         <td>${loc.adresse || '-'}</td>
         <td>${loc.google_maps_link ? `<a href="${loc.google_maps_link}" target="_blank">Link</a>` : '-'}</td>
@@ -658,46 +674,30 @@ async function ladeLocationsGesamt() {
 
     // Dropdown für Arbeitsplan
     const select = document.getElementById('plan-location');
-    select.innerHTML = '';
-    locations.forEach(loc => {
-      const opt = document.createElement('option');
-      opt.value = loc.id;
-      opt.textContent = loc.name;
-      select.appendChild(opt);
-    });
+    if (select) {
+      select.innerHTML = '';
+      locations.forEach(loc => {
+        const opt = document.createElement('option');
+        opt.value = loc.id;
+        opt.textContent = loc.name;
+        select.appendChild(opt);
+      });
+    }
   } catch (err) {
     console.error("Fehler beim Laden der Locations", err);
   }
 }
 
-// Drei-Punkte-Menü öffnen / schließen
-const menuBtn = document.getElementById('menu-btn');
-const menuDropdown = document.getElementById('menu-dropdown');
-menuBtn.addEventListener('click', () => {
-  // Checkboxen in der Tabelle sichtbar machen
-  document.querySelectorAll('.checkbox-cell').forEach(td => td.style.display = 'table-cell');
-
-  // Menü ein-/ausblenden
-  menuDropdown.style.display = menuDropdown.style.display === 'none' ? 'block' : 'none';
-});
-
-// Klick außerhalb → Menü schließen und Checkboxen wieder ausblenden
-document.addEventListener('click', e => {
-  if (!menuBtn.contains(e.target) && !menuDropdown.contains(e.target)) {
-    menuDropdown.style.display = 'none';
-    document.querySelectorAll('.checkbox-cell').forEach(td => td.style.display = 'none');
-    document.querySelectorAll('.loc-checkbox').forEach(cb => cb.checked = false);
-  }
-});
-
-// Standort erstellen
-document.getElementById('location-form').addEventListener('submit', async (e) => {
+// ==========================
+// Formular für neue Location
+// ==========================
+const locationForm = document.getElementById('location-form');
+locationForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   try {
     const name = document.getElementById('loc-name').value.trim();
     const adresse = document.getElementById('loc-adresse').value.trim();
     const google_maps_link = document.getElementById('loc-google').value.trim();
-
     if (!name) return alert("Name ist erforderlich!");
 
     await apiFetch('/api/locations', {
@@ -706,29 +706,52 @@ document.getElementById('location-form').addEventListener('submit', async (e) =>
       body: JSON.stringify({ name, adresse, google_maps_link })
     });
 
-    document.getElementById('location-form').reset();
-    await ladeLocationsGesamt(); // aktualisiert Tabelle + Dropdown
+    locationForm.reset();
+    await ladeLocationsGesamt();
   } catch (err) {
     console.error("Fehler beim Speichern des Standorts", err);
   }
 });
 
-// Bearbeiten
+// ==========================
+// Drei-Punkte-Menü + Checkboxen
+// ==========================
+const menuBtn = document.getElementById('menu-btn');
+const menuDropdown = document.getElementById('menu-dropdown');
+
+menuBtn.addEventListener('click', () => {
+  // Checkboxen sichtbar machen
+  document.querySelectorAll('.checkbox-cell').forEach(td => {
+    td.style.display = td.style.display === 'table-cell' ? 'none' : 'table-cell';
+  });
+  // Dropdown anzeigen
+  menuDropdown.style.display = menuDropdown.style.display === 'block' ? 'none' : 'block';
+});
+
+// Klick außerhalb → Menü schließen + Checkboxen ausblenden
+document.addEventListener('click', e => {
+  if (!menuBtn.contains(e.target) && !menuDropdown.contains(e.target)) {
+    menuDropdown.style.display = 'none';
+    document.querySelectorAll('.checkbox-cell').forEach(td => td.style.display = 'none');
+    document.querySelectorAll('.loc-checkbox').forEach(cb => cb.checked = false);
+  }
+});
+
+// ==========================
+// Bearbeiten einer Location
+// ==========================
 document.getElementById('edit-location-btn').addEventListener('click', () => {
   const checked = Array.from(document.querySelectorAll('.loc-checkbox:checked'));
-  if (checked.length !== 1) return alert("Bitte genau eine Location zum Bearbeiten auswählen!");
+  if (checked.length !== 1) return alert("Bitte genau eine Location auswählen!");
 
   const locId = checked[0].dataset.id;
   const row = checked[0].closest('tr');
-  const name = row.children[1].textContent;
-  const adresse = row.children[2].textContent === '-' ? '' : row.children[2].textContent;
-  const link = row.children[3].textContent === 'Link' ? row.children[3].querySelector('a').href : '';
 
   const editForm = document.getElementById('edit-form');
   editForm.style.display = 'block';
-  document.getElementById('edit-name').value = name;
-  document.getElementById('edit-adresse').value = adresse;
-  document.getElementById('edit-link').value = link;
+  document.getElementById('edit-name').value = row.children[1].textContent;
+  document.getElementById('edit-adresse').value = row.children[2].textContent === '-' ? '' : row.children[2].textContent;
+  document.getElementById('edit-link').value = row.children[3].textContent === 'Link' ? row.children[3].querySelector('a').href : '';
 
   const saveBtn = document.getElementById('save-edit-btn');
   const cancelBtn = document.getElementById('cancel-edit-btn');
@@ -749,22 +772,20 @@ document.getElementById('edit-location-btn').addEventListener('click', () => {
     await ladeLocationsGesamt();
   };
 
-  cancelBtn.onclick = () => {
-    editForm.style.display = 'none';
-  };
+  cancelBtn.onclick = () => editForm.style.display = 'none';
 });
 
-// Löschen
+// ==========================
+// Löschen mehrerer Locations
+// ==========================
 document.getElementById('delete-location-btn').addEventListener('click', async () => {
   const checked = Array.from(document.querySelectorAll('.loc-checkbox:checked'));
-  if (checked.length === 0) return alert("Bitte mindestens eine Location zum Löschen auswählen!");
-
+  if (checked.length === 0) return alert("Bitte mindestens eine Location auswählen!");
   if (!confirm(`Willst du die ausgewählten ${checked.length} Location(s) wirklich löschen?`)) return;
 
   for (const cb of checked) {
     await apiFetch(`/api/locations/${cb.dataset.id}`, { method: 'DELETE' });
   }
-
   await ladeLocationsGesamt();
 });
   
