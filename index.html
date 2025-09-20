@@ -638,17 +638,17 @@ document.getElementById('location-form').addEventListener('submit', async (e) =>
 });
 
 // Tabelle mit Locations laden
+// Hauptfunktion zum Laden der Locations (Tabelle + Dropdown)
 async function ladeLocationsGesamt() {
   try {
     const locations = await apiFetch('/api/locations');
-
     const tbody = document.querySelector('#locations-table tbody');
     tbody.innerHTML = '';
 
     locations.forEach(loc => {
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td><input type="checkbox" class="loc-checkbox" data-id="${loc.id}"></td>
+        <td class="checkbox-cell" style="display:none;"><input type="checkbox" class="loc-checkbox" data-id="${loc.id}"></td>
         <td>${loc.name}</td>
         <td>${loc.adresse || '-'}</td>
         <td>${loc.google_maps_link ? `<a href="${loc.google_maps_link}" target="_blank">Link</a>` : '-'}</td>
@@ -674,13 +674,42 @@ async function ladeLocationsGesamt() {
 const menuBtn = document.getElementById('menu-btn');
 const menuDropdown = document.getElementById('menu-dropdown');
 menuBtn.addEventListener('click', () => {
+  // Checkboxen in der Tabelle sichtbar machen
+  document.querySelectorAll('.checkbox-cell').forEach(td => td.style.display = 'table-cell');
+
+  // Menü ein-/ausblenden
   menuDropdown.style.display = menuDropdown.style.display === 'none' ? 'block' : 'none';
 });
 
-// Klick außerhalb → Menü schließen
+// Klick außerhalb → Menü schließen und Checkboxen wieder ausblenden
 document.addEventListener('click', e => {
   if (!menuBtn.contains(e.target) && !menuDropdown.contains(e.target)) {
     menuDropdown.style.display = 'none';
+    document.querySelectorAll('.checkbox-cell').forEach(td => td.style.display = 'none');
+    document.querySelectorAll('.loc-checkbox').forEach(cb => cb.checked = false);
+  }
+});
+
+// Standort erstellen
+document.getElementById('location-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  try {
+    const name = document.getElementById('loc-name').value.trim();
+    const adresse = document.getElementById('loc-adresse').value.trim();
+    const google_maps_link = document.getElementById('loc-google').value.trim();
+
+    if (!name) return alert("Name ist erforderlich!");
+
+    await apiFetch('/api/locations', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, adresse, google_maps_link })
+    });
+
+    document.getElementById('location-form').reset();
+    await ladeLocationsGesamt(); // aktualisiert Tabelle + Dropdown
+  } catch (err) {
+    console.error("Fehler beim Speichern des Standorts", err);
   }
 });
 
@@ -688,7 +717,7 @@ document.addEventListener('click', e => {
 document.getElementById('edit-location-btn').addEventListener('click', () => {
   const checked = Array.from(document.querySelectorAll('.loc-checkbox:checked'));
   if (checked.length !== 1) return alert("Bitte genau eine Location zum Bearbeiten auswählen!");
-  
+
   const locId = checked[0].dataset.id;
   const row = checked[0].closest('tr');
   const name = row.children[1].textContent;
@@ -715,6 +744,7 @@ document.getElementById('edit-location-btn').addEventListener('click', () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: newName, adresse: newAdresse, google_maps_link: newLink })
     });
+
     editForm.style.display = 'none';
     await ladeLocationsGesamt();
   };
