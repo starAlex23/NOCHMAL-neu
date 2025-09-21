@@ -814,12 +814,12 @@ const toggleAddFormBtn = document.getElementById('toggle-add-form-btn');
 
 // Menü öffnen / schließen
 menuBtn.addEventListener('click', (e) => {
-  e.stopPropagation(); // verhindert, dass der globale Klick-Listener sofort wieder schließt
+  e.stopPropagation(); // verhindert sofortiges Schließen durch globalen Listener
 
   // Formular immer zuklappen, wenn Menü geöffnet wird
   locationForm.style.display = 'none';
 
-  // Checkboxen toggeln
+  // Checkboxen sichtbar machen
   document.querySelectorAll('.checkbox-cell').forEach(td => {
     td.style.display = (td.style.display === 'table-cell') ? 'none' : 'table-cell';
   });
@@ -828,12 +828,11 @@ menuBtn.addEventListener('click', (e) => {
   menuDropdown.style.display = (menuDropdown.style.display === 'block') ? 'none' : 'block';
 });
 
-// Klick außerhalb → Menü schließen + Checkboxen ausblenden
+// Klick außerhalb → nur Menü schließen (aber Auswahl NICHT zurücksetzen)
 document.addEventListener('click', (e) => {
   if (!menuBtn.contains(e.target) && !menuDropdown.contains(e.target)) {
     menuDropdown.style.display = 'none';
-    document.querySelectorAll('.checkbox-cell').forEach(td => td.style.display = 'none');
-    document.querySelectorAll('.loc-checkbox').forEach(cb => cb.checked = false);
+    // ⚠️ Checkboxen bleiben sichtbar und behalten Status
   }
 });
 
@@ -844,13 +843,13 @@ toggleAddFormBtn.addEventListener('click', (e) => {
   e.stopPropagation();
   // Menü schließen, falls es offen war
   menuDropdown.style.display = 'none';
-  document.querySelectorAll('.checkbox-cell').forEach(td => td.style.display = 'none');
-  document.querySelectorAll('.loc-checkbox').forEach(cb => cb.checked = false);
 
-  // Formular ein/ausklappen
-  locationForm.style.display = (locationForm.style.display === 'none' || locationForm.style.display === '') 
-    ? 'block' 
-    : 'none';
+  // ⚠️ Checkboxen + Auswahl nicht killen!
+  // Nur Formular toggeln
+  locationForm.style.display = 
+    (locationForm.style.display === 'none' || locationForm.style.display === '') 
+      ? 'block' 
+      : 'none';
 });
 
 // ==========================
