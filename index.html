@@ -115,6 +115,11 @@
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
     }
 
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+    
    .section.active {
   display: block !important;
 }
@@ -278,6 +283,33 @@ body.dark-mode #daten-aktualisieren {
     <button type="submit">Login</button>
     <p class="error" id="error-msg"></p>
   </form>
+</div>
+
+  <div id="loading-overlay" style="
+  display:none;
+  position:fixed;
+  top:0; left:0;
+  width:100%; height:100%;
+  background: rgba(0,0,0,0.4);
+  color:white;
+  font-size:1.2rem;
+  font-weight:bold;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  z-index:10000;
+">
+  <div class="spinner" style="
+    border: 4px solid rgba(255,255,255,0.3);
+    border-top: 4px solid white;
+    border-radius: 50%;
+    width:40px;
+    height:40px;
+    margin-bottom:10px;
+    animation: spin 1s linear infinite;
+  "></div>
+  <div id="loading-text">Lädt...</div>
 </div>
 
 <div id="dashboard">
@@ -526,62 +558,74 @@ const dashboard = document.getElementById('dashboard');
   }
 });
 
-async function apiFetch(path, options = {}) {
-  const method = (options.method || 'GET').toUpperCase();
+async function apiFetch(path, options = {}, retries = 2, statusText = "Lädt...") {
+  showLoading(statusText);
 
+  const method = (options.method || 'GET').toUpperCase();
   options = { ...options };
   options.headers = options.headers || {};
-  options.credentials = 'include'; // Cookies immer mitschicken
+  options.credentials = 'include';
 
-  // CSRF-Token aus localStorage
   const csrfToken = localStorage.getItem('csrfToken');
-  if (csrfToken) {
-    options.headers['X-CSRF-Token'] = csrfToken;
-  }
+  if (csrfToken) options.headers['X-CSRF-Token'] = csrfToken;
 
-  let response = await fetch(`${backendUrl}${path}`, options);
-
-  // 401 → Token ggf. refreshen und Request erneut senden
-  if (response.status === 401) {
-    const refreshed = await tryTokenRefresh();
-    if (refreshed) {
-      const newCsrfToken = localStorage.getItem('csrfToken');
-      if (newCsrfToken) {
-        options.headers['X-CSRF-Token'] = newCsrfToken;
-      }
-      response = await fetch(`${backendUrl}${path}`, options);
-    }
-  }
-
-  // Fehlerbehandlung
-  if (!response.ok) {
-    let message = `Fehler bei ${path}`;
-    try {
-      const contentType = response.headers.get('content-type');
-      if (contentType && contentType.includes('application/json')) {
-        const err = await response.json();
-        message = err.message || message;
-      } else {
-        const text = await response.text();
-        message = text || message;
-      }
-    } catch {}
-    throw new Error(message);
-  }
-
-  // JSON oder Text zurückgeben
   try {
+    let response = await fetch(`${backendUrl}${path}`, options);
+
+    if (response.status === 401) {
+      const refreshed = await tryTokenRefresh();
+      if (refreshed) {
+        const newCsrfToken = localStorage.getItem('csrfToken');
+        if (newCsrfToken) options.headers['X-CSRF-Token'] = newCsrfToken;
+        response = await fetch(`${backendUrl}${path}`, options);
+      }
+    }
+
+    if (!response.ok) {
+      let message = `Fehler bei ${path}`;
+      try {
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const err = await response.json();
+          message = err.message || message;
+        } else {
+          const text = await response.text();
+          message = text || message;
+        }
+      } catch {}
+      throw new Error(message);
+    }
+
     const contentType = response.headers.get('content-type');
     if (contentType && contentType.includes('application/json')) {
       return await response.json();
     } else {
       return await response.text();
     }
+
   } catch (err) {
-    throw new Error(err.message || 'Fehler beim Verarbeiten der Antwort.');
+    if (retries > 0 && (err instanceof TypeError || err.message.includes('Network'))) {
+      console.warn(`apiFetch ${path} fehlgeschlagen, retrying (${retries} verbleibend)`);
+      await new Promise(r => setTimeout(r, 1000));
+      return apiFetch(path, options, retries - 1, statusText);
+    }
+    throw err;
+  } finally {
+    hideLoading(); // Overlay immer ausblenden, egal ob Erfolg oder Fehler
   }
 }
 
+function showLoading(text = "Lädt...") {
+  const overlay = document.getElementById('loading-overlay');
+  overlay.style.display = 'flex';
+  document.getElementById('loading-text').textContent = text;
+}
+
+function hideLoading() {
+  document.getElementById('loading-overlay').style.display = 'none';
+}
+
+  
 async function tryTokenRefresh() {
   try {
     const res = await fetch(`${backendUrl}/api/refresh`, {
