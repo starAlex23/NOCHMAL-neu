@@ -149,6 +149,20 @@
       padding: 0 2rem;
     }
 
+/* Spinner CSS */
+#login-overlay .spinner {
+  width: 40px;
+  height: 40px;
+  border: 5px solid rgba(255,255,255,0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+    
 .dropdown { position: relative; display: inline-block; }
   .dropdown-content {
     display: none;
@@ -517,15 +531,41 @@ const errorMsg = document.getElementById('error-msg');
 const loginCard = document.getElementById('login-card');
 const dashboard = document.getElementById('dashboard');
 
-  loginForm.addEventListener('submit', async (e) => {
+// Lade-Overlay erstellen
+const loginOverlay = document.createElement('div');
+loginOverlay.id = 'login-overlay';
+loginOverlay.style = `
+  position: fixed;
+  top:0; left:0; width:100%; height:100%;
+  background: rgba(0,0,0,0.4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  color: white;
+  font-size: 1.2rem;
+  flex-direction: column;
+  display: none;
+`;
+loginOverlay.innerHTML = `
+  <div class="spinner" style="margin-bottom:10px;"></div>
+  <div id="login-overlay-text">Anmeldung läuft...</div>
+`;
+document.body.appendChild(loginOverlay);
+
+loginForm.addEventListener('submit', async (e) => {
   e.preventDefault();
-  errorMsg.textContent = '...';
+  errorMsg.textContent = '';
 
   const formData = new FormData(loginForm);
   const payload = {
     email: formData.get('email'),
     passwort: formData.get('passwort')
   };
+
+  // Lade-Overlay einblenden
+  loginOverlay.style.display = 'flex';
+  document.getElementById('login-overlay-text').textContent = 'Anmeldung läuft...';
 
   try {
     const res = await fetch(`${backendUrl}/api/admin-login`, {
@@ -545,14 +585,20 @@ const dashboard = document.getElementById('dashboard');
     loginCard.style.display = 'none';
     dashboard.style.display = 'block';
 
-    // 🔄 Tabellen und Benutzer laden
+    // Lade-Overlay aktualisieren während Tabellen geladen werden
+    document.getElementById('login-overlay-text').textContent = 'Daten werden geladen...';
+
     await Promise.all([
       reloadZeitenTabelle(),
       reloadArbeitszeitenTabelle(),
       loadUsers()
     ]);
 
+    // Lade-Overlay ausblenden
+    loginOverlay.style.display = 'none';
+
   } catch (err) {
+    loginOverlay.style.display = 'none';
     errorMsg.textContent = err.message;
     console.error('Loginfehler:', err);
   }
