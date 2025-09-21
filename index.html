@@ -563,20 +563,10 @@ loginForm.addEventListener('submit', async (e) => {
     passwort: formData.get('passwort')
   };
 
- // Lade-Overlay einblenden
-loginOverlay.style.display = 'flex';
-document.getElementById('login-overlay-text').textContent = 'Anmeldung läuft...';
+  // Lade-Overlay einblenden
+  loginOverlay.style.display = 'flex';
+  document.getElementById('login-overlay-text').textContent = 'Anmeldung läuft...';
 
-// Theme direkt anwenden
-const savedTheme = localStorage.getItem('theme');
-if (savedTheme === 'dark') {
-  document.body.classList.add('dark-mode');
-  themeToggle.textContent = '☀️ Hellmodus';
-} else {
-  document.body.classList.remove('dark-mode');
-  themeToggle.textContent = '🌙 Dark Mode';
-}
-  
   try {
     const res = await fetch(`${backendUrl}/api/admin-login`, {
       method: 'POST',
@@ -592,8 +582,19 @@ if (savedTheme === 'dark') {
       localStorage.setItem('csrfToken', data.csrfToken);
     }
 
+    // Dashboard anzeigen
     loginCard.style.display = 'none';
     dashboard.style.display = 'block';
+
+    // 🔹 Dark/Lightmode nach Login direkt anwenden
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark') {
+      document.body.classList.add('dark-mode');
+      themeToggle.textContent = '☀️ Hellmodus';
+    } else {
+      document.body.classList.remove('dark-mode');
+      themeToggle.textContent = '🌙 Dark Mode';
+    }
 
     // Lade-Overlay aktualisieren während Tabellen geladen werden
     document.getElementById('login-overlay-text').textContent = 'Daten werden geladen...';
@@ -603,16 +604,6 @@ if (savedTheme === 'dark') {
       reloadArbeitszeitenTabelle(),
       loadUsers()
     ]);
-
-    // 🔹 Dark/Lightmode wiederherstellen
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme === 'dark') {
-      document.body.classList.add('dark-mode');
-      document.getElementById('dark-mode-toggle').textContent = '☀️ Hellmodus';
-    } else {
-      document.body.classList.remove('dark-mode');
-      document.getElementById('dark-mode-toggle').textContent = '🌙 Dark Mode';
-    }
 
     // 🔹 Letzte Section wiederherstellen
     const lastSection = localStorage.getItem('lastSection') || 'arbeitszeiten-section';
