@@ -742,6 +742,58 @@ async function setRole(userId, rolle) {
   }
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// ==========================
+// Section-Wechsel merken
+// ==========================
+function switchSection(sectionId) {
+  // alle Sections ausblenden
+  document.querySelectorAll('.section').forEach(sec => sec.style.display = 'none');
+  
+  // gewünschte Section anzeigen
+  const active = document.getElementById(sectionId);
+  if (active) active.style.display = 'block';
+
+  // ✅ in localStorage merken
+  localStorage.setItem('lastSection', sectionId);
+}
+
+// ==========================
+// Theme Toggle (Dark/Light)
+// ==========================
+const themeToggle = document.getElementById('theme-toggle');
+if (themeToggle) {
+  themeToggle.addEventListener('click', () => {
+    document.body.classList.toggle('darkmode');
+    
+    // ✅ Speichern ob darkmode aktiv ist
+    const isDark = document.body.classList.contains('darkmode');
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+  });
+}
+
+// ==========================
+// Seite laden → Einstellungen wiederherstellen
+// ==========================
+window.addEventListener('DOMContentLoaded', () => {
+  // Theme wiederherstellen
+  const savedTheme = localStorage.getItem('theme');
+  if (savedTheme === 'dark') {
+    document.body.classList.add('darkmode');
+  } else {
+    document.body.classList.remove('darkmode');
+  }
+
+  // Section wiederherstellen
+  const lastSection = localStorage.getItem('lastSection');
+  if (lastSection) {
+    switchSection(lastSection);
+  } else {
+    // Fallback: Standard-Section öffnen
+    switchSection('mein-tag-section'); // <- passe an, welche Section default sein soll
+  }
+});
+  
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Standort erstellen
 // ==========================
