@@ -553,6 +553,30 @@ loginOverlay.innerHTML = `
 `;
 document.body.appendChild(loginOverlay);
 
+// ==========================
+// Theme-Toggle Funktion
+// ==========================
+function applyTheme(theme) {
+  if (theme === 'dark') {
+    document.body.classList.add('dark-mode');
+    themeToggle.textContent = '☀️ Hellmodus';
+  } else {
+    document.body.classList.remove('dark-mode');
+    themeToggle.textContent = '🌙 Dark Mode';
+  }
+  localStorage.setItem('theme', theme);
+}
+
+// Eventlistener für Toggle-Button
+const themeToggle = document.getElementById('dark-mode-toggle');
+themeToggle.addEventListener('click', () => {
+  const currentTheme = document.body.classList.contains('dark-mode') ? 'dark' : 'light';
+  applyTheme(currentTheme === 'dark' ? 'light' : 'dark');
+});
+
+// ==========================
+// Nach Login Theme anwenden
+// ==========================
 loginForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   errorMsg.textContent = '';
@@ -563,7 +587,6 @@ loginForm.addEventListener('submit', async (e) => {
     passwort: formData.get('passwort')
   };
 
-  // Lade-Overlay einblenden
   loginOverlay.style.display = 'flex';
   document.getElementById('login-overlay-text').textContent = 'Anmeldung läuft...';
 
@@ -578,38 +601,25 @@ loginForm.addEventListener('submit', async (e) => {
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || 'Fehler beim Login.');
 
-    if (data.csrfToken) {
-      localStorage.setItem('csrfToken', data.csrfToken);
-    }
+    if (data.csrfToken) localStorage.setItem('csrfToken', data.csrfToken);
 
-    // Dashboard anzeigen
     loginCard.style.display = 'none';
     dashboard.style.display = 'block';
 
-    // 🔹 Dark/Lightmode nach Login direkt anwenden
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme === 'dark') {
-      document.body.classList.add('dark-mode');
-      themeToggle.textContent = '☀️ Hellmodus';
-    } else {
-      document.body.classList.remove('dark-mode');
-      themeToggle.textContent = '🌙 Dark Mode';
-    }
+    // ✅ Direkt nach Login Theme anwenden
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    applyTheme(savedTheme);
 
-    // Lade-Overlay aktualisieren während Tabellen geladen werden
     document.getElementById('login-overlay-text').textContent = 'Daten werden geladen...';
-
     await Promise.all([
       reloadZeitenTabelle(),
       reloadArbeitszeitenTabelle(),
       loadUsers()
     ]);
 
-    // 🔹 Letzte Section wiederherstellen
     const lastSection = localStorage.getItem('lastSection') || 'arbeitszeiten-section';
     switchSection(lastSection);
 
-    // Lade-Overlay ausblenden
     loginOverlay.style.display = 'none';
     document.getElementById('login-overlay-text').textContent = '';
 
@@ -618,6 +628,17 @@ loginForm.addEventListener('submit', async (e) => {
     errorMsg.textContent = err.message;
     console.error('Loginfehler:', err);
   }
+});
+
+// ==========================
+// Beim Laden der Seite Theme anwenden
+// ==========================
+window.addEventListener('DOMContentLoaded', () => {
+  const savedTheme = localStorage.getItem('theme') || 'light';
+  applyTheme(savedTheme);
+
+  const lastSection = localStorage.getItem('lastSection') || 'arbeitszeiten-section';
+  switchSection(lastSection);
 });
 
 async function apiFetch(path, options = {}, retries = 2, statusText = "Lädt...") {
@@ -797,42 +818,6 @@ document.querySelectorAll('nav button').forEach(btn => {
   });
 });
 
-// ==========================
-// Dark/Light Mode
-// ==========================
-const themeToggle = document.getElementById('dark-mode-toggle');
-if (themeToggle) {
-  themeToggle.addEventListener('click', () => {
-    document.body.classList.toggle('dark-mode');
-
-    // Toggle Text
-    themeToggle.textContent = document.body.classList.contains('dark-mode')
-      ? '☀️ Hellmodus'
-      : '🌙 Dark Mode';
-
-    localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
-  });
-}
-
-// ==========================
-// Seite laden → Einstellungen wiederherstellen
-// ==========================
-window.addEventListener('DOMContentLoaded', () => {
-  // Theme wiederherstellen
-  const savedTheme = localStorage.getItem('theme');
-  if (savedTheme === 'dark') {
-    document.body.classList.add('dark-mode');
-    themeToggle.textContent = '☀️ Hellmodus';
-  } else {
-    document.body.classList.remove('dark-mode');
-    themeToggle.textContent = '🌙 Dark Mode';
-  }
-
-  // Section wiederherstellen
-  const lastSection = localStorage.getItem('lastSection');
-  switchSection(lastSection || 'arbeitszeiten-section'); // Standard
-});
-  
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Standort erstellen
 // ==========================
