@@ -531,7 +531,9 @@ const errorMsg = document.getElementById('error-msg');
 const loginCard = document.getElementById('login-card');
 const dashboard = document.getElementById('dashboard');
 
+// ==========================
 // Lade-Overlay erstellen
+// ==========================
 const loginOverlay = document.createElement('div');
 loginOverlay.id = 'login-overlay';
 loginOverlay.style = `
@@ -556,6 +558,8 @@ document.body.appendChild(loginOverlay);
 // ==========================
 // Theme-Toggle Funktion
 // ==========================
+const themeToggle = document.getElementById('dark-mode-toggle');
+
 function applyTheme(theme) {
   if (theme === 'dark') {
     document.body.classList.add('dark-mode');
@@ -567,15 +571,46 @@ function applyTheme(theme) {
   localStorage.setItem('theme', theme);
 }
 
-// Eventlistener für Toggle-Button
-const themeToggle = document.getElementById('dark-mode-toggle');
+// Toggle-Button Event
 themeToggle.addEventListener('click', () => {
   const currentTheme = document.body.classList.contains('dark-mode') ? 'dark' : 'light';
   applyTheme(currentTheme === 'dark' ? 'light' : 'dark');
 });
 
 // ==========================
-// Nach Login Theme anwenden
+// Section-Wechsel
+// ==========================
+function switchSection(sectionId) {
+  document.querySelectorAll('.section').forEach(sec => {
+    sec.classList.remove('active');
+    sec.classList.add('hidden');
+  });
+
+  const section = document.getElementById(sectionId);
+  if (section) {
+    section.classList.remove('hidden');
+    section.classList.add('active');
+  }
+
+  document.querySelectorAll('nav button').forEach(btn => {
+    btn.classList.remove('active');
+    if (btn.dataset.target === sectionId) btn.classList.add('active');
+  });
+
+  localStorage.setItem('lastSection', sectionId);
+}
+
+// Nav Buttons
+document.querySelectorAll('nav button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const targetId = btn.dataset.target;
+    if (!targetId) return;
+    switchSection(targetId);
+  });
+});
+
+// ==========================
+// Nach Login
 // ==========================
 loginForm.addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -606,7 +641,7 @@ loginForm.addEventListener('submit', async (e) => {
     loginCard.style.display = 'none';
     dashboard.style.display = 'block';
 
-    // ✅ Direkt nach Login Theme anwenden
+    // Theme sofort anwenden
     const savedTheme = localStorage.getItem('theme') || 'light';
     applyTheme(savedTheme);
 
@@ -617,6 +652,7 @@ loginForm.addEventListener('submit', async (e) => {
       loadUsers()
     ]);
 
+    // Letzte Section wiederherstellen
     const lastSection = localStorage.getItem('lastSection') || 'arbeitszeiten-section';
     switchSection(lastSection);
 
@@ -631,7 +667,7 @@ loginForm.addEventListener('submit', async (e) => {
 });
 
 // ==========================
-// Beim Laden der Seite Theme anwenden
+// Beim Laden der Seite
 // ==========================
 window.addEventListener('DOMContentLoaded', () => {
   const savedTheme = localStorage.getItem('theme') || 'light';
@@ -641,6 +677,7 @@ window.addEventListener('DOMContentLoaded', () => {
   switchSection(lastSection);
 });
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////
 async function apiFetch(path, options = {}, retries = 2, statusText = "Lädt...") {
   showLoading(statusText);
 
@@ -778,45 +815,6 @@ async function setRole(userId, rolle) {
     alert('Fehler: ' + e.message);
   }
 }
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// ==========================
-// Section-Wechsel
-// ==========================
-function switchSection(sectionId) {
-  // alle Sections verstecken / entfernen .active
-  document.querySelectorAll('.section').forEach(sec => {
-    sec.classList.remove('active');
-    sec.classList.add('hidden');
-  });
-
-  // gewünschte Section anzeigen
-  const section = document.getElementById(sectionId);
-  if (section) {
-    section.classList.remove('hidden');
-    section.classList.add('active');
-  }
-
-  // Navigation Button aktivieren
-  document.querySelectorAll('nav button').forEach(btn => {
-    btn.classList.remove('active');
-    if (btn.dataset.target === sectionId) btn.classList.add('active');
-  });
-
-  // ✅ speichern
-  localStorage.setItem('lastSection', sectionId);
-}
-
-// ==========================
-// Nav Buttons
-// ==========================
-document.querySelectorAll('nav button').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const targetId = btn.dataset.target;
-    if (!targetId) return;
-    switchSection(targetId);
-  });
-});
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Standort erstellen
@@ -1949,13 +1947,6 @@ document.addEventListener('DOMContentLoaded', () => {
 document.getElementById('dark-mode-toggle').addEventListener('click', () => {
   document.body.classList.toggle('dark-mode');
 
-  // Toggle Text ändern
-  const btn = document.getElementById('dark-mode-toggle');
-  if (document.body.classList.contains('dark-mode')) {
-    btn.textContent = '☀️ Hellmodus';
-  } else {
-    btn.textContent = '🌙 Dark Mode';
-  }
 });
 </script>
 
