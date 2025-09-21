@@ -563,10 +563,20 @@ loginForm.addEventListener('submit', async (e) => {
     passwort: formData.get('passwort')
   };
 
-  // Lade-Overlay einblenden
-  loginOverlay.style.display = 'flex';
-  document.getElementById('login-overlay-text').textContent = 'Anmeldung läuft...';
+ // Lade-Overlay einblenden
+loginOverlay.style.display = 'flex';
+document.getElementById('login-overlay-text').textContent = 'Anmeldung läuft...';
 
+// Theme direkt anwenden
+const savedTheme = localStorage.getItem('theme');
+if (savedTheme === 'dark') {
+  document.body.classList.add('dark-mode');
+  themeToggle.textContent = '☀️ Hellmodus';
+} else {
+  document.body.classList.remove('dark-mode');
+  themeToggle.textContent = '🌙 Dark Mode';
+}
+  
   try {
     const res = await fetch(`${backendUrl}/api/admin-login`, {
       method: 'POST',
