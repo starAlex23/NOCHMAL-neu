@@ -943,6 +943,77 @@ document.getElementById('delete-location-btn').addEventListener('click', async (
   resetLocationSelection(); // ✅ nach Löschen zurücksetzen
 });
 
+// ==========================
+// Checkbox-Auswahl beobachten
+// ==========================
+function updateActionButtons() {
+  const checked = document.querySelectorAll('.loc-checkbox:checked');
+  const editBtn = document.getElementById('edit-location-btn');
+  const deleteBtn = document.getElementById('delete-location-btn');
+
+  if (checked.length === 1) {
+    if (editBtn) editBtn.style.display = 'inline-block';
+  } else {
+    if (editBtn) editBtn.style.display = 'none';
+  }
+
+  if (checked.length > 0) {
+    if (deleteBtn) deleteBtn.style.display = 'inline-block';
+  } else {
+    if (deleteBtn) deleteBtn.style.display = 'none';
+  }
+}
+
+// Checkbox-Listener setzen (nach Laden der Locations)
+function attachCheckboxListeners() {
+  document.querySelectorAll('.loc-checkbox').forEach(cb => {
+    cb.addEventListener('click', (e) => {
+      e.stopPropagation(); // verhindert, dass globaler Klick-Handler sofort alles zurücksetzt
+      updateActionButtons();
+    });
+  });
+}
+
+// Nach dem Laden der Tabelle aufrufen
+async function ladeLocationsGesamt() {
+  try {
+    const locations = await apiFetch('/api/locations');
+    const tbody = document.querySelector('#locations-table tbody');
+    tbody.innerHTML = '';
+
+    locations.forEach(loc => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="checkbox-cell" style="display:none">
+          <input type="checkbox" class="loc-checkbox" data-id="${loc.id}">
+        </td>
+        <td>${loc.name}</td>
+        <td>${loc.adresse || '-'}</td>
+        <td>${loc.google_maps_link ? `<a href="${loc.google_maps_link}" target="_blank">Link</a>` : '-'}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    // Dropdown füllen
+    const select = document.getElementById('plan-location');
+    if (select) {
+      select.innerHTML = '';
+      locations.forEach(loc => {
+        const opt = document.createElement('option');
+        opt.value = loc.id;
+        opt.textContent = loc.name;
+        select.appendChild(opt);
+      });
+    }
+
+    // ⚡ WICHTIG: Checkbox-Listener nach Neubau hinzufügen
+    attachCheckboxListeners();
+
+  } catch (err) {
+    console.error("Fehler beim Laden der Locations", err);
+  }
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // =================== Arbeitspläne ===================
 
