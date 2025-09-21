@@ -810,18 +810,27 @@ locationForm.addEventListener('submit', async (e) => {
 // ==========================
 const menuBtn = document.getElementById('menu-btn');
 const menuDropdown = document.getElementById('menu-dropdown');
+const locationForm = document.getElementById('location-form');
+const toggleAddFormBtn = document.getElementById('toggle-add-form-btn');
 
-menuBtn.addEventListener('click', () => {
-  // Checkboxen sichtbar machen
+// Menü öffnen / schließen
+menuBtn.addEventListener('click', (e) => {
+  e.stopPropagation(); // verhindert, dass der globale Klick-Listener sofort wieder schließt
+
+  // Formular immer zuklappen, wenn Menü geöffnet wird
+  locationForm.style.display = 'none';
+
+  // Checkboxen toggeln
   document.querySelectorAll('.checkbox-cell').forEach(td => {
-    td.style.display = td.style.display === 'table-cell' ? 'none' : 'table-cell';
+    td.style.display = (td.style.display === 'table-cell') ? 'none' : 'table-cell';
   });
-  // Dropdown anzeigen
-  menuDropdown.style.display = menuDropdown.style.display === 'block' ? 'none' : 'block';
+
+  // Dropdown toggeln
+  menuDropdown.style.display = (menuDropdown.style.display === 'block') ? 'none' : 'block';
 });
 
 // Klick außerhalb → Menü schließen + Checkboxen ausblenden
-document.addEventListener('click', e => {
+document.addEventListener('click', (e) => {
   if (!menuBtn.contains(e.target) && !menuDropdown.contains(e.target)) {
     menuDropdown.style.display = 'none';
     document.querySelectorAll('.checkbox-cell').forEach(td => td.style.display = 'none');
@@ -832,32 +841,17 @@ document.addEventListener('click', e => {
 // ==========================
 // Einklappbares Formular
 // ==========================
-const toggleAddFormBtn = document.getElementById('toggle-add-form-btn');
-  
-toggleAddFormBtn.addEventListener('click', () => {
-  locationForm.style.display = locationForm.style.display === 'none' ? 'block' : 'none';
-});
+toggleAddFormBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  // Menü schließen, falls es offen war
+  menuDropdown.style.display = 'none';
+  document.querySelectorAll('.checkbox-cell').forEach(td => td.style.display = 'none');
+  document.querySelectorAll('.loc-checkbox').forEach(cb => cb.checked = false);
 
-menuBtn.addEventListener('click', () => {
-  // Formular beim Menü öffnen schließen
-  locationForm.style.display = 'none';
-
-  // Checkboxen sichtbar machen
-  document.querySelectorAll('.checkbox-cell').forEach(td => {
-    td.style.display = td.style.display === 'table-cell' ? 'none' : 'table-cell';
-  });
-
-  // Dropdown ein-/ausblenden
-  menuDropdown.style.display = menuDropdown.style.display === 'block' ? 'none' : 'block';
-});
-
-// Klick außerhalb → Menü schließen + Checkboxen ausblenden
-document.addEventListener('click', e => {
-  if (!menuBtn.contains(e.target) && !menuDropdown.contains(e.target) && !toggleAddFormBtn.contains(e.target) && !locationForm.contains(e.target)) {
-    menuDropdown.style.display = 'none';
-    document.querySelectorAll('.checkbox-cell').forEach(td => td.style.display = 'none');
-    document.querySelectorAll('.loc-checkbox').forEach(cb => cb.checked = false);
-  }
+  // Formular ein/ausklappen
+  locationForm.style.display = (locationForm.style.display === 'none' || locationForm.style.display === '') 
+    ? 'block' 
+    : 'none';
 });
 
 // ==========================
