@@ -1898,26 +1898,6 @@ document.getElementById('delete-selected-btn').addEventListener('click', async (
   await loadUsers();
 });
 
-document.querySelectorAll('nav button').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-
-    document.querySelectorAll('.section').forEach(sec => {
-      sec.classList.remove('active');
-      sec.classList.add('hidden');  // Sektionen verstecken
-    });
-
-    const targetId = btn.dataset.target;
-    if (!targetId) return;
-
-    const section = document.getElementById(targetId);
-    if (!section) return;
-
-    section.classList.remove('hidden');  // Sichtbar machen
-    section.classList.add('active');
-  });
-});
 
   document.getElementById('arbeitszeiten-suche').addEventListener('input', (e) => {
   const suchbegriff = e.target.value.toLowerCase();
