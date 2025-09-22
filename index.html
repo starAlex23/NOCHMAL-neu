@@ -1248,50 +1248,45 @@ function attachPlanCheckboxListeners() {
   });
 }
 
-// === Plan bearbeiten Button ===
-document.getElementById('edit-plan-btn').addEventListener('click', async () => {
-  const checked = Array.from(document.querySelectorAll('.plan-checkbox:checked'));
-  if (checked.length !== 1) return alert("Bitte genau einen Plan auswählen!");
-  
-  const planId = checked[0].dataset.id;
-  await bearbeiteArbeitsplan(planId);
-  resetPlanSelection(); // nach Bearbeiten wieder alles zurücksetzen
-});
-
 // ==========================
 // Modal-Elemente
 // ==========================
 const editPlanModal = document.getElementById('edit-plan-modal');
-const closeEditModal = document.getElementById('close-edit-modal');
+const closeEditModalBtn = document.getElementById('close-edit-modal');
 const saveEditPlanBtn = document.getElementById('save-edit-plan');
+let currentPlanId = null;        // Merkt sich gerade bearbeiteten Plan
+let mitContainer = null;         // Mitarbeiter-Container global für save
 
 // ==========================
-// Bearbeiten-Funktion
-// ==========================
 // Modal schließen
+// ==========================
 closeEditModalBtn.addEventListener('click', () => {
   editPlanModal.style.display = 'none';
 });
 
-// Klick außerhalb Modal schließt es
 editPlanModal.addEventListener('click', (e) => {
   if (e.target === editPlanModal) editPlanModal.style.display = 'none';
 });
 
-// Bearbeiten-Button Eventlistener einmalig
+// ==========================
+// Bearbeiten Button
+// ==========================
 document.getElementById('edit-plan-btn').addEventListener('click', async () => {
   const checked = Array.from(document.querySelectorAll('.plan-checkbox:checked'));
   if (checked.length !== 1) return alert("Bitte genau einen Plan auswählen!");
-  const planId = checked[0].dataset.id;
-  await bearbeiteArbeitsplan(planId);
+  
+  currentPlanId = checked[0].dataset.id;
+  await bearbeiteArbeitsplan(currentPlanId);
   resetPlanSelection();
 });
 
-// Funktion nur für das Laden der Plan-Daten und Anzeigen des Modals
+// ==========================
+// Funktion: Plan bearbeiten
+// ==========================
 async function bearbeiteArbeitsplan(planId) {
   try {
     const plan = await apiFetch(`/api/workplans/${planId}`);
-
+    
     // Modal anzeigen
     editPlanModal.style.display = 'flex';
 
@@ -1313,7 +1308,7 @@ async function bearbeiteArbeitsplan(planId) {
     });
 
     // Mitarbeiter füllen
-    const mitContainer = document.getElementById('edit-plan-mitarbeiter-container');
+    mitContainer = document.getElementById('edit-plan-mitarbeiter-container');
     mitContainer.innerHTML = '';
 
     // Suchfeld
@@ -1356,42 +1351,42 @@ async function bearbeiteArbeitsplan(planId) {
     console.error("Fehler beim Laden des Plans", err);
   }
 }
-    
-    // ==========================
-    // Speichern-Button
-    // ==========================
-    saveEditPlanBtn.onclick = async () => {
-      const datum = document.getElementById('edit-plan-datum').value;
-      const uhrzeit = document.getElementById('edit-plan-uhrzeit').value;
-      const location_id = document.getElementById('edit-plan-location').value;
-      const beschreibung = document.getElementById('edit-plan-beschreibung').value;
 
-      const mitarbeiter = Array.from(
-        mitContainer.querySelectorAll('input[type="checkbox"]:checked')
-      ).map(cb => parseInt(cb.value));
+// ==========================
+// Speichern Button
+// ==========================
+saveEditPlanBtn.addEventListener('click', async () => {
+  if (!currentPlanId || !mitContainer) return;
 
-      if (!datum || !uhrzeit || !location_id) return alert("Datum, Uhrzeit und Standort auswählen!");
-      if (mitarbeiter.length === 0) return alert("Bitte mindestens einen Mitarbeiter auswählen!");
+  const datum = document.getElementById('edit-plan-datum').value;
+  const uhrzeit = document.getElementById('edit-plan-uhrzeit').value;
+  const location_id = document.getElementById('edit-plan-location').value;
+  const beschreibung = document.getElementById('edit-plan-beschreibung').value;
 
-      try {
-        await apiFetch(`/api/workplans/${planId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ datum, uhrzeit, location_id, beschreibung, mitarbeiter })
-        });
+  const mitarbeiter = Array.from(
+    mitContainer.querySelectorAll('input[type="checkbox"]:checked')
+  ).map(cb => parseInt(cb.value));
 
-        alert("Arbeitsplan aktualisiert!");
-        editPlanModal.style.display = 'none';
-        await ladeArbeitsplaene();
-      } catch (err) {
-        console.error("Fehler beim Aktualisieren des Plans", err);
-      }
-    };
+  if (!datum || !uhrzeit || !location_id) return alert("Datum, Uhrzeit und Standort auswählen!");
+  if (mitarbeiter.length === 0) return alert("Bitte mindestens einen Mitarbeiter auswählen!");
+
+  try {
+    await apiFetch(`/api/workplans/${currentPlanId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ datum, uhrzeit, location_id, beschreibung, mitarbeiter })
+    });
+
+    alert("Arbeitsplan aktualisiert!");
+    editPlanModal.style.display = 'none';
+    await ladeArbeitsplaene();
+    currentPlanId = null;
 
   } catch (err) {
-    console.error("Fehler beim Laden des Plans", err);
+    console.error("Fehler beim Aktualisieren des Plans", err);
   }
-}
+});
+
 
 // ==========================
 // Arbeitspläne laden
