@@ -569,6 +569,12 @@ function applyTheme(theme) {
     themeToggle.textContent = '🌙 Dark Mode';
   }
   localStorage.setItem('theme', theme);
+
+  // ➜ Nach Theme-Wechsel: letzte Section wieder anzeigen
+  const lastSection = localStorage.getItem('lastSection');
+  if (lastSection) {
+    switchSection(lastSection);
+  }
 }
 
 // Toggle-Button Event
