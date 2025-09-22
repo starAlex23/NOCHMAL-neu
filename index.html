@@ -365,42 +365,51 @@ body.dark-mode #daten-aktualisieren {
   </section>
 
   <!-- Arbeitspläne -->
-  <section id="arbeitsplan-section" class="section hidden">
-    <h2>Arbeitspläne</h2>
+<section id="arbeitsplan-section" class="section hidden">
+  <h2>Arbeitspläne</h2>
 
-    <!-- Toggle-Button für Formular -->
-    <button id="arbeitsplan-toggle">▼ Plan erstellen</button>
+  <!-- Toggle-Button für Formular -->
+  <button id="arbeitsplan-toggle">▼ Plan erstellen</button>
 
-    <!-- Erstellungsformular (einklappbar) -->
-    <div id="arbeitsplan-form" style="display:none; margin-top:1rem;">
-      <input type="date" id="plan-datum" required />
-      <input type="time" id="plan-uhrzeit" required />
-      <select id="plan-location"></select>
-      <input type="text" id="plan-beschreibung" placeholder="Beschreibung (optional)" />
+  <!-- Erstellungsformular (einklappbar) -->
+  <div id="arbeitsplan-form" style="display:none; margin-top:1rem;">
+    <input type="date" id="plan-datum" required />
+    <input type="time" id="plan-uhrzeit" required />
+    <select id="plan-location"></select>
+    <input type="text" id="plan-beschreibung" placeholder="Beschreibung (optional)" />
 
-      <label for="plan-mitarbeiter-search">Mitarbeiter suchen:</label>
-      <input type="text" id="plan-mitarbeiter-search" placeholder="Suche..." />
+    <label for="plan-mitarbeiter-search">Mitarbeiter suchen:</label>
+    <input type="text" id="plan-mitarbeiter-search" placeholder="Suche..." />
 
-      <div id="plan-mitarbeiter-container" style="max-height:150px; overflow-y:auto; border:1px solid #ccc; padding:5px;"></div>
+    <div id="plan-mitarbeiter-container" style="max-height:150px; overflow-y:auto; border:1px solid #ccc; padding:5px;"></div>
 
-      <button id="arbeitsplan-erstellen">➕ Plan erstellen</button>
-    </div>
+    <button id="arbeitsplan-erstellen">➕ Plan erstellen</button>
+  </div>
 
-    <!-- Tabellenansicht -->
-    <div id="arbeitsplan-liste" class="table-container" style="margin-top:1rem;">
-      <table>
-        <thead>
-          <tr>
-            <th>Datum / Uhrzeit</th>
-            <th>Standort</th>
-            <th>Mitarbeiter</th>
-            <th>Aktionen</th>
-          </tr>
-        </thead>
-        <tbody id="arbeitsplan-tbody"></tbody>
-      </table>
-    </div>
-  </section>
+  <!-- Drei-Punkte-Button für Aktionen -->
+  <button id="plan-menu-btn" style="margin-top:10px;">⋮</button>
+
+  <!-- Dropdown-Menü für Bearbeiten/Löschen -->
+  <div id="plan-menu-dropdown" style="display:none; margin-top:5px;">
+    <button id="edit-plan-btn" style="display:none">✏️ Bearbeiten</button>
+    <button id="delete-plan-btn" style="display:none">🗑️ Löschen</button>
+  </div>
+
+  <!-- Tabellenansicht -->
+  <div id="arbeitsplan-liste" class="table-container" style="margin-top:1rem;">
+    <table>
+      <thead>
+        <tr>
+          <th style="display:none"></th> <!-- Checkbox-Spalte -->
+          <th>Datum / Uhrzeit</th>
+          <th>Standort</th>
+          <th>Mitarbeiter</th>
+        </tr>
+      </thead>
+      <tbody id="arbeitsplan-tbody"></tbody>
+    </table>
+  </div>
+</section>
 
   <!-- Standorte -->
 <section id="locations-section" class="section hidden">
@@ -1096,39 +1105,18 @@ async function ladeLocationsGesamt() {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // =================== Arbeitspläne ===================
-
-// Mitarbeiter für Arbeitsplan laden (Checkboxen)
-async function ladeMitarbeiterDropdown() {
+// ==========================
+// Mitarbeiter laden + Suchfeld + Checkboxen
+// ==========================
+async function ladeMitarbeiterCheckboxen() {
   const container = document.getElementById('plan-mitarbeiter-container');
   if (!container) {
     console.error('Element #plan-mitarbeiter-container nicht gefunden!');
     return;
   }
-  try {
-    const users = await apiFetch('/api/users'); 
-    container.innerHTML = '';
 
-    users.filter(u => u.rolle === 'user').forEach(u => {
-      const label = document.createElement('label');
-      label.style.display = 'block';
-      const checkbox = document.createElement('input');
-      checkbox.type = 'checkbox';
-      checkbox.value = u.id;
-      checkbox.dataset.name = `${u.vorname} ${u.nachname}`;
-      label.appendChild(checkbox);
-      label.appendChild(document.createTextNode(` ${u.vorname} ${u.nachname} (${u.rolle})`));
-      container.appendChild(label);
-    });
-  } catch (err) {
-    console.error("Fehler beim Laden der Mitarbeiter", err);
-  }
-}
-  
-// === Mitarbeiter mit Checkboxen + Suche laden (NEU) ===
-async function ladeMitarbeiterCheckboxen() {
   try {
     const users = await apiFetch('/api/users'); 
-    const container = document.getElementById('plan-mitarbeiter-container');
     container.innerHTML = '';
 
     // Suchfeld
@@ -1144,6 +1132,7 @@ async function ladeMitarbeiterCheckboxen() {
     });
     container.appendChild(suchfeld);
 
+    // Mitarbeiter-Checkboxen
     users.forEach(u => {
       if (u.rolle === 'user' || u.rolle === 'vorarbeiter') {
         const div = document.createElement('div');
@@ -1155,7 +1144,7 @@ async function ladeMitarbeiterCheckboxen() {
         cb.id = `mitarbeiter-${u.id}`;
 
         const label = document.createElement('label');
-        label.setAttribute('for', `mitarbeiter-${u.id}`);
+        label.setAttribute('for', cb.id);
         label.textContent = `${u.vorname} ${u.nachname} (${u.rolle})`;
 
         div.appendChild(cb);
@@ -1168,7 +1157,48 @@ async function ladeMitarbeiterCheckboxen() {
   }
 }
 
-// === Arbeitspläne laden + tabellarisch anzeigen (angepasst) ===
+// ==========================
+// Checkbox-Auswahl beobachten
+// ==========================
+function updatePlanActionButtons() {
+  const checked = document.querySelectorAll('.plan-checkbox:checked');
+  const deleteBtn = document.getElementById('delete-plan-btn');
+  const editBtn = document.getElementById('edit-plan-btn');
+
+  if (checked.length === 0) {
+    if (deleteBtn) deleteBtn.style.display = 'none';
+    if (editBtn) editBtn.style.display = 'none';
+  } else if (checked.length === 1) {
+    if (deleteBtn) deleteBtn.style.display = 'inline-block';
+    if (editBtn) editBtn.style.display = 'inline-block';
+  } else {
+    if (deleteBtn) deleteBtn.style.display = 'inline-block';
+    if (editBtn) editBtn.style.display = 'none'; // nur bei EINEM Plan sichtbar
+  }
+}
+
+function attachPlanCheckboxListeners() {
+  document.querySelectorAll('.plan-checkbox').forEach(cb => {
+    cb.addEventListener('click', (e) => {
+      e.stopPropagation();
+      updatePlanActionButtons();
+    });
+  });
+}
+
+// === Plan bearbeiten Button ===
+document.getElementById('edit-plan-btn').addEventListener('click', async () => {
+  const checked = Array.from(document.querySelectorAll('.plan-checkbox:checked'));
+  if (checked.length !== 1) return alert("Bitte genau einen Plan auswählen!");
+  
+  const planId = checked[0].dataset.id;
+  await bearbeiteArbeitsplan(planId);
+  resetPlanSelection(); // nach Bearbeiten wieder alles zurücksetzen
+});
+
+// ==========================
+// Arbeitspläne laden
+// ==========================
 async function ladeArbeitsplaene() {
   try {
     const plaene = await apiFetch('/api/workplans');
@@ -1178,34 +1208,33 @@ async function ladeArbeitsplaene() {
     plaene.forEach(plan => {
       const tr = document.createElement('tr');
 
-      const mitarbeiterBlock = plan.mitarbeiter && plan.mitarbeiter.length > 0
+      const mitarbeiterBlock = (plan.mitarbeiter && plan.mitarbeiter.length > 0)
         ? plan.mitarbeiter.map(m => `
             <div>${m.rolle === 'vorarbeiter' ? '⭐ ' : ''}${m.vorname} ${m.nachname} (${m.rolle}) [${m.status}]</div>
           `).join('')
         : '-';
 
       tr.innerHTML = `
+        <td class="plan-checkbox-cell" style="display:none">
+          <input type="checkbox" class="plan-checkbox" data-id="${plan.id}">
+        </td>
         <td>${plan.datum} ${plan.uhrzeit || ''}</td>
         <td>${plan.location_name || '-'}</td>
         <td>${mitarbeiterBlock}</td>
-        <td>
-          <div class="dropdown">
-            <button class="menu-btn">⋮</button>
-            <div class="dropdown-content">
-              <a href="#" onclick="loescheArbeitsplan(${plan.id})">❌ Löschen</a>
-            </div>
-          </div>
-        </td>
       `;
 
       tbody.appendChild(tr);
     });
+
+    attachPlanCheckboxListeners();
   } catch (err) {
     console.error('Fehler beim Laden der Arbeitspläne', err);
   }
 }
 
-// === Plan erstellen (angepasst für Checkboxen + Uhrzeit) ===
+// ==========================
+// Plan erstellen
+// ==========================
 document.getElementById('arbeitsplan-erstellen').addEventListener('click', async () => {
   const datum = document.getElementById('plan-datum').value;
   const uhrzeit = document.getElementById('plan-uhrzeit').value;
@@ -1213,8 +1242,8 @@ document.getElementById('arbeitsplan-erstellen').addEventListener('click', async
   const beschreibung = document.getElementById('plan-beschreibung').value;
 
   const mitarbeiter = Array.from(
-  document.querySelectorAll('#plan-mitarbeiter-container input[type="checkbox"]:checked')
-).map(cb => parseInt(cb.value));
+    document.querySelectorAll('#plan-mitarbeiter-container input[type="checkbox"]:checked')
+  ).map(cb => parseInt(cb.value));
 
   if (!datum || !uhrzeit || !location_id) return alert("Datum, Uhrzeit und Standort auswählen!");
   if (mitarbeiter.length === 0) return alert("Bitte mindestens einen Mitarbeiter auswählen!");
@@ -1233,24 +1262,74 @@ document.getElementById('arbeitsplan-erstellen').addEventListener('click', async
   }
 });
 
-// === Plan löschen (unverändert) ===
-async function loescheArbeitsplan(planId) {
-  if (!confirm("Plan wirklich löschen?")) return;
-  try {
-    await apiFetch(`/api/workplans/${planId}`, { method: 'DELETE' });
-    await ladeArbeitsplaene();
-  } catch (err) {
-    console.error('Fehler beim Löschen des Plans', err);
+// ==========================
+// Mehrfach-Löschen von Plänen
+// ==========================
+document.getElementById('delete-plan-btn').addEventListener('click', async () => {
+  const checked = Array.from(document.querySelectorAll('.plan-checkbox:checked'));
+  if (checked.length === 0) return alert("Bitte mindestens einen Plan auswählen!");
+  if (!confirm(`Willst du die ausgewählten ${checked.length} Plan/Pläne wirklich löschen?`)) return;
+
+  for (const cb of checked) {
+    await apiFetch(`/api/workplans/${cb.dataset.id}`, { method: 'DELETE' });
   }
+  await ladeArbeitsplaene();
+  resetPlanSelection();
+});
+
+// ==========================
+// Drei-Punkte-Menü + Reset
+// ==========================
+const planMenuBtn = document.getElementById('plan-menu-btn');
+const planMenuDropdown = document.getElementById('plan-menu-dropdown');
+const togglePlanFormBtn = document.getElementById('toggle-plan-form-btn');
+
+planMenuBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  const planForm = document.getElementById('arbeitsplan-form');
+  if (planForm) planForm.style.display = 'none';
+
+  document.querySelectorAll('.plan-checkbox-cell').forEach(td => {
+    td.style.display = (td.style.display === 'table-cell') ? 'none' : 'table-cell';
+  });
+
+  planMenuDropdown.style.display = (planMenuDropdown.style.display === 'block') ? 'none' : 'block';
+});
+
+function resetPlanSelection() {
+  planMenuDropdown.style.display = 'none';
+  document.querySelectorAll('.plan-checkbox-cell').forEach(td => td.style.display = 'none');
+  document.querySelectorAll('.plan-checkbox').forEach(cb => cb.checked = false);
+
+  const deleteBtn = document.getElementById('delete-plan-btn');
+  if (deleteBtn) deleteBtn.style.display = 'none';
 }
 
-// === Formular einklappbar machen (NEU) ===
+// globaler Klick
+document.addEventListener('click', (e) => {
+  const table = document.getElementById('arbeitsplan-table');
+  const insideTable = table && table.contains(e.target);
+  const insideMenu = planMenuBtn.contains(e.target) || planMenuDropdown.contains(e.target);
+  const insideForm = document.getElementById('arbeitsplan-form').contains(e.target);
+
+  if (!insideTable && !insideMenu && !insideForm) {
+    resetPlanSelection();
+  } else if (!insideMenu) {
+    planMenuDropdown.style.display = 'none';
+  }
+});
+
+// ==========================
+// Formular einklappbar
+// ==========================
 document.getElementById('arbeitsplan-toggle').addEventListener('click', () => {
   const form = document.getElementById('arbeitsplan-form');
   form.style.display = form.style.display === 'none' ? 'block' : 'none';
 });
 
-// Detailansicht eines Arbeitsplans
+// ==========================
+// Detailansicht
+// ==========================
 async function zeigeArbeitsplanDetail(planId) {
   try {
     const plan = await apiFetch(`/api/workplans/${planId}`);
@@ -1269,12 +1348,15 @@ async function zeigeArbeitsplanDetail(planId) {
   }
 }
 
-// Initialisierung beim Laden der Seite
+// ==========================
+// Initialisierung
+// ==========================
 window.addEventListener('DOMContentLoaded', async () => {
   await ladeLocationsGesamt();
-  await ladeMitarbeiterDropdown();
+  await ladeMitarbeiterCheckboxen(); // nur noch die neue Version
   await ladeArbeitsplaene();
 });
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   
   //Zeiten durchsuchen
