@@ -1280,13 +1280,35 @@ window.addEventListener('click', (e) => {
 // ==========================
 // Bearbeiten-Funktion
 // ==========================
+const editPlanModal = document.getElementById('edit-plan-modal');
+const closeEditModalBtn = document.getElementById('close-edit-modal');
+
+// Modal schließen
+closeEditModalBtn.addEventListener('click', () => {
+  editPlanModal.style.display = 'none';
+});
+
+// Klick außerhalb Modal schließt es
+editPlanModal.addEventListener('click', (e) => {
+  if (e.target === editPlanModal) editPlanModal.style.display = 'none';
+});
+
+// Bearbeiten-Button Eventlistener einmalig
+document.getElementById('edit-plan-btn').addEventListener('click', async () => {
+  const checked = Array.from(document.querySelectorAll('.plan-checkbox:checked'));
+  if (checked.length !== 1) return alert("Bitte genau einen Plan auswählen!");
+  const planId = checked[0].dataset.id;
+  await bearbeiteArbeitsplan(planId);
+  resetPlanSelection();
+});
+
+// Funktion nur für das Laden der Plan-Daten und Anzeigen des Modals
 async function bearbeiteArbeitsplan(planId) {
   try {
-    // Plan-Daten vom Server laden
     const plan = await apiFetch(`/api/workplans/${planId}`);
 
     // Modal anzeigen
-    editPlanModal.style.display = 'block';
+    editPlanModal.style.display = 'flex';
 
     // Felder vorbefüllen
     document.getElementById('edit-plan-datum').value = plan.datum;
@@ -1305,7 +1327,7 @@ async function bearbeiteArbeitsplan(planId) {
       locationSelect.appendChild(opt);
     });
 
-    // Mitarbeiter-Container füllen
+    // Mitarbeiter füllen
     const mitContainer = document.getElementById('edit-plan-mitarbeiter-container');
     mitContainer.innerHTML = '';
 
@@ -1333,11 +1355,7 @@ async function bearbeiteArbeitsplan(planId) {
         cb.type = 'checkbox';
         cb.value = u.id;
         cb.id = `edit-mitarbeiter-${u.id}`;
-
-        // Vorbefüllen: bereits ausgewählte Mitarbeiter abhaken
-        if (plan.mitarbeiter.some(m => m.id === u.id)) {
-          cb.checked = true;
-        }
+        if (plan.mitarbeiter.some(m => m.id === u.id)) cb.checked = true;
 
         const label = document.createElement('label');
         label.setAttribute('for', cb.id);
@@ -1349,27 +1367,10 @@ async function bearbeiteArbeitsplan(planId) {
       }
     });
 
-  const editPlanModal = document.getElementById('edit-plan-modal');
-  const closeEditModalBtn = document.getElementById('close-edit-modal');
-
-  // Modal schließen
-  closeEditModalBtn.addEventListener('click', () => {
-    editPlanModal.style.display = 'none';
-  });
-
-  // Klick außerhalb Modal schließt es
-  editPlanModal.addEventListener('click', (e) => {
-    if (e.target === editPlanModal) editPlanModal.style.display = 'none';
-  });
-
-  // Funktion nur beim Klicken auf "Bearbeiten" auslösen
-  document.getElementById('edit-plan-btn').addEventListener('click', async () => {
-    const checked = Array.from(document.querySelectorAll('.plan-checkbox:checked'));
-    if (checked.length !== 1) return alert("Bitte genau einen Plan auswählen!");
-    const planId = checked[0].dataset.id;
-    await bearbeiteArbeitsplan(planId);
-    resetPlanSelection();
-  });
+  } catch (err) {
+    console.error("Fehler beim Laden des Plans", err);
+  }
+}
     
     // ==========================
     // Speichern-Button
