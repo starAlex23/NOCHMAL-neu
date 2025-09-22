@@ -268,6 +268,26 @@ body.dark-mode nav button.active {
   color: white;
 }
 
+ body[data-theme="dark"] #edit-plan-modal-content {
+    background: #1e1e1e;
+    color: #f0f0f0;
+  }
+
+  body[data-theme="dark"] #edit-plan-modal-content input,
+  body[data-theme="dark"] #edit-plan-modal-content select {
+    background: #2c2c2c;
+    color: #f0f0f0;
+    border: 1px solid #555;
+  }
+
+  body[data-theme="dark"] #edit-plan-modal-content button#close-edit-modal {
+    color: #f0f0f0;
+  }
+
+  body[data-theme="dark"] #save-edit-plan {
+    background: #3a8e3a;
+  }
+    
 /* Aktualisieren-Button woanders */
 #daten-aktualisieren {
   max-width: 200px;
@@ -413,36 +433,38 @@ body.dark-mode #daten-aktualisieren {
 <!-- ========================== -->
 <!-- Modal für Arbeitsplan bearbeiten -->
 <!-- ========================== -->
-<div id="edit-plan-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; 
+<div id="edit-plan-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
   background: rgba(0,0,0,0.5); z-index:1000; display:flex; justify-content:center; align-items:center;">
-  
-  <div style="background:#fff; padding:1.5rem; border-radius:12px; width:90%; max-width:500px; 
-      box-shadow:0 4px 20px rgba(0,0,0,0.2); position:relative; overflow-y:auto; max-height:90%;">
-      
+
+  <div id="edit-plan-modal-content" style="background:#fff; padding:1.5rem; border-radius:12px; width:90%; max-width:500px;
+      box-shadow:0 4px 20px rgba(0,0,0,0.2); position:relative; overflow-y:auto; max-height:90%;
+      transition: background 0.3s, color 0.3s;">
+
     <!-- Schließen-Button -->
-    <button id="close-edit-modal" style="position:absolute; top:10px; right:10px; background:none; border:none; font-size:1.2rem; cursor:pointer;">×</button>
+    <button id="close-edit-modal" style="position:absolute; top:10px; right:10px; background:none; border:none; font-size:1.5rem; cursor:pointer; color:#333;">
+      ×
+    </button>
 
     <h3 style="margin-top:0; margin-bottom:1rem;">Arbeitsplan bearbeiten</h3>
 
     <!-- Formularfelder -->
     <label>Datum:</label>
-    <input type="date" id="edit-plan-datum" style="width:100%; margin-bottom:0.5rem;">
+    <input type="date" id="edit-plan-datum" style="width:100%; margin-bottom:0.5rem; padding:0.4rem; border-radius:4px; border:1px solid #ccc;">
 
     <label>Uhrzeit:</label>
-    <input type="time" id="edit-plan-uhrzeit" style="width:100%; margin-bottom:0.5rem;">
+    <input type="time" id="edit-plan-uhrzeit" style="width:100%; margin-bottom:0.5rem; padding:0.4rem; border-radius:4px; border:1px solid #ccc;">
 
     <label>Standort:</label>
-    <select id="edit-plan-location" style="width:100%; margin-bottom:0.5rem;"></select>
+    <select id="edit-plan-location" style="width:100%; margin-bottom:0.5rem; padding:0.4rem; border-radius:4px; border:1px solid #ccc;"></select>
 
     <label>Beschreibung:</label>
-    <input type="text" id="edit-plan-beschreibung" style="width:100%; margin-bottom:0.5rem;" placeholder="optional">
+    <input type="text" id="edit-plan-beschreibung" placeholder="optional" style="width:100%; margin-bottom:0.5rem; padding:0.4rem; border-radius:4px; border:1px solid #ccc;">
 
     <label>Mitarbeiter:</label>
     <div id="edit-plan-mitarbeiter-container" style="max-height:200px; overflow-y:auto; border:1px solid #ccc; padding:5px; margin-bottom:1rem;"></div>
-
     <!-- Speichern-Button -->
     <button id="save-edit-plan" style="width:100%; padding:0.5rem; background:#4CAF50; color:white; border:none; border-radius:6px; font-size:1rem; cursor:pointer;">
-       Änderungen speichern
+      Änderungen speichern
     </button>
   </div>
 </div>
