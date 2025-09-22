@@ -1265,24 +1265,9 @@ const editPlanModal = document.getElementById('edit-plan-modal');
 const closeEditModal = document.getElementById('close-edit-modal');
 const saveEditPlanBtn = document.getElementById('save-edit-plan');
 
-// Modal schließen
-closeEditModal.addEventListener('click', () => {
-  editPlanModal.style.display = 'none';
-});
-
-// Klick außerhalb des Modals → schließen
-window.addEventListener('click', (e) => {
-  if (e.target === editPlanModal) {
-    editPlanModal.style.display = 'none';
-  }
-});
-
 // ==========================
 // Bearbeiten-Funktion
 // ==========================
-const editPlanModal = document.getElementById('edit-plan-modal');
-const closeEditModalBtn = document.getElementById('close-edit-modal');
-
 // Modal schließen
 closeEditModalBtn.addEventListener('click', () => {
   editPlanModal.style.display = 'none';
