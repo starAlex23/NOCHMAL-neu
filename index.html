@@ -1242,15 +1242,14 @@ function attachPlanCheckboxListeners() {
 // Modal-Elemente
 // ==========================
 const editPlanModal = document.getElementById('edit-plan-modal');
-const closeEditModalBtn = document.getElementById('close-edit-modal');
+const closeEditModal = document.getElementById('close-edit-modal');
 const saveEditPlanBtn = document.getElementById('save-edit-plan');
-let currentPlanId = null;        // Merkt sich gerade bearbeiteten Plan
-let mitContainer = null;         // Mitarbeiter-Container global für save
+
+let currentEditPlanId = null; // speichert aktuell bearbeiteten Plan
 
 // ==========================
 // Modal schließen
 // ==========================
-// Modal schließen
 closeEditModal.addEventListener('click', () => editPlanModal.style.display = 'none');
 editPlanModal.addEventListener('click', (e) => {
   if (e.target === editPlanModal) editPlanModal.style.display = 'none';
