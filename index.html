@@ -1306,7 +1306,6 @@ document.getElementById('edit-plan-btn').addEventListener('click', async () => {
 // ==========================
 // Funktion: Plan bearbeiten
 // ==========================
-// Bearbeiten-Funktion
 async function bearbeiteArbeitsplan(planId) {
   try {
     const plan = await apiFetch(`/api/workplans/${planId}`);
@@ -1453,9 +1452,32 @@ async function ladeArbeitsplaene() {
 // ==========================
 // Plan erstellen
 // ==========================
+// Hilfsfunktionen wiederverwenden
+function toDateInputValue(dateStr) {
+  if (!dateStr) return "";
+  const d = new Date(dateStr);
+  return d.toISOString().split("T")[0]; // YYYY-MM-DD für <input type="date">
+}
+
+function toTimeInputValue(dateStr) {
+  if (!dateStr) return "";
+  const d = new Date(dateStr);
+  return d.toISOString().split("T")[1].slice(0,5); // HH:MM
+}
+
+function formatDateDE(dateStr) {
+  if (!dateStr) return "";
+  const d = new Date(dateStr);
+  const day = String(d.getDate()).padStart(2,"0");
+  const month = String(d.getMonth()+1).padStart(2,"0");
+  const year = d.getFullYear();
+  return `${day}.${month}.${year}`;
+}
+
+// Event Listener für "Arbeitsplan erstellen"
 document.getElementById('arbeitsplan-erstellen').addEventListener('click', async () => {
-  const datum = document.getElementById('plan-datum').value;
-  const uhrzeit = document.getElementById('plan-uhrzeit').value;
+  const datumInput = document.getElementById('plan-datum').value; // YYYY-MM-DD
+  const uhrzeit = document.getElementById('plan-uhrzeit').value;  // HH:MM
   const location_id = document.getElementById('plan-location').value;
   const beschreibung = document.getElementById('plan-beschreibung').value;
 
@@ -1463,18 +1485,26 @@ document.getElementById('arbeitsplan-erstellen').addEventListener('click', async
     document.querySelectorAll('#plan-mitarbeiter-container input[type="checkbox"]:checked')
   ).map(cb => parseInt(cb.value));
 
-  if (!datum || !uhrzeit || !location_id) return alert("Datum, Uhrzeit und Standort auswählen!");
+  if (!datumInput || !uhrzeit || !location_id) return alert("Datum, Uhrzeit und Standort auswählen!");
   if (mitarbeiter.length === 0) return alert("Bitte mindestens einen Mitarbeiter auswählen!");
+
+  // Datum + Uhrzeit in ISO kombinieren, falls Backend TIMESTAMP erwartet
+  const datum = new Date(`${datumInput}T${uhrzeit}:00`).toISOString(); // YYYY-MM-DDTHH:MM:SSZ
 
   try {
     await apiFetch('/api/workplans', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ datum, uhrzeit, location_id, beschreibung, mitarbeiter })
+      body: JSON.stringify({ datum, location_id, beschreibung, mitarbeiter })
     });
 
     alert("Arbeitsplan erstellt!");
     await ladeArbeitsplaene();
+
+    // Optional: Datum in DD.MM.YYYY anzeigen
+    const datumAnzeige = document.getElementById('plan-datum-anzeige');
+    if (datumAnzeige) datumAnzeige.textContent = formatDateDE(datum);
+
   } catch (err) {
     console.error("Fehler beim Erstellen des Plans", err);
   }
