@@ -1452,29 +1452,6 @@ async function ladeArbeitsplaene() {
 // ==========================
 // Plan erstellen
 // ==========================
-// Hilfsfunktionen wiederverwenden
-function toDateInputValue(dateStr) {
-  if (!dateStr) return "";
-  const d = new Date(dateStr);
-  return d.toISOString().split("T")[0]; // YYYY-MM-DD für <input type="date">
-}
-
-function toTimeInputValue(dateStr) {
-  if (!dateStr) return "";
-  const d = new Date(dateStr);
-  return d.toISOString().split("T")[1].slice(0,5); // HH:MM
-}
-
-function formatDateDE(dateStr) {
-  if (!dateStr) return "";
-  const d = new Date(dateStr);
-  const day = String(d.getDate()).padStart(2,"0");
-  const month = String(d.getMonth()+1).padStart(2,"0");
-  const year = d.getFullYear();
-  return `${day}.${month}.${year}`;
-}
-
-// Event Listener für "Arbeitsplan erstellen"
 document.getElementById('arbeitsplan-erstellen').addEventListener('click', async () => {
   const datumInput = document.getElementById('plan-datum').value; // YYYY-MM-DD
   const uhrzeit = document.getElementById('plan-uhrzeit').value;  // HH:MM
