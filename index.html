@@ -1465,14 +1465,17 @@ document.getElementById('arbeitsplan-erstellen').addEventListener('click', async
   if (!datumInput || !uhrzeit || !location_id) return alert("Datum, Uhrzeit und Standort auswählen!");
   if (mitarbeiter.length === 0) return alert("Bitte mindestens einen Mitarbeiter auswählen!");
 
-  // Datum + Uhrzeit im Format YYYY-MM-DD HH:MM:SS für PostgreSQL
-  const datum = `${datumInput} ${uhrzeit}:00`;
+  // Datum + Uhrzeit als ISO 8601 in lokaler Zeit (ohne "Z")
+  const [hour, minute] = uhrzeit.split(':').map(Number);
+  const date = new Date(datumInput);
+  date.setHours(hour, minute, 0, 0);
+  const datumISO = date.toISOString().slice(0,19); // "YYYY-MM-DDTHH:MM:SS"
 
   try {
     await apiFetch('/api/workplans', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ datum, location_id, beschreibung, mitarbeiter })
+      body: JSON.stringify({ datum: datumISO, location_id, beschreibung, mitarbeiter })
     });
 
     alert("Arbeitsplan erstellt!");
@@ -1495,7 +1498,6 @@ function formatDateDE(dateStr) {
   const year = d.getFullYear();
   return `${day}.${month}.${year}`;
 }
-
 // ==========================
 // Mehrfach-Löschen von Plänen
 // ==========================
