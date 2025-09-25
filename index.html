@@ -1455,18 +1455,18 @@ async function ladeArbeitsplaene() {
 document.getElementById('arbeitsplan-erstellen').addEventListener('click', async () => {
   const datumInput = document.getElementById('plan-datum').value; // YYYY-MM-DD
   const uhrzeit = document.getElementById('plan-uhrzeit').value;  // HH:MM
-  const location_id = document.getElementById('plan-location').value;
+  const location_id = parseInt(document.getElementById('plan-location').value, 10);
   const beschreibung = document.getElementById('plan-beschreibung').value;
 
   const mitarbeiter = Array.from(
     document.querySelectorAll('#plan-mitarbeiter-container input[type="checkbox"]:checked')
-  ).map(cb => parseInt(cb.value));
+  ).map(cb => parseInt(cb.value, 10));
 
   if (!datumInput || !uhrzeit || !location_id) return alert("Datum, Uhrzeit und Standort auswählen!");
   if (mitarbeiter.length === 0) return alert("Bitte mindestens einen Mitarbeiter auswählen!");
 
-  // Datum + Uhrzeit in ISO kombinieren, falls Backend TIMESTAMP erwartet
-  const datum = new Date(`${datumInput}T${uhrzeit}:00`).toISOString(); // YYYY-MM-DDTHH:MM:SSZ
+  // Datum + Uhrzeit im Format YYYY-MM-DD HH:MM:SS für PostgreSQL
+  const datum = `${datumInput} ${uhrzeit}:00`;
 
   try {
     await apiFetch('/api/workplans', {
@@ -1480,12 +1480,21 @@ document.getElementById('arbeitsplan-erstellen').addEventListener('click', async
 
     // Optional: Datum in DD.MM.YYYY anzeigen
     const datumAnzeige = document.getElementById('plan-datum-anzeige');
-    if (datumAnzeige) datumAnzeige.textContent = formatDateDE(datum);
+    if (datumAnzeige) datumAnzeige.textContent = formatDateDE(datumInput);
 
   } catch (err) {
     console.error("Fehler beim Erstellen des Plans", err);
   }
 });
+
+// Hilfsfunktion für DD.MM.YYYY
+function formatDateDE(dateStr) {
+  const d = new Date(dateStr);
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  return `${day}.${month}.${year}`;
+}
 
 // ==========================
 // Mehrfach-Löschen von Plänen
