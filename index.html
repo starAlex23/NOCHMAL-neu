@@ -1306,6 +1306,7 @@ document.getElementById('edit-plan-btn').addEventListener('click', async () => {
 // ==========================
 // Funktion: Plan bearbeiten
 // ==========================
+// Bearbeiten-Funktion
 async function bearbeiteArbeitsplan(planId) {
   try {
     const plan = await apiFetch(`/api/workplans/${planId}`);
@@ -1314,9 +1315,13 @@ async function bearbeiteArbeitsplan(planId) {
     editPlanModal.style.display = 'flex';
 
     // Felder vorbefüllen
-    document.getElementById('edit-plan-datum').value = plan.datum;
-    document.getElementById('edit-plan-uhrzeit').value = plan.uhrzeit || '';
+    document.getElementById('edit-plan-datum').value = toDateInputValue(plan.datum); // YYYY-MM-DD
+    document.getElementById('edit-plan-uhrzeit').value = toTimeInputValue(plan.datum) || '';
     document.getElementById('edit-plan-beschreibung').value = plan.beschreibung || '';
+
+    // Optional: Datum auch in "DD.MM.YYYY" anzeigen
+    const datumAnzeige = document.getElementById('edit-plan-datum-anzeige');
+    if (datumAnzeige) datumAnzeige.textContent = formatDateDE(plan.datum);
 
     // Locations füllen
     const locationSelect = document.getElementById('edit-plan-location');
@@ -1374,7 +1379,6 @@ async function bearbeiteArbeitsplan(planId) {
     console.error("Fehler beim Laden des Plans", err);
   }
 }
-
 // ==========================
 // Speichern Button
 // ==========================
