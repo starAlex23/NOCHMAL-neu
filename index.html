@@ -1472,11 +1472,17 @@ document.getElementById('arbeitsplan-erstellen').addEventListener('click', async
   const datumISO = date.toISOString().slice(0,19); // "YYYY-MM-DDTHH:MM:SS"
 
   try {
-    await apiFetch('/api/workplans', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ datum: datumISO, location_id, beschreibung, mitarbeiter })
-    });
+   await apiFetch('/api/workplans', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    datum: datumInput,   // "2025-10-08"
+    uhrzeit,             // "08:30"
+    location_id,
+    beschreibung,
+    mitarbeiter
+  })
+});
 
     alert("Arbeitsplan erstellt!");
     await ladeArbeitsplaene();
