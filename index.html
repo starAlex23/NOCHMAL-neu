@@ -393,23 +393,8 @@ body.dark-mode #daten-aktualisieren {
 <section id="arbeitsplan-section" class="section hidden">
   <h2>Arbeitspläne</h2>
 
-  <!-- Toggle-Button für Formular -->
-  <button id="arbeitsplan-toggle">▼ Plan erstellen</button>
-
-  <!-- Erstellungsformular (einklappbar) -->
-  <div id="arbeitsplan-form" style="display:none; margin-top:1rem;">
-    <input type="date" id="plan-datum" required />
-    <input type="time" id="plan-uhrzeit" required />
-    <select id="plan-location"></select>
-    <input type="text" id="plan-beschreibung" placeholder="Beschreibung (optional)" />
-
-    <label for="plan-mitarbeiter-search">Mitarbeiter suchen:</label>
-    <input type="text" id="plan-mitarbeiter-search" placeholder="Suche..." />
-
-    <div id="plan-mitarbeiter-container" style="max-height:150px; overflow-y:auto; border:1px solid #ccc; padding:5px;"></div>
-
-    <button id="arbeitsplan-erstellen">➕ Plan erstellen</button>
-  </div>
+  <!-- Button für neues Modal -->
+  <button id="arbeitsplan-erstellen-btn" style="margin-bottom:1rem;">➕ Neuer Arbeitsplan</button>
 
   <!-- Drei-Punkte-Button für Aktionen -->
   <button id="plan-menu-btn" style="margin-top:10px;">⋮</button>
@@ -435,42 +420,84 @@ body.dark-mode #daten-aktualisieren {
     </table>
   </div>
 
-<!-- ========================== -->
-<!-- Modal für Arbeitsplan bearbeiten -->
-<!-- ========================== -->
-<div id="edit-plan-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; 
-  background: rgba(0,0,0,0.5); z-index:1000; justify-content:center; align-items:center;">
-
-  <div id="edit-plan-modal-content" style="padding:1.5rem; border-radius:12px; width:90%; max-width:500px;
+  <!-- ========================== -->
+  <!-- Modal: Arbeitsplan ERSTELLEN -->
+  <!-- ========================== -->
+  <div id="createPlanModal" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+    background: rgba(0,0,0,0.5); z-index:1000; justify-content:center; align-items:center;">
+    
+    <div class="modal-content" style="padding:1.5rem; border-radius:12px; width:90%; max-width:500px;
       box-shadow:0 4px 20px rgba(0,0,0,0.2); position:relative; overflow-y:auto; max-height:90%;
       transition: background 0.3s, color 0.3s;">
-    
-    <button id="close-edit-modal" style="position:absolute; top:10px; right:10px; background:none; border:none; font-size:1.5rem; cursor:pointer;">
-      ×
-    </button>
+      
+      <button id="create-plan-cancel" style="position:absolute; top:10px; right:10px; background:none; border:none; font-size:1.5rem; cursor:pointer;">
+        ×
+      </button>
 
-    <h3 style="margin-top:0; margin-bottom:1rem;">Arbeitsplan bearbeiten</h3>
+      <h3 style="margin-top:0; margin-bottom:1rem;">Neuen Arbeitsplan erstellen</h3>
 
-    <label>Datum:</label>
-    <input type="date" id="edit-plan-datum" style="width:100%; margin-bottom:0.5rem; padding:0.4rem; border-radius:4px; border:1px solid #ccc;">
+      <label>Datum:</label>
+      <input type="date" id="create-plan-datum" style="width:100%; margin-bottom:0.5rem; padding:0.4rem; border-radius:4px; border:1px solid #ccc;">
 
-    <label>Uhrzeit:</label>
-    <input type="time" id="edit-plan-uhrzeit" style="width:100%; margin-bottom:0.5rem; padding:0.4rem; border-radius:4px; border:1px solid #ccc;">
+      <label>Uhrzeit:</label>
+      <input type="time" id="create-plan-uhrzeit" style="width:100%; margin-bottom:0.5rem; padding:0.4rem; border-radius:4px; border:1px solid #ccc;">
 
-    <label>Standort:</label>
-    <select id="edit-plan-location" style="width:100%; margin-bottom:0.5rem; padding:0.4rem; border-radius:4px; border:1px solid #ccc;"></select>
+      <label>Standort:</label>
+      <select id="create-plan-location" style="width:100%; margin-bottom:0.5rem; padding:0.4rem; border-radius:4px; border:1px solid #ccc;"></select>
 
-    <label>Beschreibung:</label>
-    <input type="text" id="edit-plan-beschreibung" placeholder="optional" style="width:100%; margin-bottom:0.5rem; padding:0.4rem; border-radius:4px; border:1px solid #ccc;">
+      <label>Beschreibung:</label>
+      <textarea id="create-plan-beschreibung" placeholder="optional"
+        style="width:100%; min-height:60px; margin-bottom:0.5rem; padding:0.4rem; border-radius:4px; border:1px solid #ccc;"></textarea>
 
-    <label>Mitarbeiter:</label>
-    <div id="edit-plan-mitarbeiter-container" style="max-height:200px; overflow-y:auto; border:1px solid #ccc; padding:5px; margin-bottom:1rem;"></div>
+      <h4 style="margin-top:1rem;">Mitarbeiter auswählen</h4>
+      <div id="create-plan-mitarbeiter-container"
+        style="max-height:200px; overflow-y:auto; border:1px solid #ccc; padding:5px; margin-bottom:1rem;">
+      </div>
 
-    <button id="save-edit-plan" style="width:100%; padding:0.5rem; border:none; border-radius:6px; font-size:1rem; cursor:pointer;">
-      Änderungen speichern
-    </button>
+      <button id="create-plan-save" style="width:100%; padding:0.5rem; border:none; border-radius:6px; font-size:1rem; cursor:pointer;">
+        ✅ Speichern
+      </button>
+    </div>
   </div>
-</div>
+
+  <!-- ========================== -->
+  <!-- Modal: Arbeitsplan BEARBEITEN -->
+  <!-- ========================== -->
+  <div id="edit-plan-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+    background: rgba(0,0,0,0.5); z-index:1000; justify-content:center; align-items:center;">
+
+    <div id="edit-plan-modal-content" style="padding:1.5rem; border-radius:12px; width:90%; max-width:500px;
+        box-shadow:0 4px 20px rgba(0,0,0,0.2); position:relative; overflow-y:auto; max-height:90%;
+        transition: background 0.3s, color 0.3s;">
+
+      <button id="close-edit-modal" style="position:absolute; top:10px; right:10px; background:none; border:none; font-size:1.5rem; cursor:pointer;">
+        ×
+      </button>
+
+      <h3 style="margin-top:0; margin-bottom:1rem;">Arbeitsplan bearbeiten</h3>
+
+      <label>Datum:</label>
+      <input type="date" id="edit-plan-datum" style="width:100%; margin-bottom:0.5rem; padding:0.4rem; border-radius:4px; border:1px solid #ccc;">
+
+      <label>Uhrzeit:</label>
+      <input type="time" id="edit-plan-uhrzeit" style="width:100%; margin-bottom:0.5rem; padding:0.4rem; border-radius:4px; border:1px solid #ccc;">
+
+      <label>Standort:</label>
+      <select id="edit-plan-location" style="width:100%; margin-bottom:0.5rem; padding:0.4rem; border-radius:4px; border:1px solid #ccc;"></select>
+
+      <label>Beschreibung:</label>
+      <input type="text" id="edit-plan-beschreibung" placeholder="optional" style="width:100%; margin-bottom:0.5rem; padding:0.4rem; border-radius:4px; border:1px solid #ccc;">
+
+      <label>Mitarbeiter:</label>
+      <div id="edit-plan-mitarbeiter-container"
+        style="max-height:200px; overflow-y:auto; border:1px solid #ccc; padding:5px; margin-bottom:1rem;">
+      </div>
+
+      <button id="save-edit-plan" style="width:100%; padding:0.5rem; border:none; border-radius:6px; font-size:1rem; cursor:pointer;">
+        Änderungen speichern
+      </button>
+    </div>
+  </div>
 </section>
 
   <!-- Standorte -->
@@ -1190,18 +1217,19 @@ async function ladeLocationsGesamt() {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // =================== Arbeitspläne ===================
+
 // ==========================
 // Mitarbeiter laden + Suchfeld + Checkboxen
 // ==========================
-async function ladeMitarbeiterCheckboxen() {
-  const container = document.getElementById('plan-mitarbeiter-container');
+async function ladeMitarbeiterCheckboxen(containerId) {
+  const container = document.getElementById(containerId);
   if (!container) {
-    console.error('Element #plan-mitarbeiter-container nicht gefunden!');
+    console.error('Element #' + containerId + ' nicht gefunden!');
     return;
   }
 
   try {
-    const users = await apiFetch('/api/users'); 
+    const users = await apiFetch('/api/users');
     container.innerHTML = '';
 
     // Suchfeld
@@ -1209,6 +1237,7 @@ async function ladeMitarbeiterCheckboxen() {
     suchfeld.type = 'text';
     suchfeld.placeholder = 'Mitarbeiter suchen...';
     suchfeld.style.width = '100%';
+    suchfeld.style.marginBottom = '5px';
     suchfeld.addEventListener('input', () => {
       const filter = suchfeld.value.toLowerCase();
       Array.from(container.querySelectorAll('.mitarbeiter-item')).forEach(div => {
@@ -1217,7 +1246,7 @@ async function ladeMitarbeiterCheckboxen() {
     });
     container.appendChild(suchfeld);
 
-    // Mitarbeiter-Checkboxen
+    // Checkboxen erstellen
     users.forEach(u => {
       if (u.rolle === 'user' || u.rolle === 'vorarbeiter') {
         const div = document.createElement('div');
@@ -1226,7 +1255,7 @@ async function ladeMitarbeiterCheckboxen() {
         const cb = document.createElement('input');
         cb.type = 'checkbox';
         cb.value = u.id;
-        cb.id = `mitarbeiter-${u.id}`;
+        cb.id = `${containerId}-mitarbeiter-${u.id}`;
 
         const label = document.createElement('label');
         label.setAttribute('for', cb.id);
@@ -1237,8 +1266,9 @@ async function ladeMitarbeiterCheckboxen() {
         container.appendChild(div);
       }
     });
+
   } catch (err) {
-    console.error("Fehler beim Laden der Mitarbeiter", err);
+    console.error('Fehler beim Laden der Mitarbeiter', err);
   }
 }
 
@@ -1258,160 +1288,18 @@ function updatePlanActionButtons() {
     if (editBtn) editBtn.style.display = 'inline-block';
   } else {
     if (deleteBtn) deleteBtn.style.display = 'inline-block';
-    if (editBtn) editBtn.style.display = 'none'; // nur bei EINEM Plan sichtbar
+    if (editBtn) editBtn.style.display = 'none';
   }
 }
 
 function attachPlanCheckboxListeners() {
   document.querySelectorAll('.plan-checkbox').forEach(cb => {
-    cb.addEventListener('click', (e) => {
+    cb.addEventListener('click', e => {
       e.stopPropagation();
       updatePlanActionButtons();
     });
   });
 }
-
-// ==========================
-// Modal-Elemente
-// ==========================
-const editPlanModal = document.getElementById('edit-plan-modal');
-const closeEditModalBtn = document.getElementById('close-edit-modal');
-const saveEditPlanBtn = document.getElementById('save-edit-plan');
-let currentPlanId = null;        // Merkt sich gerade bearbeiteten Plan
-let mitContainer = null;         // Mitarbeiter-Container global für save
-
-// ==========================
-// Modal schließen
-// ==========================
-closeEditModalBtn.addEventListener('click', () => {
-  editPlanModal.style.display = 'none';
-});
-
-editPlanModal.addEventListener('click', (e) => {
-  if (e.target === editPlanModal) editPlanModal.style.display = 'none';
-});
-
-// ==========================
-// Bearbeiten Button
-// ==========================
-document.getElementById('edit-plan-btn').addEventListener('click', async () => {
-  const checked = Array.from(document.querySelectorAll('.plan-checkbox:checked'));
-  if (checked.length !== 1) return alert("Bitte genau einen Plan auswählen!");
-  
-  currentPlanId = checked[0].dataset.id;
-  await bearbeiteArbeitsplan(currentPlanId);
-  resetPlanSelection();
-});
-
-// ==========================
-// Funktion: Plan bearbeiten
-// ==========================
-async function bearbeiteArbeitsplan(planId) {
-  try {
-    const plan = await apiFetch(`/api/workplans/${planId}`);
-    
-    // Modal anzeigen
-    editPlanModal.style.display = 'flex';
-
-    // Felder vorbefüllen
-    document.getElementById('edit-plan-datum').value = toDateInputValue(plan.datum); // YYYY-MM-DD
-    document.getElementById('edit-plan-uhrzeit').value = toTimeInputValue(plan.datum) || '';
-    document.getElementById('edit-plan-beschreibung').value = plan.beschreibung || '';
-
-    // Optional: Datum auch in "DD.MM.YYYY" anzeigen
-    const datumAnzeige = document.getElementById('edit-plan-datum-anzeige');
-    if (datumAnzeige) datumAnzeige.textContent = formatDateDE(plan.datum);
-
-    // Locations füllen
-    const locationSelect = document.getElementById('edit-plan-location');
-    locationSelect.innerHTML = '';
-    const locations = await apiFetch('/api/locations');
-    locations.forEach(loc => {
-      const opt = document.createElement('option');
-      opt.value = loc.id;
-      opt.textContent = loc.name;
-      if (loc.id === plan.location_id) opt.selected = true;
-      locationSelect.appendChild(opt);
-    });
-
-    // Mitarbeiter füllen
-    mitContainer = document.getElementById('edit-plan-mitarbeiter-container');
-    mitContainer.innerHTML = '';
-
-    // Suchfeld
-    const suchfeld = document.createElement('input');
-    suchfeld.type = 'text';
-    suchfeld.placeholder = 'Mitarbeiter suchen...';
-    suchfeld.style.width = '100%';
-    suchfeld.addEventListener('input', () => {
-      const filter = suchfeld.value.toLowerCase();
-      Array.from(mitContainer.querySelectorAll('.mitarbeiter-item')).forEach(div => {
-        div.style.display = div.textContent.toLowerCase().includes(filter) ? '' : 'none';
-      });
-    });
-    mitContainer.appendChild(suchfeld);
-
-    // Checkboxen erstellen
-    const users = await apiFetch('/api/users');
-    users.forEach(u => {
-      if (u.rolle === 'user' || u.rolle === 'vorarbeiter') {
-        const div = document.createElement('div');
-        div.classList.add('mitarbeiter-item');
-
-        const cb = document.createElement('input');
-        cb.type = 'checkbox';
-        cb.value = u.id;
-        cb.id = `edit-mitarbeiter-${u.id}`;
-        if (plan.mitarbeiter.some(m => m.id === u.id)) cb.checked = true;
-
-        const label = document.createElement('label');
-        label.setAttribute('for', cb.id);
-        label.textContent = `${u.vorname} ${u.nachname} (${u.rolle})`;
-
-        div.appendChild(cb);
-        div.appendChild(label);
-        mitContainer.appendChild(div);
-      }
-    });
-
-  } catch (err) {
-    console.error("Fehler beim Laden des Plans", err);
-  }
-}
-// ==========================
-// Speichern Button
-// ==========================
-saveEditPlanBtn.addEventListener('click', async () => {
-  if (!currentPlanId || !mitContainer) return;
-
-  const datum = document.getElementById('edit-plan-datum').value;
-  const uhrzeit = document.getElementById('edit-plan-uhrzeit').value;
-  const location_id = document.getElementById('edit-plan-location').value;
-  const beschreibung = document.getElementById('edit-plan-beschreibung').value;
-
-  const mitarbeiter = Array.from(
-    mitContainer.querySelectorAll('input[type="checkbox"]:checked')
-  ).map(cb => parseInt(cb.value));
-
-  if (!datum || !uhrzeit || !location_id) return alert("Datum, Uhrzeit und Standort auswählen!");
-  if (mitarbeiter.length === 0) return alert("Bitte mindestens einen Mitarbeiter auswählen!");
-
-  try {
-    await apiFetch(`/api/workplans/${currentPlanId}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ datum, uhrzeit, location_id, beschreibung, mitarbeiter })
-    });
-
-    alert("Arbeitsplan aktualisiert!");
-    editPlanModal.style.display = 'none';
-    await ladeArbeitsplaene();
-    currentPlanId = null;
-
-  } catch (err) {
-    console.error("Fehler beim Aktualisieren des Plans", err);
-  }
-});
 
 // ==========================
 // Arbeitspläne laden
@@ -1440,6 +1328,8 @@ async function ladeArbeitsplaene() {
         <td>${mitarbeiterBlock}</td>
       `;
 
+      tr.addEventListener('click', () => zeigeArbeitsplanDetail(plan.id));
+
       tbody.appendChild(tr);
     });
 
@@ -1450,126 +1340,6 @@ async function ladeArbeitsplaene() {
 }
 
 // ==========================
-// Plan erstellen
-// ==========================
-document.getElementById('arbeitsplan-erstellen').addEventListener('click', async () => {
-  const datumInput = document.getElementById('plan-datum').value; // YYYY-MM-DD
-  const uhrzeit = document.getElementById('plan-uhrzeit').value;  // HH:MM
-  const location_id = parseInt(document.getElementById('plan-location').value, 10);
-  const beschreibung = document.getElementById('plan-beschreibung').value;
-
-  const mitarbeiter = Array.from(
-    document.querySelectorAll('#plan-mitarbeiter-container input[type="checkbox"]:checked')
-  ).map(cb => parseInt(cb.value, 10));
-
-  if (!datumInput || !uhrzeit || !location_id) return alert("Datum, Uhrzeit und Standort auswählen!");
-  if (mitarbeiter.length === 0) return alert("Bitte mindestens einen Mitarbeiter auswählen!");
-
-  // Datum + Uhrzeit als ISO 8601 in lokaler Zeit (ohne "Z")
-  const [hour, minute] = uhrzeit.split(':').map(Number);
-  const date = new Date(datumInput);
-  date.setHours(hour, minute, 0, 0);
-  const datumISO = date.toISOString().slice(0,19); // "YYYY-MM-DDTHH:MM:SS"
-
-  try {
-   await apiFetch('/api/workplans', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    datum: datumInput,   // "2025-10-08"
-    uhrzeit,             // "08:30"
-    location_id,
-    beschreibung,
-    mitarbeiter
-  })
-});
-
-    alert("Arbeitsplan erstellt!");
-    await ladeArbeitsplaene();
-
-    // Optional: Datum in DD.MM.YYYY anzeigen
-    const datumAnzeige = document.getElementById('plan-datum-anzeige');
-    if (datumAnzeige) datumAnzeige.textContent = formatDateDE(datumInput);
-
-  } catch (err) {
-    console.error("Fehler beim Erstellen des Plans", err);
-  }
-});
-
-// Hilfsfunktion für DD.MM.YYYY
-function formatDateDE(dateStr) {
-  const d = new Date(dateStr);
-  const day = String(d.getDate()).padStart(2, '0');
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const year = d.getFullYear();
-  return `${day}.${month}.${year}`;
-}
-// ==========================
-// Mehrfach-Löschen von Plänen
-// ==========================
-document.getElementById('delete-plan-btn').addEventListener('click', async () => {
-  const checked = Array.from(document.querySelectorAll('.plan-checkbox:checked'));
-  if (checked.length === 0) return alert("Bitte mindestens einen Plan auswählen!");
-  if (!confirm(`Willst du die ausgewählten ${checked.length} Plan/Pläne wirklich löschen?`)) return;
-
-  for (const cb of checked) {
-    await apiFetch(`/api/workplans/${cb.dataset.id}`, { method: 'DELETE' });
-  }
-  await ladeArbeitsplaene();
-  resetPlanSelection();
-});
-
-// ==========================
-// Drei-Punkte-Menü + Reset
-// ==========================
-const planMenuBtn = document.getElementById('plan-menu-btn');
-const planMenuDropdown = document.getElementById('plan-menu-dropdown');
-const togglePlanFormBtn = document.getElementById('toggle-plan-form-btn');
-
-planMenuBtn.addEventListener('click', (e) => {
-  e.stopPropagation();
-  const planForm = document.getElementById('arbeitsplan-form');
-  if (planForm) planForm.style.display = 'none';
-
-  document.querySelectorAll('.plan-checkbox-cell').forEach(td => {
-    td.style.display = (td.style.display === 'table-cell') ? 'none' : 'table-cell';
-  });
-
-  planMenuDropdown.style.display = (planMenuDropdown.style.display === 'block') ? 'none' : 'block';
-});
-
-function resetPlanSelection() {
-  planMenuDropdown.style.display = 'none';
-  document.querySelectorAll('.plan-checkbox-cell').forEach(td => td.style.display = 'none');
-  document.querySelectorAll('.plan-checkbox').forEach(cb => cb.checked = false);
-
-  const deleteBtn = document.getElementById('delete-plan-btn');
-  if (deleteBtn) deleteBtn.style.display = 'none';
-}
-
-// globaler Klick
-document.addEventListener('click', (e) => {
-  const table = document.getElementById('arbeitsplan-table');
-  const insideTable = table && table.contains(e.target);
-  const insideMenu = planMenuBtn.contains(e.target) || planMenuDropdown.contains(e.target);
-  const insideForm = document.getElementById('arbeitsplan-form').contains(e.target);
-
-  if (!insideTable && !insideMenu && !insideForm) {
-    resetPlanSelection();
-  } else if (!insideMenu) {
-    planMenuDropdown.style.display = 'none';
-  }
-});
-
-// ==========================
-// Formular einklappbar
-// ==========================
-document.getElementById('arbeitsplan-toggle').addEventListener('click', () => {
-  const form = document.getElementById('arbeitsplan-form');
-  form.style.display = form.style.display === 'none' ? 'block' : 'none';
-});
-
-// ==========================
 // Detailansicht
 // ==========================
 async function zeigeArbeitsplanDetail(planId) {
@@ -1578,7 +1348,7 @@ async function zeigeArbeitsplanDetail(planId) {
 
     let text = `Datum: ${plan.datum}\nStandort: ${plan.location_name}\nBeschreibung: ${plan.beschreibung || ''}\n\nMitarbeiter:\n`;
     plan.mitarbeiter.forEach(m => {
-      let statusSymbol = '⚪'; 
+      let statusSymbol = '⚪';
       if (m.status === 'zugesagt') statusSymbol = '🟢';
       if (m.status === 'abgelehnt') statusSymbol = '🔴';
       text += `- ${m.vorname} ${m.nachname} (${m.rolle}) ${statusSymbol}\n`;
@@ -1591,11 +1361,209 @@ async function zeigeArbeitsplanDetail(planId) {
 }
 
 // ==========================
+// Modal-Elemente erstellen
+// ==========================
+const createPlanModal = document.getElementById('createPlanModal');
+const createPlanBtn = document.getElementById('arbeitsplan-erstellen-btn');
+const createPlanCancel = document.getElementById('create-plan-cancel');
+const createPlanSave = document.getElementById('create-plan-save');
+const createPlanMitarbeiterContainer = document.getElementById('create-plan-mitarbeiter-container');
+const createPlanLocationSelect = document.getElementById('create-plan-location');
+const createPlanDatum = document.getElementById('create-plan-datum');
+const createPlanUhrzeit = document.getElementById('create-plan-uhrzeit');
+const createPlanBeschreibung = document.getElementById('create-plan-beschreibung');
+
+// ==========================
+// Modal öffnen / schließen
+// ==========================
+createPlanBtn.addEventListener('click', async () => {
+  createPlanModal.style.display = 'flex';
+  await ladeMitarbeiterCheckboxen('create-plan-mitarbeiter-container');
+
+  // Locations laden
+  const locations = await apiFetch('/api/locations');
+  createPlanLocationSelect.innerHTML = '';
+  locations.forEach(loc => {
+    const opt = document.createElement('option');
+    opt.value = loc.id;
+    opt.textContent = loc.name;
+    createPlanLocationSelect.appendChild(opt);
+  });
+});
+
+createPlanCancel.addEventListener('click', () => createPlanModal.style.display = 'none');
+createPlanModal.addEventListener('click', e => {
+  if (e.target === createPlanModal) createPlanModal.style.display = 'none';
+});
+
+// ==========================
+// Plan speichern
+// ==========================
+createPlanSave.addEventListener('click', async () => {
+  const datum = createPlanDatum.value;
+  const uhrzeit = createPlanUhrzeit.value;
+  const location_id = createPlanLocationSelect.value;
+  const beschreibung = createPlanBeschreibung.value;
+  const mitarbeiter = Array.from(createPlanMitarbeiterContainer.querySelectorAll('input[type="checkbox"]:checked'))
+    .map(cb => parseInt(cb.value));
+
+  if (!datum || !uhrzeit || !location_id) return alert('Datum, Uhrzeit und Standort auswählen!');
+  if (mitarbeiter.length === 0) return alert('Bitte mindestens einen Mitarbeiter auswählen!');
+
+  try {
+    await apiFetch('/api/workplans', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ datum, uhrzeit, location_id, beschreibung, mitarbeiter })
+    });
+
+    createPlanModal.style.display = 'none';
+    createPlanDatum.value = '';
+    createPlanUhrzeit.value = '';
+    createPlanBeschreibung.value = '';
+    await ladeArbeitsplaene();
+    alert('Arbeitsplan erstellt!');
+
+  } catch (err) {
+    console.error('Fehler beim Erstellen des Plans', err);
+  }
+});
+
+// ==========================
+// Bearbeiten Modal (wie vorher)
+// ==========================
+const editPlanModal = document.getElementById('edit-plan-modal');
+const closeEditModalBtn = document.getElementById('close-edit-modal');
+const saveEditPlanBtn = document.getElementById('save-edit-plan');
+let currentPlanId = null;
+let editMitarbeiterContainer = null;
+
+closeEditModalBtn.addEventListener('click', () => editPlanModal.style.display = 'none');
+editPlanModal.addEventListener('click', e => { if (e.target === editPlanModal) editPlanModal.style.display = 'none'; });
+
+document.getElementById('edit-plan-btn').addEventListener('click', async () => {
+  const checked = Array.from(document.querySelectorAll('.plan-checkbox:checked'));
+  if (checked.length !== 1) return alert('Bitte genau einen Plan auswählen!');
+  currentPlanId = checked[0].dataset.id;
+  await bearbeiteArbeitsplan(currentPlanId);
+  resetPlanSelection();
+});
+
+async function bearbeiteArbeitsplan(planId) {
+  try {
+    const plan = await apiFetch(`/api/workplans/${planId}`);
+    editPlanModal.style.display = 'flex';
+    document.getElementById('edit-plan-datum').value = plan.datum;
+    document.getElementById('edit-plan-uhrzeit').value = plan.uhrzeit || '';
+    document.getElementById('edit-plan-beschreibung').value = plan.beschreibung || '';
+
+    const locationSelect = document.getElementById('edit-plan-location');
+    locationSelect.innerHTML = '';
+    const locations = await apiFetch('/api/locations');
+    locations.forEach(loc => {
+      const opt = document.createElement('option');
+      opt.value = loc.id;
+      opt.textContent = loc.name;
+      if (loc.id === plan.location_id) opt.selected = true;
+      locationSelect.appendChild(opt);
+    });
+
+    editMitarbeiterContainer = document.getElementById('edit-plan-mitarbeiter-container');
+    editMitarbeiterContainer.innerHTML = '';
+    await ladeMitarbeiterCheckboxen('edit-plan-mitarbeiter-container');
+
+    plan.mitarbeiter.forEach(m => {
+      const cb = editMitarbeiterContainer.querySelector(`input[value="${m.id}"]`);
+      if (cb) cb.checked = true;
+    });
+
+  } catch (err) {
+    console.error('Fehler beim Laden des Plans', err);
+  }
+}
+
+saveEditPlanBtn.addEventListener('click', async () => {
+  if (!currentPlanId || !editMitarbeiterContainer) return;
+  const datum = document.getElementById('edit-plan-datum').value;
+  const uhrzeit = document.getElementById('edit-plan-uhrzeit').value;
+  const location_id = document.getElementById('edit-plan-location').value;
+  const beschreibung = document.getElementById('edit-plan-beschreibung').value;
+  const mitarbeiter = Array.from(editMitarbeiterContainer.querySelectorAll('input[type="checkbox"]:checked')).map(cb => parseInt(cb.value));
+
+  if (!datum || !uhrzeit || !location_id) return alert('Datum, Uhrzeit und Standort auswählen!');
+  if (mitarbeiter.length === 0) return alert('Bitte mindestens einen Mitarbeiter auswählen!');
+
+  try {
+    await apiFetch(`/api/workplans/${currentPlanId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ datum, uhrzeit, location_id, beschreibung, mitarbeiter })
+    });
+
+    alert('Arbeitsplan aktualisiert!');
+    editPlanModal.style.display = 'none';
+    await ladeArbeitsplaene();
+    currentPlanId = null;
+
+  } catch (err) {
+    console.error('Fehler beim Aktualisieren des Plans', err);
+  }
+});
+
+// ==========================
+// Mehrfach löschen
+// ==========================
+document.getElementById('delete-plan-btn').addEventListener('click', async () => {
+  const checked = Array.from(document.querySelectorAll('.plan-checkbox:checked'));
+  if (checked.length === 0) return alert('Bitte mindestens einen Plan auswählen!');
+  if (!confirm(`Willst du die ausgewählten ${checked.length} Plan/Pläne wirklich löschen?`)) return;
+
+  for (const cb of checked) {
+    await apiFetch(`/api/workplans/${cb.dataset.id}`, { method: 'DELETE' });
+  }
+  await ladeArbeitsplaene();
+  resetPlanSelection();
+});
+
+// ==========================
+// Drei-Punkte-Menü & Reset
+// ==========================
+const planMenuBtn = document.getElementById('plan-menu-btn');
+const planMenuDropdown = document.getElementById('plan-menu-dropdown');
+
+planMenuBtn.addEventListener('click', e => {
+  e.stopPropagation();
+  document.querySelectorAll('.plan-checkbox-cell').forEach(td => {
+    td.style.display = td.style.display === 'table-cell' ? 'none' : 'table-cell';
+  });
+  planMenuDropdown.style.display = planMenuDropdown.style.display === 'block' ? 'none' : 'block';
+});
+
+function resetPlanSelection() {
+  planMenuDropdown.style.display = 'none';
+  document.querySelectorAll('.plan-checkbox-cell').forEach(td => td.style.display = 'none');
+  document.querySelectorAll('.plan-checkbox').forEach(cb => cb.checked = false);
+  const deleteBtn = document.getElementById('delete-plan-btn');
+  if (deleteBtn) deleteBtn.style.display = 'none';
+}
+
+document.addEventListener('click', e => {
+  const table = document.getElementById('arbeitsplan-tbody');
+  const insideTable = table && table.contains(e.target);
+  const insideMenu = planMenuBtn.contains(e.target) || planMenuDropdown.contains(e.target);
+
+  if (!insideTable && !insideMenu) {
+    resetPlanSelection();
+  } else if (!insideMenu) {
+    planMenuDropdown.style.display = 'none';
+  }
+});
+
+// ==========================
 // Initialisierung
 // ==========================
 window.addEventListener('DOMContentLoaded', async () => {
   await ladeLocationsGesamt();
-  await ladeMitarbeiterCheckboxen(); // nur noch die neue Version
   await ladeArbeitsplaene();
 });
 
