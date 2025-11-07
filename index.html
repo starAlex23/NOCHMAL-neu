@@ -342,6 +342,123 @@ body.dark-mode #plan-menu-dropdown button:hover {
 }
 
 /* ========================== */
+/* Chat section */
+/* ========================== */
+.chat-container {
+  display: flex;
+  height: 80vh;
+  border: 1px solid #444;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.chat-sidebar {
+  width: 250px;
+  background: #1f1f1f;
+  color: #fff;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-sidebar h3 {
+  margin-top: 0;
+  margin-bottom: 10px;
+}
+
+.chat-sidebar ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.chat-item {
+  padding: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.chat-item.active, .chat-item:hover {
+  background: #333;
+}
+
+.chat-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: #f5f5f5;
+}
+
+.chat-header {
+  background: #ddd;
+  padding: 10px;
+  border-bottom: 1px solid #bbb;
+}
+
+.chat-messages {
+  flex: 1;
+  padding: 10px;
+  overflow-y: auto;
+}
+
+.message {
+  background: #fff;
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.message.system {
+  background: #eef;
+  border-left: 4px solid #446;
+}
+
+.actions button {
+  margin: 4px 6px 0 0;
+  padding: 4px 8px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.actions .approve-btn {
+  background: #4caf50;
+  color: white;
+}
+
+.actions .reject-btn {
+  background: #f44336;
+  color: white;
+}
+
+.chat-input {
+  display: flex;
+  border-top: 1px solid #ccc;
+  padding: 10px;
+  background: #eee;
+}
+
+.chat-input input {
+  flex: 1;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid #bbb;
+}
+
+.chat-input button {
+  margin-left: 8px;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 8px;
+  background: #333;
+  color: white;
+  cursor: pointer;
+}
+
+/* ========================== */
 /* Aktualisieren-Button (wie vorher) */
 /* ========================== */
 #daten-aktualisieren {
@@ -406,6 +523,7 @@ body.dark-mode #daten-aktualisieren {
   <nav>
     <button data-target="arbeitszeiten-section" class="active">Arbeitszeiten</button>
     <button data-target="users-section">Benutzer</button>
+    <button data-target="chat-section">Chat</button>
     <button data-target="qr-passwort-section">QR-Passwort</button>
     <button data-target="zeiten-section">Datenbank</button>
     <button data-target="arbeitsplan-section">Arbeitspläne</button>
@@ -602,6 +720,45 @@ body.dark-mode #daten-aktualisieren {
   </div>
 </section>
 
+<!-- Chat Section -->
+<section id="chat-section" style="display:none;">
+  <div class="chat-container">
+    <!-- Linke Seitenleiste: Chat-Liste -->
+    <aside class="chat-sidebar">
+      <h3>Chats</h3>
+      <ul id="chat-list">
+        <li class="chat-item active" data-chat-id="system">🛠️ System</li>
+        <!-- Später: <li class="chat-item" data-chat-id="vorarbeiter">📋 Vorarbeiter</li> usw. -->
+      </ul>
+    </aside>
+
+    <!-- Rechte Seite: Aktueller Chat -->
+    <div class="chat-main">
+      <header class="chat-header">
+        <h3 id="chat-title">🛠️ System</h3>
+      </header>
+
+      <div id="chat-messages" class="chat-messages">
+        <!-- Beispielnachricht -->
+        <div class="message system">
+          <p><strong>System:</strong> Neuer Registrierungsantrag</p>
+          <p>E-Mail: <em>neuer.user@example.com</em></p>
+          <p>Name: <em>Max Mustermann</em></p>
+          <div class="actions">
+            <button class="approve-btn">✅ Annehmen</button>
+            <button class="reject-btn">❌ Ablehnen</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="chat-input">
+        <input type="text" id="chat-text" placeholder="Nachricht schreiben..." disabled />
+        <button id="chat-send" disabled>📨</button>
+      </div>
+    </div>
+  </div>
+</section>
+  
   <!-- Benutzerverwaltung -->
   <section id="users-section" class="section hidden">
     <h2>Benutzerverwaltung
@@ -753,6 +910,63 @@ function switchSection(sectionId) {
   });
 
   localStorage.setItem('lastSection', sectionId);
+}
+
+// Chat-Umschaltung
+document.querySelectorAll('.chat-item').forEach(item => {
+  item.addEventListener('click', () => {
+    document.querySelectorAll('.chat-item').forEach(i => i.classList.remove('active'));
+    item.classList.add('active');
+    const chatId = item.dataset.chatId;
+    document.getElementById('chat-title').textContent =
+      chatId === 'system' ? '🛠️ System' : chatId;
+  });
+});
+
+// Beispiel: Klick auf "Annehmen" oder "Ablehnen"
+document.addEventListener('click', async (e) => {
+  if (e.target.classList.contains('approve-btn') || e.target.classList.contains('reject-btn')) {
+    const message = e.target.closest('.message');
+    const userId = e.target.dataset.id;
+    const action = e.target.classList.contains('approve-btn') ? 'approve' : 'reject';
+
+    message.querySelector('.actions').innerHTML = '<p>⏳ wird verarbeitet...</p>';
+
+    try {
+      const res = await fetch(`/api/admin/users/${action}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': getCookie('csrfToken')
+        },
+        credentials: 'include',
+        body: JSON.stringify({ userId })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Fehler beim ' + action);
+      }
+
+      if (action === 'approve') {
+        message.querySelector('.actions').innerHTML = '<p>✅ Antrag angenommen</p>';
+      } else {
+        message.querySelector('.actions').innerHTML = '<p>❌ Antrag abgelehnt</p>';
+      }
+
+    } catch (err) {
+      console.error(err);
+      message.querySelector('.actions').innerHTML = '<p>⚠️ Fehler: ' + err.message + '</p>';
+    }
+  }
+});
+
+// Hilfsfunktion: Cookie auslesen
+function getCookie(name) {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(';').shift();
 }
 
 // Nav Buttons
@@ -970,6 +1184,44 @@ async function setRole(userId, rolle) {
     alert('Fehler: ' + e.message);
   }
 }
+/////////////////////////////////////////////////////////////////////////////////////////////////
+// chat
+
+  async function fetchSystemMessages() {
+  try {
+    const res = await fetch('/api/system-messages', {
+      credentials: 'include'
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+
+    const container = document.getElementById('chat-messages');
+    container.innerHTML = '';
+
+    data.forEach(msg => {
+      if (msg.type === 'registration_request') {
+        const p = msg.payload;
+        container.innerHTML += `
+          <div class="message system">
+            <p><strong>System:</strong> Neuer Registrierungsantrag</p>
+            <p>E-Mail: <em>${p.email}</em></p>
+            <p>Name: <em>${p.vorname} ${p.nachname}</em></p>
+            <div class="actions">
+              <button class="approve-btn" data-id="${p.id}">✅ Annehmen</button>
+              <button class="reject-btn" data-id="${p.id}">❌ Ablehnen</button>
+            </div>
+          </div>
+        `;
+      }
+    });
+  } catch (err) {
+    console.error('Polling-Fehler:', err);
+  }
+}
+
+setInterval(fetchSystemMessages, 10000);
+fetchSystemMessages();
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Konvertiert ISO/DB-String -> für <input type="date">
 function toDateInputValue(dateStr) {
