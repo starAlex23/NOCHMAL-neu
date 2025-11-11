@@ -1187,41 +1187,117 @@ async function setRole(userId, rolle) {
 /////////////////////////////////////////////////////////////////////////////////////////////////
 // chat
 
-  async function fetchSystemMessages() {
+  async function fetchChatMessages(chatId = 'system') {
+  const container = document.getElementById('chat-messages');
+  container.innerHTML = '<p style="color:gray;">Lade Nachrichten...</p>';
+
   try {
-   const res = await fetch(`${window.location.origin.includes('vercel.app') 
-  ? 'https://backend-869x.onrender.com'
-  : ''}/api/system-messages`, { credentials: 'include' });
+    let endpoint;
+    if (chatId === 'system') {
+      endpoint = `${window.location.origin.includes('vercel.app') 
+        ? 'https://backend-869x.onrender.com'
+        : ''}/api/system-messages`;
+    } else {
+      endpoint = `${window.location.origin.includes('vercel.app') 
+        ? 'https://backend-869x.onrender.com'
+        : ''}/api/chat/${chatId}`;
+    }
 
-    if (!res.ok) return;
+    const res = await fetch(endpoint, { credentials: 'include' });
+    if (!res.ok) {
+      container.innerHTML = '<p style="color:red;">Fehler beim Laden.</p>';
+      return;
+    }
+
     const data = await res.json();
-
-    const container = document.getElementById('chat-messages');
     container.innerHTML = '';
 
-    data.forEach(msg => {
-      if (msg.type === 'registration_request') {
-        const p = msg.payload;
-        container.innerHTML += `
-          <div class="message system">
-            <p><strong>System:</strong> Neuer Registrierungsantrag</p>
-            <p>E-Mail: <em>${p.email}</em></p>
-            <p>Name: <em>${p.vorname} ${p.nachname}</em></p>
-            <div class="actions">
-              <button class="approve-btn" data-id="${p.id}">✅ Annehmen</button>
-              <button class="reject-btn" data-id="${p.id}">❌ Ablehnen</button>
+    if (chatId === 'system') {
+      // 🔹 Systemnachrichten rendern
+      data.forEach(msg => {
+        if (msg.type === 'registration_request') {
+          const p = msg.payload;
+          container.innerHTML += `
+            <div class="message system">
+              <p><strong>System:</strong> Neuer Registrierungsantrag</p>
+              <p>E-Mail: <em>${p.email}</em></p>
+              <p>Name: <em>${p.vorname} ${p.nachname}</em></p>
+              <div class="actions">
+                <button class="approve-btn" data-id="${p.id}">✅ Annehmen</button>
+                <button class="reject-btn" data-id="${p.id}">❌ Ablehnen</button>
+              </div>
             </div>
-          </div>
-        `;
+          `;
+        } else if (msg.type === 'approval_result') {
+          const p = msg.payload;
+          container.innerHTML += `
+            <div class="message system">
+              <p><strong>System:</strong> Antrag von <em>${p.vorname}</em> wurde <b>${p.action}</b>.</p>
+            </div>
+          `;
+        }
+      });
+    } else {
+      // 🔹 Später: normale Chatnachrichten
+      if (data.length === 0) {
+        container.innerHTML = '<p style="color:gray;">Keine Nachrichten.</p>';
+      } else {
+        data.forEach(msg => {
+          container.innerHTML += `
+            <div class="message">
+              <p><strong>${msg.sender_name}:</strong> ${msg.text}</p>
+            </div>
+          `;
+        });
       }
-    });
+    }
   } catch (err) {
-    console.error('Polling-Fehler:', err);
+    console.error('Fehler beim Laden der Chatnachrichten:', err);
+    container.innerHTML = '<p style="color:red;">Verbindungsfehler.</p>';
   }
 }
 
-setInterval(fetchSystemMessages, 10000);
-fetchSystemMessages();
+document.querySelectorAll('.chat-item').forEach(item => {
+  item.addEventListener('click', () => {
+    // aktive Markierung umschalten
+    document.querySelectorAll('.chat-item').forEach(i => i.classList.remove('active'));
+    item.classList.add('active');
+
+    const chatId = item.dataset.chatId;
+    document.getElementById('chat-title').textContent = item.textContent.trim();
+    fetchChatMessages(chatId);
+  });
+});
+
+let activeChat = 'system';
+setInterval(() => fetchChatMessages(activeChat), 10000);
+
+document.querySelectorAll('.chat-item').forEach(item => {
+  item.addEventListener('click', () => {
+    activeChat = item.dataset.chatId;
+    fetchChatMessages(activeChat);
+  });
+});
+
+// Initiale Ladung
+fetchChatMessages('system');
+
+function updateChatInputState(chatId) {
+  const input = document.getElementById('chat-text');
+  const sendBtn = document.getElementById('chat-send');
+  const disabled = chatId === 'system';
+  input.disabled = disabled;
+  sendBtn.disabled = disabled;
+}
+
+document.querySelectorAll('.chat-item').forEach(item => {
+  item.addEventListener('click', () => {
+    const chatId = item.dataset.chatId;
+    updateChatInputState(chatId);
+  });
+});
+
+updateChatInputState('system');
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Konvertiert ISO/DB-String -> für <input type="date">
