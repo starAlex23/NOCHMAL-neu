@@ -1005,6 +1005,7 @@ document.querySelectorAll('nav button[data-target]').forEach(btn => {
 // ==========================
 // Chat-Elemente nur in Chat-Section
 // ==========================
+let activeChat = 'system';
 const chatSection = document.getElementById('chat-section');
 const chatMessages = chatSection ? chatSection.querySelector('#chat-messages') : null;
 const chatTitle = chatSection ? chatSection.querySelector('#chat-title') : null;
