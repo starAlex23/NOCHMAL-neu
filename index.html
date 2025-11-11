@@ -993,6 +993,14 @@ function switchSection(sectionId) {
 
   localStorage.setItem('lastSection', sectionId);
 }
+
+document.querySelectorAll('nav button[data-target]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const targetId = btn.dataset.target;
+    if (targetId) switchSection(targetId);
+  });
+});
+
 ///////////////////////////////////////////////////////////////////////////////////////////////
 let activeChat = 'system';
 const chatMessages = document.getElementById('chat-messages');
@@ -1355,8 +1363,7 @@ async function setRole(userId, rolle) {
     alert('Fehler: ' + e.message);
   }
 }
-/////////////////////////////////////////////////////////////////////////////////////////////////
-// chat
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Konvertiert ISO/DB-String -> für <input type="date">
 function toDateInputValue(dateStr) {
