@@ -1172,15 +1172,6 @@ function getCookie(name) {
   if (parts.length === 2) return parts.pop().split(';').shift();
 }
 
-// ==========================
-// Auto-Refresh (nur wenn Chat-Section sichtbar)
-// ==========================
-setInterval(() => {
-  if (chatSection && !chatSection.classList.contains('hidden')) {
-    fetchChatMessages(activeChat);
-  }
-}, 10000);
-
 // Initial
 updateChatInputState(activeChat);
 fetchChatMessages(activeChat);
