@@ -420,339 +420,243 @@ body.dark-mode .chat-input {
   </style>
 </head>
 <body>
-<div id="login-card">
-  <h2>Admin Login</h2>
-  <form id="login-form">
-    <input type="email" name="email" placeholder="E-Mail" required />
-    <input type="password" name="passwort" placeholder="Passwort" required />
-    <button type="submit">Login</button>
-    <p class="error" id="error-msg"></p>
-  </form>
-</div>
-
-  <div id="loading-overlay" style="
-  display:none;
-  position:fixed;
-  top:0; left:0;
-  width:100%; height:100%;
-  background: rgba(0,0,0,0.4);
-  color:white;
-  font-size:1.2rem;
-  font-weight:bold;
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-  align-items:center;
-  z-index:10000;
-">
-  <div class="spinner" style="
-    border: 4px solid rgba(255,255,255,0.3);
-    border-top: 4px solid white;
-    border-radius: 50%;
-    width:40px;
-    height:40px;
-    margin-bottom:10px;
-    animation: spin 1s linear infinite;
-  "></div>
-  <div id="loading-text">Lädt...</div>
-</div>
-
-<div id="dashboard">
-  <nav>
-    <button data-target="arbeitszeiten-section" class="active">Arbeitszeiten</button>
-    <button data-target="users-section">Benutzer</button>
-    <button data-target="chat-section">Chat</button>
-    <button data-target="qr-passwort-section">QR-Passwort</button>
-    <button data-target="zeiten-section">Datenbank</button>
-    <button data-target="arbeitsplan-section">Arbeitspläne</button>
-    <button data-target="locations-section">Standorte</button>
-    <button id="dark-mode-toggle" style="margin-left:auto; background: transparent; color: inherit; border:none; cursor:pointer;">
-      🌙 Dark Mode
-    </button>
-  </nav>
-
-  <div id="top-controls">
-    <button id="daten-aktualisieren">🔄 Alle Daten aktualisieren</button>
+  <!-- Login Card -->
+  <div id="login-card" class="section active">
+    <h2>Admin Login</h2>
+    <form id="login-form">
+      <input type="email" name="email" placeholder="E-Mail" required />
+      <input type="password" name="passwort" placeholder="Passwort" required />
+      <button type="submit">Login</button>
+      <p class="error" id="error-msg"></p>
+    </form>
   </div>
 
-  <!-- Arbeitszeiten -->
-  <section id="arbeitszeiten-section" class="section">
-    <h2>Arbeitszeiten (pro Tag)</h2>
-    <input type="text" id="arbeitszeiten-suche" placeholder="Suche nach Name oder Datum..." />
-    <div class="table-container">
-      <table id="arbeitszeiten-table">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Datum</th>
-            <th>Start</th>
-            <th>Stop</th>
-            <th>Dauer</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
+  <!-- Lade-Overlay -->
+  <div id="loading-overlay">
+    <div class="spinner"></div>
+    <div id="loading-text">Lädt...</div>
+  </div>
+
+  <!-- Dashboard -->
+  <div id="dashboard" class="section">
+    <!-- Navbar -->
+    <nav>
+      <button data-target="arbeitszeiten-section" class="active">Arbeitszeiten</button>
+      <button data-target="users-section">Benutzer</button>
+      <button data-target="chat-section">Chat</button>
+      <button data-target="qr-passwort-section">QR-Passwort</button>
+      <button data-target="zeiten-section">Datenbank</button>
+      <button data-target="arbeitsplan-section">Arbeitspläne</button>
+      <button data-target="locations-section">Standorte</button>
+      <button id="dark-mode-toggle" style="margin-left:auto;">🌙 Dark Mode</button>
+    </nav>
+
+    <!-- Top Controls -->
+    <div id="top-controls">
+      <button id="daten-aktualisieren">🔄 Alle Daten aktualisieren</button>
     </div>
-    <button id="arbeitszeiten-mehrladen">⬇ Mehr laden</button>
-  </section>
 
-  <!-- Arbeitspläne -->
-<section id="arbeitsplan-section" class="section hidden">
-  <h2>Arbeitspläne</h2>
+    <!-- Arbeitszeiten -->
+    <section id="arbeitszeiten-section" class="section active">
+      <h2>Arbeitszeiten (pro Tag)</h2>
+      <input type="text" id="arbeitszeiten-suche" placeholder="Suche nach Name oder Datum..." />
+      <div class="table-container">
+        <table id="arbeitszeiten-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Datum</th>
+              <th>Start</th>
+              <th>Stop</th>
+              <th>Dauer</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <button id="arbeitszeiten-mehrladen">⬇ Mehr laden</button>
+    </section>
 
-  <!-- Button für neues Modal -->
-  <button id="arbeitsplan-erstellen-btn" style="margin-bottom:1rem;">➕ Neuer Arbeitsplan</button>
-
-  <!-- Drei-Punkte-Button für Aktionen -->
-  <button id="plan-menu-btn" style="margin-top:10px;">⋮</button>
-
-  <!-- Dropdown-Menü für Bearbeiten/Löschen -->
-  <div id="plan-menu-dropdown" style="display:none; margin-top:5px;">
-    <button id="edit-plan-btn" style="display:none">✏️ Bearbeiten</button>
-    <button id="delete-plan-btn" style="display:none">🗑️ Löschen</button>
-  </div>
-
-  <!-- Tabellenansicht -->
-  <div id="arbeitsplan-liste" class="table-container" style="margin-top:1rem;">
-    <table>
-      <thead>
-        <tr>
-          <th style="display:none"></th> <!-- Checkbox-Spalte -->
-          <th>Datum / Uhrzeit</th>
-          <th>Standort</th>
-          <th>Mitarbeiter</th>
-        </tr>
-      </thead>
-      <tbody id="arbeitsplan-tbody"></tbody>
-    </table>
-  </div>
-
-  <!-- ========================== -->
-  <!-- Modal: Arbeitsplan ERSTELLEN -->
-  <!-- ========================== -->
-  <div id="createPlanModal" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
-    background: rgba(0,0,0,0.5); z-index:1000; justify-content:center; align-items:center;">
-    
-    <div class="modal-content" style="padding:1.5rem; border-radius:12px; width:90%; max-width:500px;
-      box-shadow:0 4px 20px rgba(0,0,0,0.2); position:relative; overflow-y:auto; max-height:90%;
-      transition: background 0.3s, color 0.3s;">
-      
-      <button id="create-plan-cancel" style="position:absolute; top:10px; right:10px; background:none; border:none; font-size:1.5rem; cursor:pointer;">
-        ×
-      </button>
-
-      <h3 style="margin-top:0; margin-bottom:1rem;">Neuen Arbeitsplan erstellen</h3>
-
-      <label>Datum:</label>
-      <input type="date" id="create-plan-datum" style="width:100%; margin-bottom:0.5rem; padding:0.4rem; border-radius:4px; border:1px solid #ccc;">
-
-      <label>Uhrzeit:</label>
-      <input type="time" id="create-plan-uhrzeit" style="width:100%; margin-bottom:0.5rem; padding:0.4rem; border-radius:4px; border:1px solid #ccc;">
-
-      <label>Standort:</label>
-      <select id="create-plan-location" style="width:100%; margin-bottom:0.5rem; padding:0.4rem; border-radius:4px; border:1px solid #ccc;"></select>
-
-      <label>Beschreibung:</label>
-      <textarea id="create-plan-beschreibung" placeholder="optional"
-        style="width:100%; min-height:60px; margin-bottom:0.5rem; padding:0.4rem; border-radius:4px; border:1px solid #ccc;"></textarea>
-
-      <h4 style="margin-top:1rem;">Mitarbeiter auswählen</h4>
-      <div id="create-plan-mitarbeiter-container"
-        style="max-height:200px; overflow-y:auto; border:1px solid #ccc; padding:5px; margin-bottom:1rem;">
+    <!-- Arbeitspläne -->
+    <section id="arbeitsplan-section" class="section">
+      <h2>Arbeitspläne</h2>
+      <button id="arbeitsplan-erstellen-btn">➕ Neuer Arbeitsplan</button>
+      <button id="plan-menu-btn">⋮</button>
+      <div id="plan-menu-dropdown">
+        <button id="edit-plan-btn">✏️ Bearbeiten</button>
+        <button id="delete-plan-btn">🗑️ Löschen</button>
       </div>
 
-      <button id="create-plan-save" style="width:100%; padding:0.5rem; border:none; border-radius:6px; font-size:1rem; cursor:pointer;">
-        ✅ Speichern
-      </button>
-    </div>
-  </div>
-
-  <!-- ========================== -->
-  <!-- Modal: Arbeitsplan BEARBEITEN -->
-  <!-- ========================== -->
-  <div id="edit-plan-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
-    background: rgba(0,0,0,0.5); z-index:1000; justify-content:center; align-items:center;">
-
-    <div id="edit-plan-modal-content" style="padding:1.5rem; border-radius:12px; width:90%; max-width:500px;
-        box-shadow:0 4px 20px rgba(0,0,0,0.2); position:relative; overflow-y:auto; max-height:90%;
-        transition: background 0.3s, color 0.3s;">
-
-      <button id="close-edit-modal" style="position:absolute; top:10px; right:10px; background:none; border:none; font-size:1.5rem; cursor:pointer;">
-        ×
-      </button>
-
-      <h3 style="margin-top:0; margin-bottom:1rem;">Arbeitsplan bearbeiten</h3>
-
-      <label>Datum:</label>
-      <input type="date" id="edit-plan-datum" style="width:100%; margin-bottom:0.5rem; padding:0.4rem; border-radius:4px; border:1px solid #ccc;">
-
-      <label>Uhrzeit:</label>
-      <input type="time" id="edit-plan-uhrzeit" style="width:100%; margin-bottom:0.5rem; padding:0.4rem; border-radius:4px; border:1px solid #ccc;">
-
-      <label>Standort:</label>
-      <select id="edit-plan-location" style="width:100%; margin-bottom:0.5rem; padding:0.4rem; border-radius:4px; border:1px solid #ccc;"></select>
-
-      <label>Beschreibung:</label>
-      <input type="text" id="edit-plan-beschreibung" placeholder="optional" style="width:100%; margin-bottom:0.5rem; padding:0.4rem; border-radius:4px; border:1px solid #ccc;">
-
-      <label>Mitarbeiter:</label>
-      <div id="edit-plan-mitarbeiter-container"
-        style="max-height:200px; overflow-y:auto; border:1px solid #ccc; padding:5px; margin-bottom:1rem;">
+      <div id="arbeitsplan-liste" class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th style="display:none"></th>
+              <th>Datum / Uhrzeit</th>
+              <th>Standort</th>
+              <th>Mitarbeiter</th>
+            </tr>
+          </thead>
+          <tbody id="arbeitsplan-tbody"></tbody>
+        </table>
       </div>
 
-      <button id="save-edit-plan" style="width:100%; padding:0.5rem; border:none; border-radius:6px; font-size:1rem; cursor:pointer;">
-        Änderungen speichern
-      </button>
-    </div>
-  </div>
-</section>
-
-  <!-- Standorte -->
-<section id="locations-section" class="section hidden">
-  <h2>Standorte verwalten</h2>
-
-  <!-- Button zum Einklappen/Ausklappen -->
-  <button id="toggle-add-form-btn">➕ Standort hinzufügen</button>
-
-  <!-- Formular zum Anlegen (initial versteckt) -->
-  <form id="location-form" style="display:none; margin-top:10px;">
-    <input type="text" id="loc-name" placeholder="Standortname" required />
-    <input type="text" id="loc-adresse" placeholder="Adresse (optional)" />
-    <input type="text" id="loc-google" placeholder="Google Maps Link (optional)" />
-    <button type="submit">Speichern</button>
-  </form>
-
-  <hr />
-
-  <!-- Menü für Bearbeiten/Löschen (einmal pro Section) -->
-  <div id="locations-menu" style="position:relative; margin-bottom:5px;">
-    <button id="menu-btn">⋮ Optionen</button>
-    <div id="menu-dropdown" style="display:none; position:absolute; right:0; background:#fff; border:1px solid #ccc; padding:5px; z-index:10;">
-      <button id="edit-location-btn">Bearbeiten</button>
-      <button id="delete-location-btn">Löschen</button>
-    </div>
-  </div>
-
-  <!-- Tabelle mit Checkboxen -->
-  <div class="table-container">
-    <table id="locations-table">
-      <thead>
-        <tr>
-          <th></th>
-          <th>Name</th>
-          <th>Adresse</th>
-          <th>Google Link</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </div>
-
-  <!-- Bearbeitungsformular (initial versteckt) -->
-  <div id="edit-form" style="display:none; margin-top:10px;">
-    <input type="text" id="edit-name" placeholder="Name">
-    <input type="text" id="edit-adresse" placeholder="Adresse">
-    <input type="text" id="edit-link" placeholder="Google Maps Link">
-    <button id="save-edit-btn">Speichern</button>
-    <button id="cancel-edit-btn">Abbrechen</button>
-  </div>
-</section>
-
-<!-- Chat Section -->
-<section id="chat-section" class="section hidden">
-  <div class="chat-container">
-    <!-- Linke Seitenleiste: Chat-Liste -->
-    <aside class="chat-sidebar">
-      <h3>Chats</h3>
-      <ul id="chat-list">
-        <li class="chat-item active" data-chat-id="system">🛠️ System</li>
-        <!-- Später: <li class="chat-item" data-chat-id="vorarbeiter">📋 Vorarbeiter</li> usw. -->
-      </ul>
-    </aside>
-
-    <!-- Rechte Seite: Aktueller Chat -->
-    <div class="chat-main">
-      <header class="chat-header">
-        <h3 id="chat-title">🛠️ System</h3>
-      </header>
-
-      <div id="chat-messages" class="chat-messages">
-        <!-- Beispielnachricht -->
-        <div class="message system">
-          <p><strong>System:</strong> Neuer Registrierungsantrag</p>
-          <p>E-Mail: <em>neuer.user@example.com</em></p>
-          <p>Name: <em>Max Mustermann</em></p>
-          <div class="actions">
-            <button class="approve-btn">✅ Annehmen</button>
-            <button class="reject-btn">❌ Ablehnen</button>
-          </div>
+      <!-- Modal Erstellen -->
+      <div id="createPlanModal" class="modal">
+        <div class="modal-content">
+          <button id="create-plan-cancel">×</button>
+          <h3>Neuen Arbeitsplan erstellen</h3>
+          <label>Datum:</label>
+          <input type="date" id="create-plan-datum">
+          <label>Uhrzeit:</label>
+          <input type="time" id="create-plan-uhrzeit">
+          <label>Standort:</label>
+          <select id="create-plan-location"></select>
+          <label>Beschreibung:</label>
+          <textarea id="create-plan-beschreibung" placeholder="optional"></textarea>
+          <h4>Mitarbeiter auswählen</h4>
+          <div id="create-plan-mitarbeiter-container"></div>
+          <button id="create-plan-save">✅ Speichern</button>
         </div>
       </div>
 
-      <div class="chat-input">
-        <input type="text" id="chat-text" placeholder="Nachricht schreiben..." disabled />
-        <button id="chat-send" disabled>📨</button>
+      <!-- Modal Bearbeiten -->
+      <div id="edit-plan-modal" class="modal">
+        <div id="edit-plan-modal-content" class="modal-content">
+          <button id="close-edit-modal">×</button>
+          <h3>Arbeitsplan bearbeiten</h3>
+          <label>Datum:</label>
+          <input type="date" id="edit-plan-datum">
+          <label>Uhrzeit:</label>
+          <input type="time" id="edit-plan-uhrzeit">
+          <label>Standort:</label>
+          <select id="edit-plan-location"></select>
+          <label>Beschreibung:</label>
+          <input type="text" id="edit-plan-beschreibung" placeholder="optional">
+          <label>Mitarbeiter:</label>
+          <div id="edit-plan-mitarbeiter-container"></div>
+          <button id="save-edit-plan">Änderungen speichern</button>
+        </div>
       </div>
-    </div>
+    </section>
+
+    <!-- Standorte -->
+    <section id="locations-section" class="section">
+      <h2>Standorte verwalten</h2>
+      <button id="toggle-add-form-btn">➕ Standort hinzufügen</button>
+      <form id="location-form">
+        <input type="text" id="loc-name" placeholder="Standortname" required>
+        <input type="text" id="loc-adresse" placeholder="Adresse (optional)">
+        <input type="text" id="loc-google" placeholder="Google Maps Link (optional)">
+        <button type="submit">Speichern</button>
+      </form>
+      <hr>
+      <div id="locations-menu">
+        <button id="menu-btn">⋮ Optionen</button>
+        <div id="menu-dropdown">
+          <button id="edit-location-btn">Bearbeiten</button>
+          <button id="delete-location-btn">Löschen</button>
+        </div>
+      </div>
+      <div class="table-container">
+        <table id="locations-table">
+          <thead>
+            <tr>
+              <th></th>
+              <th>Name</th>
+              <th>Adresse</th>
+              <th>Google Link</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div id="edit-form">
+        <input type="text" id="edit-name" placeholder="Name">
+        <input type="text" id="edit-adresse" placeholder="Adresse">
+        <input type="text" id="edit-link" placeholder="Google Maps Link">
+        <button id="save-edit-btn">Speichern</button>
+        <button id="cancel-edit-btn">Abbrechen</button>
+      </div>
+    </section>
+
+    <!-- Chat -->
+    <section id="chat-section" class="section">
+      <div class="chat-container">
+        <aside class="chat-sidebar">
+          <h3>Chats</h3>
+          <ul id="chat-list">
+            <li class="chat-item active" data-chat-id="system">🛠️ System</li>
+          </ul>
+        </aside>
+        <div class="chat-main">
+          <header class="chat-header">
+            <h3 id="chat-title">🛠️ System</h3>
+          </header>
+          <div id="chat-messages" class="chat-messages"></div>
+          <div class="chat-input">
+            <input type="text" id="chat-text" placeholder="Nachricht schreiben..." disabled>
+            <button id="chat-send" disabled>📨</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Benutzerverwaltung -->
+    <section id="users-section" class="section">
+      <h2>Benutzerverwaltung
+        <button id="edit-users-btn">✏️ Bearbeiten</button>
+      </h2>
+      <button id="delete-selected-btn">❌ Ausgewählte löschen</button>
+      <div class="table-container">
+        <table id="users-table">
+          <thead>
+            <tr>
+              <th></th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Rolle</th>
+              <th>Aktion</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <button id="users-mehrladen">⬇ Mehr laden</button>
+      <p class="error" id="users-error"></p>
+    </section>
+
+    <!-- QR-Passwort -->
+    <section id="qr-passwort-section" class="section">
+      <h2>QR-Passwort ändern</h2>
+      <input type="password" id="qr-passwort-input" placeholder="Neues QR-Passwort" minlength="6">
+      <button id="qr-passwort-button">Speichern</button>
+      <hr>
+      <button id="qr-passwort-laden">Aktuelles Passwort anzeigen</button>
+      <p id="qr-passwort-aktuell"></p>
+      <p id="qr-passwort-message"></p>
+    </section>
+
+    <!-- Datenbank -->
+    <section id="zeiten-section" class="section">
+      <h2>Datenbank</h2>
+      <input type="text" id="zeitensuche" placeholder="z. B. Müller 07.07.2025 13:00">
+      <div class="table-container">
+        <table id="zeiten-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Aktion</th>
+              <th>Zeit</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <button id="zeiten-mehrladen">⬇ Mehr laden</button>
+    </section>
   </div>
-</section>
-  
-  <!-- Benutzerverwaltung -->
-  <section id="users-section" class="section hidden">
-    <h2>Benutzerverwaltung
-      <button id="edit-users-btn" style="float:right;">✏️ Bearbeiten</button>
-    </h2>
-    <button id="delete-selected-btn" class="hidden">❌ Ausgewählte löschen</button>
-    <div class="table-container">
-      <table id="users-table">
-        <thead>
-          <tr>
-            <th></th> <!-- Platz für Checkbox -->
-            <th>Name</th>
-            <th>Email</th>
-            <th>Rolle</th>
-            <th>Aktion</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </div>
-    <button id="users-mehrladen">⬇ Mehr laden</button>
-    <p class="error" id="users-error"></p>
-  </section>
-
-  <!-- QR-Passwort -->
-  <section id="qr-passwort-section" class="section hidden">
-    <h2>QR-Passwort ändern</h2>
-    <input type="password" id="qr-passwort-input" placeholder="Neues QR-Passwort" minlength="6" />
-    <button id="qr-passwort-button">Speichern</button>
-    <hr />
-    <button id="qr-passwort-laden">Aktuelles Passwort anzeigen</button>
-    <p id="qr-passwort-aktuell" style="font-weight: bold;"></p>
-    <p id="qr-passwort-message"></p>
-  </section>
-
-  <!-- Datenbank -->
-  <section id="zeiten-section" class="section hidden">
-    <h2>Datenbank</h2>
-    <input type="text" id="zeitensuche" placeholder="z. B. Müller 07.07.2025 13:00" />
-    <div class="table-container">
-      <table id="zeiten-table">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Aktion</th>
-            <th>Zeit</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </div>
-    <button id="zeiten-mehrladen">⬇ Mehr laden</button>
-  </section>
-</div>
-
-
+</body>
 <script>
 //Für Zeiten-Tabelle
 let editMode = false;
