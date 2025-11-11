@@ -998,7 +998,15 @@ function switchSection(sectionId) {
     fetchChatMessages(activeChat);
   }
 }
-
+  
+// ==========================
+// sections wechsel für navbutton
+// ========================== 
+document.querySelectorAll('nav button[data-target]').
+  forEach(btn => { btn.addEventListener('click', () => 
+    { const targetId = btn.dataset.target; 
+     if (targetId) switchSection(targetId); }); });
+  
 // ==========================
 // Auto-Refresh (nur wenn Chat-Section sichtbar)
 // ==========================
