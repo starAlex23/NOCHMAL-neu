@@ -345,7 +345,6 @@ body.dark-mode #plan-menu-dropdown button:hover {
 /* ================================== */
 /* 💬 Vollbild-Chat – WhatsApp-Stil v3 */
 /* ================================== */
-
 /* Basis-Setup */
 #chat-section {
   width: 100vw;
@@ -807,16 +806,16 @@ body.dark-mode #daten-aktualisieren {
 <!-- Chat Section -->
 <section id="chat-section" class="section hidden">
   <div class="chat-container">
-    <!-- Linke Seitenleiste: Chat-Liste -->
+    <!-- Sidebar -->
     <aside class="chat-sidebar">
       <h3>Chats</h3>
       <ul id="chat-list">
         <li class="chat-item active" data-chat-id="system">🛠️ System</li>
-        <!-- Später: <li class="chat-item" data-chat-id="vorarbeiter">📋 Vorarbeiter</li> usw. -->
+        <li class="chat-item" data-chat-id="vorarbeiter">📋 Vorarbeiter</li>
       </ul>
     </aside>
 
-    <!-- Rechte Seite: Aktueller Chat -->
+    <!-- Main -->
     <div class="chat-main">
       <header class="chat-header">
         <h3 id="chat-title">🛠️ System</h3>
@@ -824,19 +823,19 @@ body.dark-mode #daten-aktualisieren {
 
       <div id="chat-messages" class="chat-messages">
         <!-- Beispielnachricht -->
-        <div class="message system">
+        <div class="message system" data-user-id="1">
           <p><strong>System:</strong> Neuer Registrierungsantrag</p>
           <p>E-Mail: <em>neuer.user@example.com</em></p>
           <p>Name: <em>Max Mustermann</em></p>
           <div class="actions">
-            <button class="approve-btn">✅ Annehmen</button>
-            <button class="reject-btn">❌ Ablehnen</button>
+            <button class="approve-btn" data-id="1">✅ Annehmen</button>
+            <button class="reject-btn" data-id="1">❌ Ablehnen</button>
           </div>
         </div>
       </div>
 
       <div class="chat-input">
-        <input type="text" id="chat-text" placeholder="Nachricht schreiben..." disabled />
+        <input type="text" id="chat-text" placeholder="Nachricht schreiben..." disabled>
         <button id="chat-send" disabled>📨</button>
       </div>
     </div>
@@ -995,18 +994,54 @@ function switchSection(sectionId) {
   localStorage.setItem('lastSection', sectionId);
 }
 
+// ==========================
 // Chat-Umschaltung
+// ==========================
+function activateChat(chatId) {
+  document.querySelectorAll('.chat-item').forEach(i => i.classList.remove('active'));
+  const item = document.querySelector(`.chat-item[data-chat-id="${chatId}"]`);
+  if (item) item.classList.add('active');
+
+  document.getElementById('chat-title').textContent =
+    chatId === 'system' ? '🛠️ System' : chatId;
+
+  loadChatMessages(chatId);
+}
+
 document.querySelectorAll('.chat-item').forEach(item => {
   item.addEventListener('click', () => {
-    document.querySelectorAll('.chat-item').forEach(i => i.classList.remove('active'));
-    item.classList.add('active');
-    const chatId = item.dataset.chatId;
-    document.getElementById('chat-title').textContent =
-      chatId === 'system' ? '🛠️ System' : chatId;
+    activateChat(item.dataset.chatId);
   });
 });
 
-// Beispiel: Klick auf "Annehmen" oder "Ablehnen"
+// Dummy-Funktion zum Nachladen
+function loadChatMessages(chatId) {
+  const container = document.getElementById('chat-messages');
+  container.innerHTML = ''; // alte Nachrichten entfernen
+
+  // Beispiel: system Nachrichten
+  if (chatId === 'system') {
+    container.innerHTML = `
+      <div class="message system" data-user-id="1">
+        <p><strong>System:</strong> Neuer Registrierungsantrag</p>
+        <p>E-Mail: <em>neuer.user@example.com</em></p>
+        <p>Name: <em>Max Mustermann</em></p>
+        <div class="actions">
+          <button class="approve-btn" data-id="1">✅ Annehmen</button>
+          <button class="reject-btn" data-id="1">❌ Ablehnen</button>
+        </div>
+      </div>`;
+  } else if (chatId === 'vorarbeiter') {
+    container.innerHTML = `<div class="message user"><p>Hier sind Vorarbeiter-Nachrichten.</p></div>`;
+  }
+
+  // Scrollen zum Ende
+  container.scrollTop = container.scrollHeight;
+}
+
+// ==========================
+// Approve / Reject
+// ==========================
 document.addEventListener('click', async (e) => {
   if (e.target.classList.contains('approve-btn') || e.target.classList.contains('reject-btn')) {
     const message = e.target.closest('.message');
@@ -1028,16 +1063,10 @@ document.addEventListener('click', async (e) => {
 
       const data = await res.json();
 
-      if (!res.ok) {
-        throw new Error(data.error || 'Fehler beim ' + action);
-      }
+      if (!res.ok) throw new Error(data.error || 'Fehler beim ' + action);
 
-      if (action === 'approve') {
-        message.querySelector('.actions').innerHTML = '<p>✅ Antrag angenommen</p>';
-      } else {
-        message.querySelector('.actions').innerHTML = '<p>❌ Antrag abgelehnt</p>';
-      }
-
+      message.querySelector('.actions').innerHTML =
+        action === 'approve' ? '<p>✅ Antrag angenommen</p>' : '<p>❌ Antrag abgelehnt</p>';
     } catch (err) {
       console.error(err);
       message.querySelector('.actions').innerHTML = '<p>⚠️ Fehler: ' + err.message + '</p>';
@@ -1045,21 +1074,14 @@ document.addEventListener('click', async (e) => {
   }
 });
 
-// Hilfsfunktion: Cookie auslesen
+// ==========================
+// Cookie Helper
+// ==========================
 function getCookie(name) {
   const value = `; ${document.cookie}`;
   const parts = value.split(`; ${name}=`);
   if (parts.length === 2) return parts.pop().split(';').shift();
 }
-
-// Nav Buttons
-document.querySelectorAll('nav button').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const targetId = btn.dataset.target;
-    if (!targetId) return;
-    switchSection(targetId);
-  });
-});
 
 // ==========================
 // Nach Login
