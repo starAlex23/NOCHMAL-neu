@@ -342,59 +342,55 @@ body.dark-mode #plan-menu-dropdown button:hover {
 }
 
 /* ================================== */
-/* 💬 Chat-Layout v3 – Fullscreen Wide */
+/* 💬 Vollbild-Chat – WhatsApp-Stil v3 */
 /* ================================== */
 
+/* Basis-Setup */
 #chat-section {
-  width: 100%;
-  height: calc(100vh - var(--navbar-height, 60px)); /* nutzt alles unter der Navbar */
+  width: 100vw;
+  height: 100vh;
   display: flex;
-  flex-direction: column;
-  background: var(--bg-main);
-}
-
-/* Container nimmt gesamte Breite */
-.chat-container {
-  flex: 1;
-  display: flex;
-  width: 100%;
-  height: 100%;
-  background: var(--bg-main);
   overflow: hidden;
+  background: var(--bg-main);
+  color: var(--text-color);
 }
 
 /* ------------------ Sidebar ------------------ */
 .chat-sidebar {
   width: 320px;
   background: var(--primary);
-  color: white;
+  color: #fff;
   display: flex;
   flex-direction: column;
-  padding: 24px;
   border-right: 1px solid rgba(255,255,255,0.1);
-  overflow-y: auto;
+  overflow: hidden;
 }
 
-.chat-sidebar h3 {
+.chat-sidebar header {
+  padding: 18px 20px;
   font-size: 1.2rem;
   font-weight: 600;
-  margin-bottom: 16px;
+  letter-spacing: 0.3px;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
 }
 
 .chat-sidebar ul {
+  flex: 1;
   list-style: none;
   margin: 0;
   padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+  overflow-y: auto;
+  scrollbar-width: thin;
 }
 
 .chat-item {
-  padding: 12px 14px;
-  border-radius: 10px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-radius: 12px;
   cursor: pointer;
-  transition: background 0.2s ease;
+  transition: background 0.15s ease;
 }
 
 .chat-item:hover {
@@ -402,139 +398,99 @@ body.dark-mode #plan-menu-dropdown button:hover {
 }
 
 .chat-item.active {
-  background: rgba(255,255,255,0.3);
+  background: rgba(255,255,255,0.25);
   font-weight: 600;
 }
 
-/* ------------------ Chat-Main ------------------ */
+/* ------------------ Hauptbereich ------------------ */
 .chat-main {
   flex: 1;
   display: flex;
   flex-direction: column;
   background: var(--bg-card);
-  color: var(--text-color);
 }
 
 /* Header */
 .chat-header {
   flex-shrink: 0;
-  height: 68px;
-  padding: 0 32px;
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--border-color);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid var(--border-color);
-  background: var(--bg-card);
-  font-size: 1.1rem;
   font-weight: 600;
+  background: var(--bg-card);
 }
 
 /* Nachrichtenbereich */
 .chat-messages {
   flex: 1;
-  padding: 28px 40px;
   overflow-y: auto;
+  padding: 24px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
   background: var(--bg-main);
 }
 
 /* Nachricht */
 .message {
   max-width: 70%;
-  padding: 14px 18px;
+  padding: 12px 16px;
   border-radius: 14px;
-  border: 1px solid var(--border-color);
   background: var(--bg-card);
+  border: 1px solid var(--border-color);
   line-height: 1.5;
-  font-size: 1rem;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  font-size: 0.95rem;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
 }
 
 .message.system {
   align-self: flex-start;
   background: var(--primary-light);
-  border-left: 5px solid var(--primary);
+  border-left: 4px solid var(--primary);
   color: var(--text-color);
 }
 
 .message.user {
   align-self: flex-end;
   background: var(--primary);
-  color: white;
+  color: #fff;
   border: none;
 }
 
-.message p {
-  margin: 2px 0;
-}
-
-/* Systembuttons */
-.actions {
-  margin-top: 10px;
-  display: flex;
-  gap: 10px;
-}
-
-.actions button {
-  flex-shrink: 0;
-  padding: 8px 12px;
-  border-radius: 6px;
-  font-weight: 500;
-  border: none;
-  cursor: pointer;
-  transition: background 0.2s ease;
-}
-
-.actions .approve-btn {
-  background: #2e7d32;
-  color: white;
-}
-.actions .approve-btn:hover {
-  background: #388e3c;
-}
-.actions .reject-btn {
-  background: #c62828;
-  color: white;
-}
-.actions .reject-btn:hover {
-  background: #d32f2f;
-}
-
-/* Eingabebereich */
+/* Eingabefeld unten fixiert */
 .chat-input {
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  padding: 14px 28px;
-  gap: 14px;
+  gap: 10px;
   border-top: 1px solid var(--border-color);
+  padding: 14px 18px;
   background: var(--bg-card);
 }
 
 .chat-input input {
   flex: 1;
-  padding: 12px 16px;
-  border-radius: 14px;
+  padding: 10px 14px;
+  border-radius: 12px;
   border: 1px solid var(--border-color);
   background: var(--bg-main);
   color: var(--text-color);
-  font-size: 1rem;
+  font-size: 0.95rem;
 }
 
 .chat-input input:focus {
-  outline: none;
   border-color: var(--primary);
-  background: var(--bg-card);
+  outline: none;
 }
 
 .chat-input button {
-  padding: 11px 16px;
-  border-radius: 12px;
+  padding: 10px 14px;
   border: none;
+  border-radius: 12px;
   background: var(--primary);
-  color: white;
+  color: #fff;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.2s ease, transform 0.1s ease;
@@ -546,41 +502,42 @@ body.dark-mode #plan-menu-dropdown button:hover {
 }
 
 /* ------------------ Dark Mode ------------------ */
-body.dark-mode .chat-sidebar {
-  background: #1f1f1f;
-  border-right: 1px solid #333;
-}
-
-body.dark-mode .chat-main {
+body.dark-mode #chat-section {
   background: #121212;
 }
 
-body.dark-mode .chat-header {
+body.dark-mode .chat-sidebar {
+  background: #1e1e1e;
+  color: #e0e0e0;
+  border-right: 1px solid #2e2e2e;
+}
+
+body.dark-mode .chat-main {
   background: #181818;
-  border-bottom: 1px solid #333;
+}
+
+body.dark-mode .chat-header {
+  background: #1f1f1f;
+  border-color: #333;
 }
 
 body.dark-mode .chat-messages {
-  background: #101010;
+  background: #181818;
 }
 
 body.dark-mode .message {
-  background: #1e1e1e;
+  background: #222;
   border-color: #333;
 }
 
 body.dark-mode .message.system {
-  background: #2b2b3a;
-  border-left: 5px solid var(--primary);
-}
-
-body.dark-mode .message.user {
-  background: var(--primary);
+  background: #2a2a3a;
+  border-left-color: var(--primary);
 }
 
 body.dark-mode .chat-input {
-  background: #181818;
-  border-top: 1px solid #333;
+  background: #1f1f1f;
+  border-color: #333;
 }
 
 /* ========================== */
