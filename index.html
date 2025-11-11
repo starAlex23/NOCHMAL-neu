@@ -1189,9 +1189,10 @@ async function setRole(userId, rolle) {
 
   async function fetchSystemMessages() {
   try {
-    const res = await fetch('/api/system-messages', {
-      credentials: 'include'
-    });
+   const res = await fetch(`${window.location.origin.includes('vercel.app') 
+  ? 'https://backend-869x.onrender.com'
+  : ''}/api/system-messages`, { credentials: 'include' });
+
     if (!res.ok) return;
     const data = await res.json();
 
