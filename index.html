@@ -994,8 +994,11 @@ function switchSection(sectionId) {
 
   localStorage.setItem('lastSection', sectionId);
 
-  // Chat nur refreshen, wenn Chat-Section aktiv ist
-  if (sectionId === 'chat-section') fetchChatMessages(activeChat);
+  // Chat nur refreshen, wenn Chat-Section sichtbar
+  const elems = getChatElements();
+  if (sectionId === 'chat-section' && elems) {
+    fetchChatMessages(activeChat);
+  }
 }
 
 // Navbuttons
@@ -1012,11 +1015,11 @@ document.querySelectorAll('nav button[data-target]').forEach(btn => {
 // ==========================
 let activeChat = 'system';
 
-// Liefert alle Chat-Elemente zurück, nur wenn Chat-Section sichtbar
+// Liefert Chat-Elemente nur, wenn sichtbar
 function getChatElements() {
   const chatSection = document.getElementById('chat-section');
   if (!chatSection || chatSection.classList.contains('hidden')) return null;
-  
+
   return {
     chatSection,
     chatMessages: chatSection.querySelector('#chat-messages'),
@@ -1046,12 +1049,18 @@ function activateChat(chatId) {
     chatSend.disabled = disabled;
   }
 
-  fetchChatMessages(chatId);
+  // Chat-Nachrichten nur laden, wenn Chat sichtbar
+  if (!chatSection.classList.contains('hidden')) {
+    fetchChatMessages(chatId);
+  }
 }
 
 // Sidebar-Click
 document.querySelectorAll('#chat-section .chat-item').forEach(item => {
-  item.addEventListener('click', () => activateChat(item.dataset.chatId));
+  item.addEventListener('click', () => {
+    const elems = getChatElements();
+    if (elems) activateChat(item.dataset.chatId);
+  });
 });
 
 // Nachrichten laden (nur wenn Chat-Section sichtbar)
@@ -1161,19 +1170,25 @@ function getCookie(name) {
   if (parts.length === 2) return parts.pop().split(';').shift();
 }
 
-// Auto-Refresh (nur wenn Chat sichtbar)
-setInterval(() => {
-  const elems = getChatElements();
-  if (elems) fetchChatMessages(activeChat);
-}, 10000);
+///////////////////////////////////////////////////////////////////////////////////////////////
+// ==========================
+// Initialisierung beim Laden der Seite
+// ==========================
+window.addEventListener('DOMContentLoaded', () => {
+  // Theme anwenden
+  const savedTheme = localStorage.getItem('theme') || 'light';
+  applyTheme(savedTheme);
 
-// Initial: Chat-Input und Nachrichten
-document.addEventListener('DOMContentLoaded', () => {
+  // Letzte Section laden
   const lastSection = localStorage.getItem('lastSection') || 'arbeitszeiten-section';
   switchSection(lastSection);
-  fetchChatMessages(activeChat);
+
+  // Chat nur laden, wenn Chat-Section aktiv ist
+  const elems = getChatElements();
+  if (elems) fetchChatMessages(activeChat);
 });
 
+///////////////////////////////////////////////////////////////////////////////////////////////
 // ==========================
 // Nach Login
 // ==========================
@@ -1221,6 +1236,10 @@ loginForm.addEventListener('submit', async (e) => {
     const lastSection = localStorage.getItem('lastSection') || 'arbeitszeiten-section';
     switchSection(lastSection);
 
+    // Chat nur laden, wenn Chat-Section aktiv
+    const elems = getChatElements();
+    if (elems) fetchChatMessages(activeChat);
+
     loginOverlay.style.display = 'none';
     document.getElementById('login-overlay-text').textContent = '';
 
@@ -1231,16 +1250,14 @@ loginForm.addEventListener('submit', async (e) => {
   }
 });
 
+///////////////////////////////////////////////////////////////////////////////////////////////
 // ==========================
-// Beim Laden der Seite
+// Auto-Refresh Chat (nur sichtbar)
 // ==========================
-window.addEventListener('DOMContentLoaded', () => {
-  const savedTheme = localStorage.getItem('theme') || 'light';
-  applyTheme(savedTheme);
-
-  const lastSection = localStorage.getItem('lastSection') || 'arbeitszeiten-section';
-  switchSection(lastSection);
-});
+setInterval(() => {
+  const elems = getChatElements();
+  if (elems) fetchChatMessages(activeChat);
+}, 10000);
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 async function apiFetch(path, options = {}, retries = 2, statusText = "Lädt...") {
