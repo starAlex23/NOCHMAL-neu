@@ -971,8 +971,9 @@ themeToggle.addEventListener('click', () => {
   applyTheme(currentTheme === 'dark' ? 'light' : 'dark');
 });
 
+///////////////////////////////////////////////////////////////////////////////////////////////
 // ==========================
-// Section-Wechsel (angepasst)
+// Section-Wechsel
 // ==========================
 function switchSection(sectionId) {
   document.querySelectorAll('.section').forEach(sec => {
@@ -994,55 +995,43 @@ function switchSection(sectionId) {
   localStorage.setItem('lastSection', sectionId);
 
   // Chat nur refreshen, wenn Chat-Section aktiv ist
-  if (sectionId === 'chat-section') {
-    fetchChatMessages(activeChat);
-  }
+  if (sectionId === 'chat-section') fetchChatMessages(activeChat);
 }
-  
-// ==========================
-// sections wechsel für navbutton
-// ========================== 
-document.querySelectorAll('nav button[data-target]').
-  forEach(btn => { btn.addEventListener('click', () => 
-    { const targetId = btn.dataset.target; 
-     if (targetId) switchSection(targetId); }); });
-  
-// ==========================
-// Auto-Refresh (nur wenn Chat-Section sichtbar)
-// ==========================
-setInterval(() => {
-  const section = document.getElementById('chat-section');
-  if (section && section.classList.contains('active')) {
-    fetchChatMessages(activeChat);
-  }
-}, 10000);
+
+// Navbuttons
+document.querySelectorAll('nav button[data-target]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const targetId = btn.dataset.target;
+    if (targetId) switchSection(targetId);
+  });
+});
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 // ==========================
-// Chat-Elemente nur in Chat-Section
+// Chat-Management
 // ==========================
 let activeChat = 'system';
-const chatSection = document.getElementById('chat-section');
-const chatMessages = chatSection ? chatSection.querySelector('#chat-messages') : null;
-const chatTitle = chatSection ? chatSection.querySelector('#chat-title') : null;
-const chatInput = chatSection ? chatSection.querySelector('#chat-text') : null;
-const chatSend = chatSection ? chatSection.querySelector('#chat-send') : null;
 
-// ==========================
-// Chat-Input aktiv/deaktiv
-// ==========================
-function updateChatInputState(chatId) {
-  if (!chatInput || !chatSend) return;
-  const disabled = chatId === 'system';
-  chatInput.disabled = disabled;
-  chatSend.disabled = disabled;
+// Liefert alle Chat-Elemente zurück, nur wenn Chat-Section sichtbar
+function getChatElements() {
+  const chatSection = document.getElementById('chat-section');
+  if (!chatSection || chatSection.classList.contains('hidden')) return null;
+  
+  return {
+    chatSection,
+    chatMessages: chatSection.querySelector('#chat-messages'),
+    chatTitle: chatSection.querySelector('#chat-title'),
+    chatInput: chatSection.querySelector('#chat-text'),
+    chatSend: chatSection.querySelector('#chat-send')
+  };
 }
 
-// ==========================
-// Chat wechseln
-// ==========================
+// Aktiviert den Chat
 function activateChat(chatId) {
-  if (!chatSection) return;
+  const elems = getChatElements();
+  if (!elems) return;
+
+  const { chatSection, chatTitle, chatInput, chatSend } = elems;
 
   chatSection.querySelectorAll('.chat-item').forEach(i => i.classList.remove('active'));
   const item = chatSection.querySelector(`.chat-item[data-chat-id="${chatId}"]`);
@@ -1050,36 +1039,37 @@ function activateChat(chatId) {
 
   if (chatTitle) chatTitle.textContent = chatId === 'system' ? '🛠️ System' : chatId;
   activeChat = chatId;
-  updateChatInputState(chatId);
+
+  if (chatInput && chatSend) {
+    const disabled = chatId === 'system';
+    chatInput.disabled = disabled;
+    chatSend.disabled = disabled;
+  }
+
   fetchChatMessages(chatId);
 }
 
-// Eventlistener für Sidebar
-if (chatSection) {
-  chatSection.querySelectorAll('.chat-item').forEach(item => {
-    item.addEventListener('click', () => activateChat(item.dataset.chatId));
-  });
-}
+// Sidebar-Click
+document.querySelectorAll('#chat-section .chat-item').forEach(item => {
+  item.addEventListener('click', () => activateChat(item.dataset.chatId));
+});
 
-// ==========================
 // Nachrichten laden (nur wenn Chat-Section sichtbar)
-// ==========================
 async function fetchChatMessages(chatId = 'system') {
-  if (!chatSection || chatSection.classList.contains('hidden') || !chatMessages) return;
+  const elems = getChatElements();
+  if (!elems) return;
 
+  const { chatMessages } = elems;
   chatMessages.innerHTML = '<p style="color:gray;">Lade Nachrichten...</p>';
 
   try {
-    let endpoint;
-    if (chatId === 'system') {
-      endpoint = `${window.location.origin.includes('vercel.app') 
-        ? 'https://backend-869x.onrender.com'
-        : ''}/api/system-messages`;
-    } else {
-      endpoint = `${window.location.origin.includes('vercel.app') 
-        ? 'https://backend-869x.onrender.com'
-        : ''}/api/chat/${chatId}`;
-    }
+    let endpoint = chatId === 'system'
+      ? `${window.location.origin.includes('vercel.app') 
+          ? 'https://backend-869x.onrender.com'
+          : ''}/api/system-messages`
+      : `${window.location.origin.includes('vercel.app') 
+          ? 'https://backend-869x.onrender.com'
+          : ''}/api/chat/${chatId}`;
 
     const res = await fetch(endpoint, { credentials: 'include' });
     if (!res.ok) {
@@ -1129,16 +1119,13 @@ async function fetchChatMessages(chatId = 'system') {
     }
 
     chatMessages.scrollTop = chatMessages.scrollHeight;
-
   } catch (err) {
     console.error('Fehler beim Laden der Chatnachrichten:', err);
     chatMessages.innerHTML = '<p style="color:red;">Verbindungsfehler.</p>';
   }
 }
 
-// ==========================
-// Approve / Reject Buttons (funktioniert global)
-// ==========================
+// Approve / Reject Buttons global
 document.addEventListener('click', async (e) => {
   if (!e.target.classList.contains('approve-btn') && !e.target.classList.contains('reject-btn')) return;
 
@@ -1151,10 +1138,7 @@ document.addEventListener('click', async (e) => {
   try {
     const res = await fetch(`/api/admin/users/${action}`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRF-Token': getCookie('csrfToken')
-      },
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': getCookie('csrfToken') },
       credentials: 'include',
       body: JSON.stringify({ userId })
     });
@@ -1164,25 +1148,31 @@ document.addEventListener('click', async (e) => {
 
     if (message) message.querySelector('.actions').innerHTML =
       action === 'approve' ? '<p>✅ Antrag angenommen</p>' : '<p>❌ Antrag abgelehnt</p>';
-
   } catch (err) {
     console.error(err);
     if (message) message.querySelector('.actions').innerHTML = '<p>⚠️ Fehler: ' + err.message + '</p>';
   }
 });
 
-// ==========================
-// Cookie Helper
-// ==========================
+// Cookie-Helfer
 function getCookie(name) {
   const value = `; ${document.cookie}`;
   const parts = value.split(`; ${name}=`);
   if (parts.length === 2) return parts.pop().split(';').shift();
 }
 
-// Initial
-updateChatInputState(activeChat);
-fetchChatMessages(activeChat);
+// Auto-Refresh (nur wenn Chat sichtbar)
+setInterval(() => {
+  const elems = getChatElements();
+  if (elems) fetchChatMessages(activeChat);
+}, 10000);
+
+// Initial: Chat-Input und Nachrichten
+document.addEventListener('DOMContentLoaded', () => {
+  const lastSection = localStorage.getItem('lastSection') || 'arbeitszeiten-section';
+  switchSection(lastSection);
+  fetchChatMessages(activeChat);
+});
 
 // ==========================
 // Nach Login
