@@ -1,3 +1,5 @@
+okay schau dirdas css an und passe überall dieses container dilemma an:
+
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -5,195 +7,357 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Admin Login & Dashboard</title>
   <style>
-   /* ======================================== */
-/* 🌐 Global Styles & Variablen */
-/* ======================================== */
-:root {
-  --bg-main: #f4f6f9;
-  --bg-card: #ffffff;
-  --primary: #0052cc;
-  --primary-light: #e6f0ff;
-  --primary-dark: #003fa3;
-  --border-color: #dcdfe6;
-  --text-color: #333;
-  --muted: #888;
-}
+    :root {
+      --bg-main: #f4f6f9;
+      --bg-card: #ffffff;
+      --primary: #0052cc;
+      --primary-light: #e6f0ff;
+      --border-color: #dcdfe6;
+      --text-color: #333;
+      --muted: #888;
+    }
 
-html, body {
-  margin: 0;
-  padding: 0;
-  width: 100%;
-  height: 100%;
-  font-family: system-ui, sans-serif;
-  background: var(--bg-main);
-  color: var(--text-color);
-  overflow: hidden;
-  box-sizing: border-box;
-}
+    body {
+      font-family: system-ui, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: var(--bg-main);
+      color: var(--text-color);
+    }
 
-/* Scrollbar Styling (Optional) */
-::-webkit-scrollbar {
-  width: 8px;
-}
-::-webkit-scrollbar-thumb {
-  background-color: rgba(0,0,0,0.2);
-  border-radius: 4px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
+    #login-card, .panel {
+      max-width: 400px;
+      margin: 5rem auto;
+      background: var(--bg-card);
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+    }
 
-/* ---------------------------------------- */
-/* 🌟 Sections Vollbild (kein Container) */
-/* ---------------------------------------- */
-.section {
-  display: none;
-  width: 100vw;
-  height: 100vh;
-  overflow: hidden;
-  position: relative;
-  background: var(--bg-card);
-  box-sizing: border-box;
-}
+    input, button, select {
+      width: 100%;
+      padding: 0.8rem;
+      margin: 0.5rem 0;
+      font-size: 1rem;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      box-sizing: border-box;
+    }
 
-.section.active {
+    button {
+      background-color: var(--primary);
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+
+    button:hover {
+      background-color: #003fa3;
+    }
+
+    .error {
+      color: red;
+      margin-top: 0.5rem;
+    }
+
+    #dashboard {
+      display: none;
+    }
+
+    nav {
+      background-color: var(--primary);
+      padding: 1rem;
+      color: white;
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    nav button {
+      width: auto;
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
+      background: white;
+      color: var(--primary);
+      border: none;
+      border-radius: 4px;
+    }
+
+    nav button.active {
+      background: #003fa3;
+      color: white;
+    }
+
+    th, td {
+      padding: 0.4rem 0.6rem;
+      font-size: 0.9rem;
+      max-width: 200px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .table-container {
+      max-height: 400px;
+      overflow-y: auto;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      margin-top: 1rem;
+    }
+
+    .section {
+      display: none;
+      max-width: 1000px;
+      margin: 2rem auto;
+      background: var(--bg-card);
+      padding: 2rem;
+      border-radius: 10px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    }
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+    
+   .section.active {
   display: block !important;
 }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
 
-/* Abstand für Navbar oben */
-.section-inner {
-  padding-top: 70px; /* Höhe Navbar */
-  height: calc(100vh - 70px);
-  overflow-y: auto;
+    th {
+      background: var(--primary-light);
+    }
+
+    h2 {
+      margin-bottom: 0.5rem;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    #top-controls {
+      max-width: 1000px;
+      margin: 1.5rem auto 0 auto;
+      display: flex;
+      justify-content: flex-end;
+      padding: 0 2rem;
+    }
+
+/* Spinner CSS */ 
+#login-overlay .spinner {
+  width: 40px;
+  height: 40px;
+  border: 5px solid rgba(255,255,255,0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
 }
 
-/* ---------------------------------------- */
-/* 🔒 Login Card (Zentriert) */
-#login-card {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  width: 100vw;
-  background: var(--bg-card);
-  padding: 2rem;
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+    
+.dropdown { position: relative; display: inline-block; }
+  .dropdown-content {
+    display: none;
+    position: absolute;
+    right: 0;
+    background: white;
+    border: 1px solid #ccc;
+    z-index: 10;
+    min-width: 100px;
+  }
+  .dropdown-content a {
+    display: block;
+    padding: 5px 10px;
+    text-decoration: none;
+    color: black;
+  }
+  .dropdown-content a:hover { background: #eee; }
+  .dropdown:hover .dropdown-content { display: block; }
+
+/* Entfernt Kopfzeilen-Kästchen */
+#locations-table thead th:first-child {
+  display: none;
 }
 
-/* Inputs und Buttons */
-input, select, textarea, button {
-  font-size: 1rem;
-  border-radius: 6px;
-  box-sizing: border-box;
-  border: 1px solid var(--border-color);
-  padding: 0.8rem;
-  margin: 0.5rem 0;
-}
-
-button {
-  background: var(--primary);
-  color: #fff;
-  font-weight: bold;
-  cursor: pointer;
-  transition: background 0.2s ease;
-}
-
-button:hover {
-  background: var(--primary-dark);
-}
-
-/* ---------------------------------------- */
-/* 📌 Navbar Fixiert Oben */
-nav {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  background: var(--primary);
-  color: #fff;
-  display: flex;
-  justify-content: center;
-  gap: 1rem;
-  padding: 0.8rem 1rem;
-  z-index: 100;
-}
-
-nav button {
-  background: #fff;
-  color: var(--primary);
-  border: none;
-  border-radius: 6px;
-  padding: 0.5rem 1rem;
-  cursor: pointer;
-  font-weight: 500;
-}
-
-nav button.active {
-  background: var(--primary-dark);
-  color: #fff;
-}
-
-/* ---------------------------------------- */
-/* 📋 Tabellen */
-.table-container {
-  width: 100%;
-  height: calc(100vh - 140px);
-  overflow-y: auto;
-  padding: 0 1rem;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-th, td {
-  padding: 0.6rem;
-  font-size: 0.95rem;
-  border-bottom: 1px solid var(--border-color);
-  text-align: left;
-}
-
-th {
-  background: var(--primary-light);
-  font-weight: 600;
-}
-
+/* Checkbox-Zellen */
 .checkbox-cell {
   width: 30px;
   text-align: center;
 }
 
-/* ---------------------------------------- */
-/* 📅 Planung & Zeit */
-#planung-section,
-#zeiten-section {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  padding: 70px 2rem 2rem 2rem; /* Platz für Navbar */
-  box-sizing: border-box;
+/* Dropdown-Menü */
+#menu-dropdown {
+  display: none;
+  position: absolute;
+  right: 0;
+  background: white;
+  border: 1px solid #ccc;
+  z-index: 10;
+  min-width: 120px;
+}
+
+#menu-dropdown a {
+  display: block;
+  padding: 6px 10px;
+  text-decoration: none;
+  color: black;
+}
+
+#menu-dropdown a:hover {
+  background: #eee;
+}
+
+/* Formular panel einklappbar */
+#location-form.hidden {
+  display: none;
+}
+    
+    /* Dark Mode Styles */
+body.dark-mode {
+  --bg-main: #121212;
+  --bg-card: #1e1e1e;
+  --primary: #1b5e20;        /* Dunkelgrün */
+  --primary-light: #2e7d32;
+  --border-color: #333;
+  --text-color: #eee;
+  --muted: #aaa;
+}
+
+body.dark-mode {
+  background-color: var(--bg-main);
+  color: var(--text-color);
+}
+
+body.dark-mode #login-card,
+body.dark-mode .panel,
+body.dark-mode .section {
+  background-color: var(--bg-card);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.8);
+}
+
+body.dark-mode button {
+  background-color: var(--primary);
+  color: white;
+  border-color: var(--primary-light);
+}
+
+body.dark-mode button:hover {
+  background-color: var(--primary-light);
+}
+
+body.dark-mode nav {
+  background-color: var(--primary);
+  color: white;
+}
+
+body.dark-mode nav button {
+  background: white;
+  color: var(--primary);
+}
+
+body.dark-mode nav button.active {
+  background: var(--primary-light);
+  color: white;
+}
+
+/* ========================== */
+/* Dark Mode: Create-Plan-Modal */
+/* ========================== */
+body.dark-mode #createPlanModal .modal-content {
+  background-color: var(--bg-card);
+  color: var(--text-color);
+}
+
+body.dark-mode #createPlanModal input,
+body.dark-mode #createPlanModal select,
+body.dark-mode #createPlanModal textarea {
+  background-color: #2c2c2c;
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+}
+
+body.dark-mode #create-plan-save {
+  background-color: var(--primary);
+  color: white;
+}
+
+body.dark-mode #create-plan-save:hover {
+  background-color: var(--primary-light);
+}
+
+body.dark-mode #create-plan-cancel {
+  color: var(--text-color);
+}
+
+/* ========================== */
+/* Scrollbereich Mitarbeiter */
+/* ========================== */
+#create-plan-mitarbeiter-container {
+  max-height: 200px;
   overflow-y: auto;
-}
-
-#top-controls {
-  width: 100%;
-  display: flex;
-  justify-content: flex-end;
+  border: 1px solid #ccc;
+  padding: 5px;
   margin-bottom: 1rem;
+  border-radius: 4px;
 }
 
-/* ---------------------------------------- */
-/* 💬 Vollbild-Chat */
+body.dark-mode #create-plan-mitarbeiter-container {
+  border-color: var(--border-color);
+}
+
+/* Checkbox-Items */
+.create-plan-mitarbeiter-item,
+#edit-plan-mitarbeiter-container .mitarbeiter-item {
+  margin-bottom: 4px;
+}
+
+/* ========================== */
+/* Drei-Punkte Menü & Checkbox-Spalten */
+/* ========================== */
+#plan-menu-dropdown button {
+  display: block;
+  width: 100%;
+  padding: 0.4rem 0.6rem;
+  border: none;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+
+#plan-menu-dropdown button:hover {
+  background-color: #eee;
+}
+
+body.dark-mode #plan-menu-dropdown button:hover {
+  background-color: #444;
+  color: var(--text-color);
+}
+
+/* ================================== */
+/* 💬 Vollbild-Chat – WhatsApp-Stil v3 */
+/* ================================== */
+
+/* Basis-Setup */
 #chat-section {
-  display: flex;
   width: 100vw;
   height: 100vh;
-  background: var(--bg-main);
+  display: flex;
   overflow: hidden;
+  background: var(--bg-main);
+  color: var(--text-color);
 }
 
-/* Sidebar */
+/* ------------------ Sidebar ------------------ */
 .chat-sidebar {
   width: 320px;
   background: var(--primary);
@@ -201,6 +365,7 @@ th {
   display: flex;
   flex-direction: column;
   border-right: 1px solid rgba(255,255,255,0.1);
+  overflow: hidden;
 }
 
 .chat-sidebar header {
@@ -212,11 +377,12 @@ th {
 }
 
 .chat-sidebar ul {
+  flex: 1;
   list-style: none;
   margin: 0;
   padding: 0;
-  flex: 1;
   overflow-y: auto;
+  scrollbar-width: thin;
 }
 
 .chat-item {
@@ -238,7 +404,7 @@ th {
   font-weight: 600;
 }
 
-/* Main Chat */
+/* ------------------ Hauptbereich ------------------ */
 .chat-main {
   flex: 1;
   display: flex;
@@ -246,7 +412,7 @@ th {
   background: var(--bg-card);
 }
 
-/* Chat Header */
+/* Header */
 .chat-header {
   flex-shrink: 0;
   padding: 18px 24px;
@@ -258,7 +424,7 @@ th {
   background: var(--bg-card);
 }
 
-/* Chat Messages */
+/* Nachrichtenbereich */
 .chat-messages {
   flex: 1;
   overflow-y: auto;
@@ -269,6 +435,7 @@ th {
   background: var(--bg-main);
 }
 
+/* Nachricht */
 .message {
   max-width: 70%;
   padding: 12px 16px;
@@ -294,6 +461,7 @@ th {
   border: none;
 }
 
+/* Eingabefeld unten fixiert */
 .chat-input {
   flex-shrink: 0;
   display: flex;
@@ -335,71 +503,9 @@ th {
   transform: scale(1.05);
 }
 
-/* ---------------------------------------- */
-/* 🔄 Aktualisieren-Button unten rechts */
-#daten-aktualisieren {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  background: var(--primary);
-  color: #fff;
-  padding: 0.7rem 1.2rem;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
-  z-index: 1000;
-  transition: background-color 0.2s ease;
-}
-
-#daten-aktualisieren:hover {
-  background: var(--primary-dark);
-}
-
-/* ---------------------------------------- */
-/* Dark Mode */
-body.dark-mode {
-  --bg-main: #121212;
-  --bg-card: #1e1e1e;
-  --primary: #1b5e20;
-  --primary-light: #2e7d32;
-  --primary-dark: #145214;
-  --border-color: #333;
-  --text-color: #eee;
-  --muted: #aaa;
-  background: var(--bg-main);
-  color: var(--text-color);
-}
-
-body.dark-mode #login-card,
-body.dark-mode .section,
-body.dark-mode .chat-main,
-body.dark-mode .chat-input {
-  background-color: var(--bg-card);
-}
-
-body.dark-mode nav {
-  background-color: var(--primary);
-}
-
-body.dark-mode nav button.active {
-  background-color: var(--primary-light);
-  color: #fff;
-}
-
-body.dark-mode table,
-body.dark-mode th,
-body.dark-mode td {
-  border-color: var(--border-color);
-}
-
-body.dark-mode .message {
-  background-color: #222;
-  border-color: #333;
-}
-
-body.dark-mode .message.system {
-  background-color: #2a2a3a;
-  border-left-color: var(--primary);
+/* ------------------ Dark Mode ------------------ */
+body.dark-mode #chat-section {
+  background: #121212;
 }
 
 body.dark-mode .chat-sidebar {
@@ -408,8 +514,27 @@ body.dark-mode .chat-sidebar {
   border-right: 1px solid #2e2e2e;
 }
 
+body.dark-mode .chat-main {
+  background: #181818;
+}
+
+body.dark-mode .chat-header {
+  background: #1f1f1f;
+  border-color: #333;
+}
+
 body.dark-mode .chat-messages {
   background: #181818;
+}
+
+body.dark-mode .message {
+  background: #222;
+  border-color: #333;
+}
+
+body.dark-mode .message.system {
+  background: #2a2a3a;
+  border-left-color: var(--primary);
 }
 
 body.dark-mode .chat-input {
@@ -417,246 +542,363 @@ body.dark-mode .chat-input {
   border-color: #333;
 }
 
-  </style>
+/* ========================== */
+/* Aktualisieren-Button (wie vorher) */
+/* ========================== */
+#daten-aktualisieren {
+  max-width: 200px;
+  background: #0073e6;
+  font-size: 0.95rem;
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1000;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+body.dark-mode #daten-aktualisieren {
+  background-color: var(--primary);
+  box-shadow: 0 0 10px var(--primary-light);
+}
+
+</style>
 </head>
+
 <body>
-  <!-- Login Card -->
-  <div id="login-card" class="section active">
-    <h2>Admin Login</h2>
-    <form id="login-form">
-      <input type="email" name="email" placeholder="E-Mail" required />
-      <input type="password" name="passwort" placeholder="Passwort" required />
-      <button type="submit">Login</button>
-      <p class="error" id="error-msg"></p>
-    </form>
+<div id="login-card">
+  <h2>Admin Login</h2>
+  <form id="login-form">
+    <input type="email" name="email" placeholder="E-Mail" required />
+    <input type="password" name="passwort" placeholder="Passwort" required />
+    <button type="submit">Login</button>
+    <p class="error" id="error-msg"></p>
+  </form>
+</div>
+
+  <div id="loading-overlay" style="
+  display:none;
+  position:fixed;
+  top:0; left:0;
+  width:100%; height:100%;
+  background: rgba(0,0,0,0.4);
+  color:white;
+  font-size:1.2rem;
+  font-weight:bold;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  z-index:10000;
+">
+  <div class="spinner" style="
+    border: 4px solid rgba(255,255,255,0.3);
+    border-top: 4px solid white;
+    border-radius: 50%;
+    width:40px;
+    height:40px;
+    margin-bottom:10px;
+    animation: spin 1s linear infinite;
+  "></div>
+  <div id="loading-text">Lädt...</div>
+</div>
+
+<div id="dashboard">
+  <nav>
+    <button data-target="arbeitszeiten-section" class="active">Arbeitszeiten</button>
+    <button data-target="users-section">Benutzer</button>
+    <button data-target="chat-section">Chat</button>
+    <button data-target="qr-passwort-section">QR-Passwort</button>
+    <button data-target="zeiten-section">Datenbank</button>
+    <button data-target="arbeitsplan-section">Arbeitspläne</button>
+    <button data-target="locations-section">Standorte</button>
+    <button id="dark-mode-toggle" style="margin-left:auto; background: transparent; color: inherit; border:none; cursor:pointer;">
+      🌙 Dark Mode
+    </button>
+  </nav>
+
+  <div id="top-controls">
+    <button id="daten-aktualisieren">🔄 Alle Daten aktualisieren</button>
   </div>
 
-  <!-- Lade-Overlay -->
-  <div id="loading-overlay">
-    <div class="spinner"></div>
-    <div id="loading-text">Lädt...</div>
-  </div>
-
-  <!-- Dashboard -->
-  <div id="dashboard" class="section">
-    <!-- Navbar -->
-    <nav>
-      <button data-target="arbeitszeiten-section" class="active">Arbeitszeiten</button>
-      <button data-target="users-section">Benutzer</button>
-      <button data-target="chat-section">Chat</button>
-      <button data-target="qr-passwort-section">QR-Passwort</button>
-      <button data-target="zeiten-section">Datenbank</button>
-      <button data-target="arbeitsplan-section">Arbeitspläne</button>
-      <button data-target="locations-section">Standorte</button>
-      <button id="dark-mode-toggle" style="margin-left:auto;">🌙 Dark Mode</button>
-    </nav>
-
-    <!-- Top Controls -->
-    <div id="top-controls">
-      <button id="daten-aktualisieren">🔄 Alle Daten aktualisieren</button>
+  <!-- Arbeitszeiten -->
+  <section id="arbeitszeiten-section" class="section">
+    <h2>Arbeitszeiten (pro Tag)</h2>
+    <input type="text" id="arbeitszeiten-suche" placeholder="Suche nach Name oder Datum..." />
+    <div class="table-container">
+      <table id="arbeitszeiten-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Datum</th>
+            <th>Start</th>
+            <th>Stop</th>
+            <th>Dauer</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
     </div>
+    <button id="arbeitszeiten-mehrladen">⬇ Mehr laden</button>
+  </section>
 
-    <!-- Arbeitszeiten -->
-    <section id="arbeitszeiten-section" class="section active">
-      <h2>Arbeitszeiten (pro Tag)</h2>
-      <input type="text" id="arbeitszeiten-suche" placeholder="Suche nach Name oder Datum..." />
-      <div class="table-container">
-        <table id="arbeitszeiten-table">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Datum</th>
-              <th>Start</th>
-              <th>Stop</th>
-              <th>Dauer</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
-      <button id="arbeitszeiten-mehrladen">⬇ Mehr laden</button>
-    </section>
+  <!-- Arbeitspläne -->
+<section id="arbeitsplan-section" class="section hidden">
+  <h2>Arbeitspläne</h2>
 
-    <!-- Arbeitspläne -->
-    <section id="arbeitsplan-section" class="section">
-      <h2>Arbeitspläne</h2>
-      <button id="arbeitsplan-erstellen-btn">➕ Neuer Arbeitsplan</button>
-      <button id="plan-menu-btn">⋮</button>
-      <div id="plan-menu-dropdown">
-        <button id="edit-plan-btn">✏️ Bearbeiten</button>
-        <button id="delete-plan-btn">🗑️ Löschen</button>
+  <!-- Button für neues Modal -->
+  <button id="arbeitsplan-erstellen-btn" style="margin-bottom:1rem;">➕ Neuer Arbeitsplan</button>
+
+  <!-- Drei-Punkte-Button für Aktionen -->
+  <button id="plan-menu-btn" style="margin-top:10px;">⋮</button>
+
+  <!-- Dropdown-Menü für Bearbeiten/Löschen -->
+  <div id="plan-menu-dropdown" style="display:none; margin-top:5px;">
+    <button id="edit-plan-btn" style="display:none">✏️ Bearbeiten</button>
+    <button id="delete-plan-btn" style="display:none">🗑️ Löschen</button>
+  </div>
+
+  <!-- Tabellenansicht -->
+  <div id="arbeitsplan-liste" class="table-container" style="margin-top:1rem;">
+    <table>
+      <thead>
+        <tr>
+          <th style="display:none"></th> <!-- Checkbox-Spalte -->
+          <th>Datum / Uhrzeit</th>
+          <th>Standort</th>
+          <th>Mitarbeiter</th>
+        </tr>
+      </thead>
+      <tbody id="arbeitsplan-tbody"></tbody>
+    </table>
+  </div>
+
+  <!-- ========================== -->
+  <!-- Modal: Arbeitsplan ERSTELLEN -->
+  <!-- ========================== -->
+  <div id="createPlanModal" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+    background: rgba(0,0,0,0.5); z-index:1000; justify-content:center; align-items:center;">
+    
+    <div class="modal-content" style="padding:1.5rem; border-radius:12px; width:90%; max-width:500px;
+      box-shadow:0 4px 20px rgba(0,0,0,0.2); position:relative; overflow-y:auto; max-height:90%;
+      transition: background 0.3s, color 0.3s;">
+      
+      <button id="create-plan-cancel" style="position:absolute; top:10px; right:10px; background:none; border:none; font-size:1.5rem; cursor:pointer;">
+        ×
+      </button>
+
+      <h3 style="margin-top:0; margin-bottom:1rem;">Neuen Arbeitsplan erstellen</h3>
+
+      <label>Datum:</label>
+      <input type="date" id="create-plan-datum" style="width:100%; margin-bottom:0.5rem; padding:0.4rem; border-radius:4px; border:1px solid #ccc;">
+
+      <label>Uhrzeit:</label>
+      <input type="time" id="create-plan-uhrzeit" style="width:100%; margin-bottom:0.5rem; padding:0.4rem; border-radius:4px; border:1px solid #ccc;">
+
+      <label>Standort:</label>
+      <select id="create-plan-location" style="width:100%; margin-bottom:0.5rem; padding:0.4rem; border-radius:4px; border:1px solid #ccc;"></select>
+
+      <label>Beschreibung:</label>
+      <textarea id="create-plan-beschreibung" placeholder="optional"
+        style="width:100%; min-height:60px; margin-bottom:0.5rem; padding:0.4rem; border-radius:4px; border:1px solid #ccc;"></textarea>
+
+      <h4 style="margin-top:1rem;">Mitarbeiter auswählen</h4>
+      <div id="create-plan-mitarbeiter-container"
+        style="max-height:200px; overflow-y:auto; border:1px solid #ccc; padding:5px; margin-bottom:1rem;">
       </div>
 
-      <div id="arbeitsplan-liste" class="table-container">
-        <table>
-          <thead>
-            <tr>
-              <th style="display:none"></th>
-              <th>Datum / Uhrzeit</th>
-              <th>Standort</th>
-              <th>Mitarbeiter</th>
-            </tr>
-          </thead>
-          <tbody id="arbeitsplan-tbody"></tbody>
-        </table>
+      <button id="create-plan-save" style="width:100%; padding:0.5rem; border:none; border-radius:6px; font-size:1rem; cursor:pointer;">
+        ✅ Speichern
+      </button>
+    </div>
+  </div>
+
+  <!-- ========================== -->
+  <!-- Modal: Arbeitsplan BEARBEITEN -->
+  <!-- ========================== -->
+  <div id="edit-plan-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+    background: rgba(0,0,0,0.5); z-index:1000; justify-content:center; align-items:center;">
+
+    <div id="edit-plan-modal-content" style="padding:1.5rem; border-radius:12px; width:90%; max-width:500px;
+        box-shadow:0 4px 20px rgba(0,0,0,0.2); position:relative; overflow-y:auto; max-height:90%;
+        transition: background 0.3s, color 0.3s;">
+
+      <button id="close-edit-modal" style="position:absolute; top:10px; right:10px; background:none; border:none; font-size:1.5rem; cursor:pointer;">
+        ×
+      </button>
+
+      <h3 style="margin-top:0; margin-bottom:1rem;">Arbeitsplan bearbeiten</h3>
+
+      <label>Datum:</label>
+      <input type="date" id="edit-plan-datum" style="width:100%; margin-bottom:0.5rem; padding:0.4rem; border-radius:4px; border:1px solid #ccc;">
+
+      <label>Uhrzeit:</label>
+      <input type="time" id="edit-plan-uhrzeit" style="width:100%; margin-bottom:0.5rem; padding:0.4rem; border-radius:4px; border:1px solid #ccc;">
+
+      <label>Standort:</label>
+      <select id="edit-plan-location" style="width:100%; margin-bottom:0.5rem; padding:0.4rem; border-radius:4px; border:1px solid #ccc;"></select>
+
+      <label>Beschreibung:</label>
+      <input type="text" id="edit-plan-beschreibung" placeholder="optional" style="width:100%; margin-bottom:0.5rem; padding:0.4rem; border-radius:4px; border:1px solid #ccc;">
+
+      <label>Mitarbeiter:</label>
+      <div id="edit-plan-mitarbeiter-container"
+        style="max-height:200px; overflow-y:auto; border:1px solid #ccc; padding:5px; margin-bottom:1rem;">
       </div>
 
-      <!-- Modal Erstellen -->
-      <div id="createPlanModal" class="modal">
-        <div class="modal-content">
-          <button id="create-plan-cancel">×</button>
-          <h3>Neuen Arbeitsplan erstellen</h3>
-          <label>Datum:</label>
-          <input type="date" id="create-plan-datum">
-          <label>Uhrzeit:</label>
-          <input type="time" id="create-plan-uhrzeit">
-          <label>Standort:</label>
-          <select id="create-plan-location"></select>
-          <label>Beschreibung:</label>
-          <textarea id="create-plan-beschreibung" placeholder="optional"></textarea>
-          <h4>Mitarbeiter auswählen</h4>
-          <div id="create-plan-mitarbeiter-container"></div>
-          <button id="create-plan-save">✅ Speichern</button>
-        </div>
-      </div>
+      <button id="save-edit-plan" style="width:100%; padding:0.5rem; border:none; border-radius:6px; font-size:1rem; cursor:pointer;">
+        Änderungen speichern
+      </button>
+    </div>
+  </div>
+</section>
 
-      <!-- Modal Bearbeiten -->
-      <div id="edit-plan-modal" class="modal">
-        <div id="edit-plan-modal-content" class="modal-content">
-          <button id="close-edit-modal">×</button>
-          <h3>Arbeitsplan bearbeiten</h3>
-          <label>Datum:</label>
-          <input type="date" id="edit-plan-datum">
-          <label>Uhrzeit:</label>
-          <input type="time" id="edit-plan-uhrzeit">
-          <label>Standort:</label>
-          <select id="edit-plan-location"></select>
-          <label>Beschreibung:</label>
-          <input type="text" id="edit-plan-beschreibung" placeholder="optional">
-          <label>Mitarbeiter:</label>
-          <div id="edit-plan-mitarbeiter-container"></div>
-          <button id="save-edit-plan">Änderungen speichern</button>
-        </div>
-      </div>
-    </section>
+  <!-- Standorte -->
+<section id="locations-section" class="section hidden">
+  <h2>Standorte verwalten</h2>
 
-    <!-- Standorte -->
-    <section id="locations-section" class="section">
-      <h2>Standorte verwalten</h2>
-      <button id="toggle-add-form-btn">➕ Standort hinzufügen</button>
-      <form id="location-form">
-        <input type="text" id="loc-name" placeholder="Standortname" required>
-        <input type="text" id="loc-adresse" placeholder="Adresse (optional)">
-        <input type="text" id="loc-google" placeholder="Google Maps Link (optional)">
-        <button type="submit">Speichern</button>
-      </form>
-      <hr>
-      <div id="locations-menu">
-        <button id="menu-btn">⋮ Optionen</button>
-        <div id="menu-dropdown">
-          <button id="edit-location-btn">Bearbeiten</button>
-          <button id="delete-location-btn">Löschen</button>
-        </div>
-      </div>
-      <div class="table-container">
-        <table id="locations-table">
-          <thead>
-            <tr>
-              <th></th>
-              <th>Name</th>
-              <th>Adresse</th>
-              <th>Google Link</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
-      <div id="edit-form">
-        <input type="text" id="edit-name" placeholder="Name">
-        <input type="text" id="edit-adresse" placeholder="Adresse">
-        <input type="text" id="edit-link" placeholder="Google Maps Link">
-        <button id="save-edit-btn">Speichern</button>
-        <button id="cancel-edit-btn">Abbrechen</button>
-      </div>
-    </section>
+  <!-- Button zum Einklappen/Ausklappen -->
+  <button id="toggle-add-form-btn">➕ Standort hinzufügen</button>
 
-    <!-- Chat -->
-    <section id="chat-section" class="section">
-      <div class="chat-container">
-        <aside class="chat-sidebar">
-          <h3>Chats</h3>
-          <ul id="chat-list">
-            <li class="chat-item active" data-chat-id="system">🛠️ System</li>
-          </ul>
-        </aside>
-        <div class="chat-main">
-          <header class="chat-header">
-            <h3 id="chat-title">🛠️ System</h3>
-          </header>
-          <div id="chat-messages" class="chat-messages"></div>
-          <div class="chat-input">
-            <input type="text" id="chat-text" placeholder="Nachricht schreiben..." disabled>
-            <button id="chat-send" disabled>📨</button>
+  <!-- Formular zum Anlegen (initial versteckt) -->
+  <form id="location-form" style="display:none; margin-top:10px;">
+    <input type="text" id="loc-name" placeholder="Standortname" required />
+    <input type="text" id="loc-adresse" placeholder="Adresse (optional)" />
+    <input type="text" id="loc-google" placeholder="Google Maps Link (optional)" />
+    <button type="submit">Speichern</button>
+  </form>
+
+  <hr />
+
+  <!-- Menü für Bearbeiten/Löschen (einmal pro Section) -->
+  <div id="locations-menu" style="position:relative; margin-bottom:5px;">
+    <button id="menu-btn">⋮ Optionen</button>
+    <div id="menu-dropdown" style="display:none; position:absolute; right:0; background:#fff; border:1px solid #ccc; padding:5px; z-index:10;">
+      <button id="edit-location-btn">Bearbeiten</button>
+      <button id="delete-location-btn">Löschen</button>
+    </div>
+  </div>
+
+  <!-- Tabelle mit Checkboxen -->
+  <div class="table-container">
+    <table id="locations-table">
+      <thead>
+        <tr>
+          <th></th>
+          <th>Name</th>
+          <th>Adresse</th>
+          <th>Google Link</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <!-- Bearbeitungsformular (initial versteckt) -->
+  <div id="edit-form" style="display:none; margin-top:10px;">
+    <input type="text" id="edit-name" placeholder="Name">
+    <input type="text" id="edit-adresse" placeholder="Adresse">
+    <input type="text" id="edit-link" placeholder="Google Maps Link">
+    <button id="save-edit-btn">Speichern</button>
+    <button id="cancel-edit-btn">Abbrechen</button>
+  </div>
+</section>
+
+<!-- Chat Section -->
+<section id="chat-section" class="section hidden">
+  <div class="chat-container">
+    <!-- Linke Seitenleiste: Chat-Liste -->
+    <aside class="chat-sidebar">
+      <h3>Chats</h3>
+      <ul id="chat-list">
+        <li class="chat-item active" data-chat-id="system">🛠️ System</li>
+        <!-- Später: <li class="chat-item" data-chat-id="vorarbeiter">📋 Vorarbeiter</li> usw. -->
+      </ul>
+    </aside>
+
+    <!-- Rechte Seite: Aktueller Chat -->
+    <div class="chat-main">
+      <header class="chat-header">
+        <h3 id="chat-title">🛠️ System</h3>
+      </header>
+
+      <div id="chat-messages" class="chat-messages">
+        <!-- Beispielnachricht -->
+        <div class="message system">
+          <p><strong>System:</strong> Neuer Registrierungsantrag</p>
+          <p>E-Mail: <em>neuer.user@example.com</em></p>
+          <p>Name: <em>Max Mustermann</em></p>
+          <div class="actions">
+            <button class="approve-btn">✅ Annehmen</button>
+            <button class="reject-btn">❌ Ablehnen</button>
           </div>
         </div>
       </div>
-    </section>
 
-    <!-- Benutzerverwaltung -->
-    <section id="users-section" class="section">
-      <h2>Benutzerverwaltung
-        <button id="edit-users-btn">✏️ Bearbeiten</button>
-      </h2>
-      <button id="delete-selected-btn">❌ Ausgewählte löschen</button>
-      <div class="table-container">
-        <table id="users-table">
-          <thead>
-            <tr>
-              <th></th>
-              <th>Name</th>
-              <th>Email</th>
-              <th>Rolle</th>
-              <th>Aktion</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
+      <div class="chat-input">
+        <input type="text" id="chat-text" placeholder="Nachricht schreiben..." disabled />
+        <button id="chat-send" disabled>📨</button>
       </div>
-      <button id="users-mehrladen">⬇ Mehr laden</button>
-      <p class="error" id="users-error"></p>
-    </section>
-
-    <!-- QR-Passwort -->
-    <section id="qr-passwort-section" class="section">
-      <h2>QR-Passwort ändern</h2>
-      <input type="password" id="qr-passwort-input" placeholder="Neues QR-Passwort" minlength="6">
-      <button id="qr-passwort-button">Speichern</button>
-      <hr>
-      <button id="qr-passwort-laden">Aktuelles Passwort anzeigen</button>
-      <p id="qr-passwort-aktuell"></p>
-      <p id="qr-passwort-message"></p>
-    </section>
-
-    <!-- Datenbank -->
-    <section id="zeiten-section" class="section">
-      <h2>Datenbank</h2>
-      <input type="text" id="zeitensuche" placeholder="z. B. Müller 07.07.2025 13:00">
-      <div class="table-container">
-        <table id="zeiten-table">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Aktion</th>
-              <th>Zeit</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
-      <button id="zeiten-mehrladen">⬇ Mehr laden</button>
-    </section>
+    </div>
   </div>
-</body>
+</section>
+  
+  <!-- Benutzerverwaltung -->
+  <section id="users-section" class="section hidden">
+    <h2>Benutzerverwaltung
+      <button id="edit-users-btn" style="float:right;">✏️ Bearbeiten</button>
+    </h2>
+    <button id="delete-selected-btn" class="hidden">❌ Ausgewählte löschen</button>
+    <div class="table-container">
+      <table id="users-table">
+        <thead>
+          <tr>
+            <th></th> <!-- Platz für Checkbox -->
+            <th>Name</th>
+            <th>Email</th>
+            <th>Rolle</th>
+            <th>Aktion</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <button id="users-mehrladen">⬇ Mehr laden</button>
+    <p class="error" id="users-error"></p>
+  </section>
+
+  <!-- QR-Passwort -->
+  <section id="qr-passwort-section" class="section hidden">
+    <h2>QR-Passwort ändern</h2>
+    <input type="password" id="qr-passwort-input" placeholder="Neues QR-Passwort" minlength="6" />
+    <button id="qr-passwort-button">Speichern</button>
+    <hr />
+    <button id="qr-passwort-laden">Aktuelles Passwort anzeigen</button>
+    <p id="qr-passwort-aktuell" style="font-weight: bold;"></p>
+    <p id="qr-passwort-message"></p>
+  </section>
+
+  <!-- Datenbank -->
+  <section id="zeiten-section" class="section hidden">
+    <h2>Datenbank</h2>
+    <input type="text" id="zeitensuche" placeholder="z. B. Müller 07.07.2025 13:00" />
+    <div class="table-container">
+      <table id="zeiten-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Aktion</th>
+            <th>Zeit</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <button id="zeiten-mehrladen">⬇ Mehr laden</button>
+  </section>
+</div>
+<body>
 <script>
 //Für Zeiten-Tabelle
 let editMode = false;
