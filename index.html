@@ -972,7 +972,7 @@ themeToggle.addEventListener('click', () => {
 });
 
 // ==========================
-// Section-Wechsel
+// Section-Wechsel (angepasst)
 // ==========================
 function switchSection(sectionId) {
   document.querySelectorAll('.section').forEach(sec => {
@@ -992,14 +992,22 @@ function switchSection(sectionId) {
   });
 
   localStorage.setItem('lastSection', sectionId);
+
+  // Chat nur refreshen, wenn Chat-Section aktiv ist
+  if (sectionId === 'chat-section') {
+    fetchChatMessages(activeChat);
+  }
 }
 
-document.querySelectorAll('nav button[data-target]').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const targetId = btn.dataset.target;
-    if (targetId) switchSection(targetId);
-  });
-});
+// ==========================
+// Auto-Refresh (nur wenn Chat-Section sichtbar)
+// ==========================
+setInterval(() => {
+  const section = document.getElementById('chat-section');
+  if (section && section.classList.contains('active')) {
+    fetchChatMessages(activeChat);
+  }
+}, 10000);
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 // ==========================
