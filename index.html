@@ -341,34 +341,35 @@ body.dark-mode #plan-menu-dropdown button:hover {
   color: var(--text-color);
 }
 
-/* ========================== */
-/* 💬 Chat Section – Neu & modern */
-/* ========================== */
+/* ================================== */
+/* 💬 Moderner Chatbereich – v2 Clean */
+/* ================================== */
+
 .chat-container {
   display: flex;
-  height: 75vh;
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
+  height: 78vh;
+  border-radius: 14px;
   overflow: hidden;
-  background: var(--bg-card);
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  background: var(--bg-main);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+  border: 1px solid var(--border-color);
 }
 
 /* ------------------ Sidebar ------------------ */
 .chat-sidebar {
-  width: 260px;
+  width: 250px;
   background: var(--primary);
   color: white;
-  padding: 12px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  padding: 16px;
+  border-right: 1px solid rgba(255,255,255,0.1);
 }
 
 .chat-sidebar h3 {
-  margin: 0 0 8px 0;
-  font-size: 1.1rem;
-  font-weight: 600;
+  font-size: 1.15rem;
+  margin-bottom: 12px;
+  letter-spacing: 0.3px;
 }
 
 .chat-sidebar ul {
@@ -377,23 +378,27 @@ body.dark-mode #plan-menu-dropdown button:hover {
   margin: 0;
   flex: 1;
   overflow-y: auto;
+  scrollbar-width: thin;
 }
 
 .chat-item {
   padding: 10px 12px;
-  margin-bottom: 4px;
-  border-radius: 8px;
+  border-radius: 10px;
+  transition: background 0.2s ease, transform 0.1s ease;
   cursor: pointer;
-  transition: background 0.2s ease;
-}
-
-.chat-item.active {
-  background: rgba(255, 255, 255, 0.2);
-  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .chat-item:hover {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255,255,255,0.2);
+  transform: scale(1.02);
+}
+
+.chat-item.active {
+  background: rgba(255,255,255,0.3);
+  font-weight: 600;
 }
 
 /* ------------------ Hauptbereich ------------------ */
@@ -401,46 +406,67 @@ body.dark-mode #plan-menu-dropdown button:hover {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background: var(--bg-main);
+  background: var(--bg-card);
   color: var(--text-color);
 }
 
 /* Header */
 .chat-header {
-  padding: 14px 16px;
-  background: var(--primary-light);
+  padding: 16px 20px;
   border-bottom: 1px solid var(--border-color);
+  background: var(--bg-card);
   font-weight: 600;
-  font-size: 1.1rem;
-  color: var(--text-color);
+  font-size: 1.05rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 /* Nachrichtenbereich */
 .chat-messages {
   flex: 1;
-  padding: 16px;
+  padding: 20px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
   background: var(--bg-main);
 }
 
-/* Nachrichtenkarten */
+/* Nachricht */
 .message {
+  max-width: 75%;
+  padding: 12px 16px;
+  border-radius: 12px;
   background: var(--bg-card);
-  padding: 10px 14px;
-  border-radius: 10px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
   border: 1px solid var(--border-color);
+  line-height: 1.4;
+  font-size: 0.95rem;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
 }
 
 .message.system {
-  border-left: 4px solid var(--primary);
+  align-self: flex-start;
   background: var(--primary-light);
+  border-left: 4px solid var(--primary);
+  color: var(--text-color);
 }
 
-/* Buttons in Systemnachrichten */
+.message.user {
+  align-self: flex-end;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+}
+
+.message p {
+  margin: 2px 0;
+}
+
+.message strong {
+  font-weight: 600;
+}
+
 .actions {
   margin-top: 8px;
 }
@@ -450,9 +476,9 @@ body.dark-mode #plan-menu-dropdown button:hover {
   padding: 6px 10px;
   border: none;
   border-radius: 6px;
-  cursor: pointer;
   font-weight: 500;
-  transition: opacity 0.2s ease;
+  cursor: pointer;
+  transition: background 0.2s ease;
 }
 
 .actions .approve-btn {
@@ -460,13 +486,17 @@ body.dark-mode #plan-menu-dropdown button:hover {
   color: white;
 }
 
+.actions .approve-btn:hover {
+  background: #388e3c;
+}
+
 .actions .reject-btn {
   background: #c62828;
   color: white;
 }
 
-.actions button:hover {
-  opacity: 0.85;
+.actions .reject-btn:hover {
+  background: #d32f2f;
 }
 
 /* Eingabebereich */
@@ -475,91 +505,109 @@ body.dark-mode #plan-menu-dropdown button:hover {
   align-items: center;
   gap: 10px;
   border-top: 1px solid var(--border-color);
-  padding: 10px 14px;
+  padding: 12px 16px;
   background: var(--bg-card);
 }
 
 .chat-input input {
   flex: 1;
-  padding: 10px 12px;
-  border-radius: 8px;
+  padding: 10px 14px;
+  border-radius: 10px;
   border: 1px solid var(--border-color);
-  font-size: 0.95rem;
   background: var(--bg-main);
   color: var(--text-color);
+  font-size: 0.95rem;
+  transition: border 0.2s ease, background 0.2s ease;
+}
+
+.chat-input input:focus {
+  border-color: var(--primary);
+  outline: none;
+  background: var(--bg-card);
 }
 
 .chat-input input:disabled {
-  opacity: 0.6;
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
 .chat-input button {
-  padding: 9px 14px;
-  border-radius: 8px;
+  padding: 10px 14px;
   border: none;
+  border-radius: 10px;
   background: var(--primary);
-  color: white;
+  color: #fff;
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: background 0.2s ease, transform 0.1s ease;
 }
 
 .chat-input button:hover {
-  background-color: #003fa3;
+  background: var(--primary-dark);
+  transform: scale(1.05);
 }
 
-/* ------------------ Dark Mode Anpassungen ------------------ */
+/* ------------------ Dark Mode ------------------ */
 body.dark-mode .chat-container {
-  background: var(--bg-card);
+  background: #1b1b1b;
   border-color: #333;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.6);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.7);
 }
 
 body.dark-mode .chat-sidebar {
-  background: #222;
-  color: #eee;
+  background: #202020;
+  color: #e0e0e0;
+  border-right: 1px solid #333;
 }
 
-body.dark-mode .chat-item.active,
 body.dark-mode .chat-item:hover {
   background: #333;
 }
 
+body.dark-mode .chat-item.active {
+  background: #2e2e2e;
+}
+
 body.dark-mode .chat-main {
-  background: var(--bg-main);
-  color: var(--text-color);
+  background: #181818;
+  color: #eaeaea;
 }
 
 body.dark-mode .chat-header {
-  background: #2c2c2c;
-  color: var(--text-color);
+  background: #222;
+  border-bottom: 1px solid #333;
+}
+
+body.dark-mode .chat-messages {
+  background: #181818;
 }
 
 body.dark-mode .message {
-  background: #1e1e1e;
+  background: #222;
   border-color: #333;
 }
 
 body.dark-mode .message.system {
   background: #2b2b3a;
-  border-left: 4px solid var(--primary-light);
+  border-left-color: var(--primary);
+}
+
+body.dark-mode .message.user {
+  background: var(--primary);
 }
 
 body.dark-mode .chat-input {
-  background: #1e1e1e;
+  background: #222;
   border-color: #333;
 }
 
 body.dark-mode .chat-input input {
   background: #2a2a2a;
-  color: var(--text-color);
   border-color: #444;
 }
 
-body.dark-mode .chat-input button {
-  background: var(--primary);
-  color: #fff;
+body.dark-mode .chat-input input:focus {
+  border-color: var(--primary);
 }
 
 body.dark-mode .chat-input button:hover {
