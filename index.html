@@ -1002,37 +1002,54 @@ document.querySelectorAll('nav button[data-target]').forEach(btn => {
 });
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
-let activeChat = 'system';
-const chatMessages = document.getElementById('chat-messages');
-const chatTitle = document.getElementById('chat-title');
-const chatInput = document.getElementById('chat-text');
-const chatSend = document.getElementById('chat-send');
+// ==========================
+// Chat-Elemente nur in Chat-Section
+// ==========================
+const chatSection = document.getElementById('chat-section');
+const chatMessages = chatSection ? chatSection.querySelector('#chat-messages') : null;
+const chatTitle = chatSection ? chatSection.querySelector('#chat-title') : null;
+const chatInput = chatSection ? chatSection.querySelector('#chat-text') : null;
+const chatSend = chatSection ? chatSection.querySelector('#chat-send') : null;
 
+// ==========================
+// Chat-Input aktiv/deaktiv
+// ==========================
 function updateChatInputState(chatId) {
+  if (!chatInput || !chatSend) return;
   const disabled = chatId === 'system';
   chatInput.disabled = disabled;
   chatSend.disabled = disabled;
 }
 
-// Chat-Item Event
-document.querySelectorAll('.chat-item').forEach(item => {
-  item.addEventListener('click', () => {
-    // aktive Markierung
-    document.querySelectorAll('.chat-item').forEach(i => i.classList.remove('active'));
-    item.classList.add('active');
+// ==========================
+// Chat wechseln
+// ==========================
+function activateChat(chatId) {
+  if (!chatSection) return;
 
-    activeChat = item.dataset.chatId;
-    chatTitle.textContent = item.textContent.trim();
+  chatSection.querySelectorAll('.chat-item').forEach(i => i.classList.remove('active'));
+  const item = chatSection.querySelector(`.chat-item[data-chat-id="${chatId}"]`);
+  if (item) item.classList.add('active');
 
-    updateChatInputState(activeChat);
-    fetchChatMessages(activeChat);
+  if (chatTitle) chatTitle.textContent = chatId === 'system' ? '🛠️ System' : chatId;
+  activeChat = chatId;
+  updateChatInputState(chatId);
+  fetchChatMessages(chatId);
+}
+
+// Eventlistener für Sidebar
+if (chatSection) {
+  chatSection.querySelectorAll('.chat-item').forEach(item => {
+    item.addEventListener('click', () => activateChat(item.dataset.chatId));
   });
-});
+}
 
 // ==========================
-// Nachrichten laden
+// Nachrichten laden (nur wenn Chat-Section sichtbar)
 // ==========================
 async function fetchChatMessages(chatId = 'system') {
+  if (!chatSection || chatSection.classList.contains('hidden') || !chatMessages) return;
+
   chatMessages.innerHTML = '<p style="color:gray;">Lade Nachrichten...</p>';
 
   try {
@@ -1103,7 +1120,7 @@ async function fetchChatMessages(chatId = 'system') {
 }
 
 // ==========================
-// Approve / Reject Buttons
+// Approve / Reject Buttons (funktioniert global)
 // ==========================
 document.addEventListener('click', async (e) => {
   if (!e.target.classList.contains('approve-btn') && !e.target.classList.contains('reject-btn')) return;
@@ -1112,7 +1129,7 @@ document.addEventListener('click', async (e) => {
   const userId = e.target.dataset.id;
   const action = e.target.classList.contains('approve-btn') ? 'approve' : 'reject';
 
-  message.querySelector('.actions').innerHTML = '<p>⏳ wird verarbeitet...</p>';
+  if (message) message.querySelector('.actions').innerHTML = '<p>⏳ wird verarbeitet...</p>';
 
   try {
     const res = await fetch(`/api/admin/users/${action}`, {
@@ -1128,12 +1145,12 @@ document.addEventListener('click', async (e) => {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Fehler beim ' + action);
 
-    message.querySelector('.actions').innerHTML =
+    if (message) message.querySelector('.actions').innerHTML =
       action === 'approve' ? '<p>✅ Antrag angenommen</p>' : '<p>❌ Antrag abgelehnt</p>';
 
   } catch (err) {
     console.error(err);
-    message.querySelector('.actions').innerHTML = '<p>⚠️ Fehler: ' + err.message + '</p>';
+    if (message) message.querySelector('.actions').innerHTML = '<p>⚠️ Fehler: ' + err.message + '</p>';
   }
 });
 
@@ -1147,10 +1164,12 @@ function getCookie(name) {
 }
 
 // ==========================
-// Auto-Refresh
+// Auto-Refresh (nur wenn Chat-Section sichtbar)
 // ==========================
 setInterval(() => {
-  fetchChatMessages(activeChat);
+  if (chatSection && !chatSection.classList.contains('hidden')) {
+    fetchChatMessages(activeChat);
+  }
 }, 10000);
 
 // Initial
