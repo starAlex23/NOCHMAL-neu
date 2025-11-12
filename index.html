@@ -287,12 +287,13 @@ th {
    8. Chat-Bereich (Desktop-Vollbild)
    ======================================================= */
 #chat-section {
-  display: none;
+  display: none; /* standardmäßig versteckt */
   width: 100vw;
   height: 100vh;
   overflow: hidden;
   background: var(--bg-main);
   color: var(--text-color);
+  flex-direction: row; /* Sidebar links, Hauptbereich rechts */
 }
 
 #chat-section.active {
@@ -301,6 +302,7 @@ th {
 
 .chat-sidebar {
   width: 280px;
+  min-width: 280px;
   background: var(--bg-sidebar);
   border-right: 1px solid var(--border-color);
   display: flex;
@@ -335,8 +337,9 @@ th {
   display: flex;
   flex-direction: column;
   height: 100%;
+  overflow: hidden;
 }
-
+    
 .chat-header {
   background: var(--bg-secondary);
   padding: 1rem 1.2rem;
