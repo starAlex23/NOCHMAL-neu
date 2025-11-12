@@ -385,11 +385,14 @@ th {
    Hauptbereich (Nachrichten)
 ===================== */
 .chat-main {
+  position: relative;
+  z-index: 1; /* unter Header-Elementen, aber rechts von Sidebar */
   flex: 1;
   display: flex;
   flex-direction: column;
-  height: 100%;
+  height: 100vh;
   background: var(--bg-main);
+  overflow: hidden;
 }
 
 /* Header oben */
@@ -405,7 +408,7 @@ th {
   justify-content: space-between;
   position: sticky;
   top: 0;
-  z-index: 2;
+  z-index: 3; /* oberhalb der Nachrichten */
 }
 
 /* Nachrichtenbereich */
@@ -417,6 +420,8 @@ th {
   flex-direction: column;
   gap: 0.8rem;
   scroll-behavior: smooth;
+  background: var(--bg-main);
+  z-index: 1;
 }
 
 /* Nachrichtenblasen */
@@ -483,6 +488,7 @@ th {
 /* =====================
    Eingabe unten
 ===================== */
+/* Eingabe unten */
 .chat-input {
   flex-shrink: 0;
   border-top: 1px solid var(--border-color);
@@ -491,6 +497,9 @@ th {
   align-items: center;
   gap: 0.6rem;
   padding: 0.8rem 1rem;
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
 }
 
 .chat-input input {
