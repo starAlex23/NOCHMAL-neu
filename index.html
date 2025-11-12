@@ -931,14 +931,14 @@ let activeChat = 'system';
 // Liefert Chat-Elemente nur, wenn sichtbar
 function getChatElements() {
   const chatSection = document.getElementById('chat-section');
-  if (!chatSection || chatSection.classList.contains('hidden')) return null;
+  if (!chatSection || getComputedStyle(chatSection).display === 'none') return null;
 
   return {
     chatSection,
-    chatMessages: chatSection.querySelector('#chat-messages'),
-    chatTitle: chatSection.querySelector('#chat-title'),
-    chatInput: chatSection.querySelector('#chat-text'),
-    chatSend: chatSection.querySelector('#chat-send')
+    chatMessages: chatSection.querySelector('.chat-messages'),
+    chatTitle: chatSection.querySelector('.chat-header'),
+    chatInput: chatSection.querySelector('.chat-input input'),
+    chatSend: chatSection.querySelector('.chat-input button')
   };
 }
 
@@ -947,15 +947,18 @@ function activateChat(chatId) {
   const elems = getChatElements();
   if (!elems) return;
 
-  const { chatSection, chatTitle, chatInput, chatSend } = elems;
+  const { chatSection, chatMessages, chatTitle, chatInput, chatSend } = elems;
 
+  // Sidebar-Highlight
   chatSection.querySelectorAll('.chat-item').forEach(i => i.classList.remove('active'));
   const item = chatSection.querySelector(`.chat-item[data-chat-id="${chatId}"]`);
   if (item) item.classList.add('active');
 
+  // Header-Titel
   if (chatTitle) chatTitle.textContent = chatId === 'system' ? '🛠️ System' : chatId;
   activeChat = chatId;
 
+  // Input aktivieren/deaktivieren
   if (chatInput && chatSend) {
     const disabled = chatId === 'system';
     chatInput.disabled = disabled;
@@ -963,7 +966,7 @@ function activateChat(chatId) {
   }
 
   // Chat-Nachrichten nur laden, wenn Chat sichtbar
-  if (!chatSection.classList.contains('hidden')) {
+  if (chatSection && getComputedStyle(chatSection).display !== 'none') {
     fetchChatMessages(chatId);
   }
 }
@@ -971,12 +974,11 @@ function activateChat(chatId) {
 // Sidebar-Click
 document.querySelectorAll('#chat-section .chat-item').forEach(item => {
   item.addEventListener('click', () => {
-    const elems = getChatElements();
-    if (elems) activateChat(item.dataset.chatId);
+    activateChat(item.dataset.chatId);
   });
 });
 
-// Nachrichten laden (nur wenn Chat-Section sichtbar)
+// Nachrichten laden
 async function fetchChatMessages(chatId = 'system') {
   const elems = getChatElements();
   if (!elems) return;
@@ -1027,7 +1029,7 @@ async function fetchChatMessages(chatId = 'system') {
         }
       });
     } else {
-      if (data.length === 0) {
+      if (!data.length) {
         chatMessages.innerHTML = '<p style="color:gray;">Keine Nachrichten.</p>';
       } else {
         data.forEach(msg => {
@@ -1082,6 +1084,19 @@ function getCookie(name) {
   const parts = value.split(`; ${name}=`);
   if (parts.length === 2) return parts.pop().split(';').shift();
 }
+
+// Automatisches Nachladen
+setInterval(() => {
+  const elems = getChatElements();
+  if (elems) fetchChatMessages(activeChat);
+}, 10000);
+
+// Chat beim Laden direkt aktivieren
+document.addEventListener('DOMContentLoaded', () => {
+  const chatSection = document.getElementById('chat-section');
+  if (chatSection) chatSection.classList.add('active');
+  activateChat(activeChat);
+});
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 // ==========================
@@ -1162,16 +1177,6 @@ loginForm.addEventListener('submit', async (e) => {
     console.error('Loginfehler:', err);
   }
 });
-
-///////////////////////////////////////////////////////////////////////////////////////////////
-// ==========================
-// Auto-Refresh Chat (nur sichtbar)
-// ==========================
-setInterval(() => {
-  const elems = getChatElements();
-  if (elems) fetchChatMessages(activeChat);
-}, 10000);
-
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 async function apiFetch(path, options = {}, retries = 2, statusText = "Lädt...") {
   showLoading(statusText);
