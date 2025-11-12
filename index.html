@@ -286,20 +286,28 @@ th {
 /* =======================================================
    8. Chat-Bereich (Desktop-Vollbild)
    ======================================================= */
+/* =====================
+   Chat Sektion
+===================== */
 #chat-section {
-  display: none; /* standardmäßig versteckt */
+  display: none; /* Standardmäßig versteckt */
   width: 100vw;
   height: 100vh;
   overflow: hidden;
   background: var(--bg-main);
   color: var(--text-color);
+  display: flex;
   flex-direction: row; /* Sidebar links, Hauptbereich rechts */
+  font-family: 'Segoe UI', sans-serif;
 }
 
 #chat-section.active {
   display: flex;
 }
 
+/* =====================
+   Sidebar
+===================== */
 .chat-sidebar {
   width: 280px;
   min-width: 280px;
@@ -313,14 +321,15 @@ th {
 .chat-sidebar h3 {
   margin: 0 0 1rem 0;
   font-size: 1.2rem;
+  font-weight: 600;
 }
 
 .chat-item {
-  padding: 0.6rem 0.8rem;
+  padding: 0.7rem 1rem;
   margin-bottom: 0.3rem;
-  border-radius: 8px;
+  border-radius: 10px;
   cursor: pointer;
-  transition: background 0.2s ease;
+  transition: background 0.2s ease, color 0.2s ease;
 }
 
 .chat-item:hover {
@@ -332,6 +341,9 @@ th {
   color: white;
 }
 
+/* =====================
+   Hauptbereich
+===================== */
 .chat-main {
   flex: 1;
   display: flex;
@@ -339,31 +351,39 @@ th {
   min-height: 0; /* wichtig für flexbox scroll */
 }
 
-    
+/* Header */
 .chat-header {
   background: var(--bg-secondary);
   padding: 1rem 1.2rem;
   border-bottom: 1px solid var(--border-color);
   font-weight: 600;
+  font-size: 1.1rem;
 }
 
+/* =====================
+   Nachrichtenbereich
+===================== */
 .chat-messages {
   flex: 1;
   overflow-y: auto;
-  padding: 1.2rem;
+  padding: 1rem 1.2rem;
   display: flex;
   flex-direction: column;
   gap: 1rem;
   background: var(--bg-main);
+  list-style: none;
 }
 
 .message {
-  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  border-radius: 12px;
   padding: 0.8rem 1rem;
   max-width: 70%;
   background: var(--bg-message);
   line-height: 1.4;
   font-size: 0.95rem;
+  word-wrap: break-word;
 }
 
 .message.user {
@@ -376,8 +396,13 @@ th {
   background: var(--bg-system);
 }
 
+.message .message-content p {
+  margin: 0.2rem 0;
+}
+
+/* Action Buttons */
 .message .actions {
-  margin-top: 0.4rem;
+  margin-top: 0.5rem;
   display: flex;
   gap: 0.5rem;
 }
@@ -385,10 +410,10 @@ th {
 .message button {
   border: none;
   border-radius: 6px;
-  padding: 0.3rem 0.6rem;
+  padding: 0.35rem 0.7rem;
   font-size: 0.85rem;
   cursor: pointer;
-  transition: 0.2s;
+  transition: background 0.2s ease;
 }
 
 .approve-btn {
@@ -396,11 +421,22 @@ th {
   color: white;
 }
 
+.approve-btn:hover {
+  background: darken(var(--success), 10%);
+}
+
 .reject-btn {
   background: var(--danger);
   color: white;
 }
 
+.reject-btn:hover {
+  background: darken(var(--danger), 10%);
+}
+
+/* =====================
+   Eingabefeld
+===================== */
 .chat-input {
   border-top: 1px solid var(--border-color);
   background: var(--bg-secondary);
@@ -415,16 +451,37 @@ th {
   background: var(--input-bg);
   border: 1px solid var(--border-color);
   border-radius: 8px;
-  padding: 0.6rem;
+  padding: 0.6rem 0.8rem;
   color: var(--text-color);
 }
 
 .chat-input button {
-  width: auto;
   padding: 0.6rem 1rem;
   background: var(--accent);
   color: white;
   border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.chat-input button:hover {
+  background: darken(var(--accent), 10%);
+}
+
+/* =====================
+   Scrollbar Styling (modern)
+===================== */
+.chat-messages::-webkit-scrollbar {
+  width: 8px;
+}
+
+.chat-messages::-webkit-scrollbar-track {
+  background: var(--bg-main);
+}
+
+.chat-messages::-webkit-scrollbar-thumb {
+  background-color: var(--border-color);
+  border-radius: 4px;
 }
 
 /* =======================================================
@@ -732,22 +789,27 @@ body.dark-mode .modal-content {
 
   <!-- Hauptbereich -->
   <div class="chat-main">
+    <!-- Header -->
     <header class="chat-header">
       <h3 id="chat-title">🛠️ System</h3>
     </header>
 
-    <div id="chat-messages" class="chat-messages">
-      <div class="message system" data-user-id="1">
-        <p><strong>System:</strong> Neuer Registrierungsantrag</p>
-        <p>E-Mail: <em>neuer.user@example.com</em></p>
-        <p>Name: <em>Max Mustermann</em></p>
+    <!-- Nachrichtenbereich -->
+    <ul id="chat-messages" class="chat-messages">
+      <li class="message system" data-user-id="1">
+        <div class="message-content">
+          <p><strong>System:</strong> Neuer Registrierungsantrag</p>
+          <p>E-Mail: <em>neuer.user@example.com</em></p>
+          <p>Name: <em>Max Mustermann</em></p>
+        </div>
         <div class="actions">
           <button class="approve-btn" data-id="1">✅ Annehmen</button>
           <button class="reject-btn" data-id="1">❌ Ablehnen</button>
         </div>
-      </div>
-    </div>
+      </li>
+    </ul>
 
+    <!-- Eingabefeld -->
     <div class="chat-input">
       <input type="text" id="chat-text" placeholder="Nachricht schreiben..." disabled>
       <button id="chat-send" disabled>📨</button>
@@ -2447,7 +2509,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // ==========================
 let activeChat = 'system';
 
-// Liefert Chat-Elemente (existenzbasiert, nicht Sichtbarkeit)
+// Liefert Chat-Elemente
 function getChatElements() {
   const chatSection = document.getElementById('chat-section');
   if (!chatSection) return null;
@@ -2466,7 +2528,7 @@ function activateChat(chatId) {
   const elems = getChatElements();
   if (!elems) return;
 
-  const { chatSection, chatMessages, chatTitle, chatInput, chatSend } = elems;
+  const { chatSection, chatTitle, chatInput, chatSend } = elems;
 
   // Sidebar-Highlight
   chatSection.querySelectorAll('.chat-item').forEach(i => i.classList.remove('active'));
@@ -2484,7 +2546,7 @@ function activateChat(chatId) {
     chatSend.disabled = disabled;
   }
 
-  // Chat-Nachrichten nur laden, wenn die Section sichtbar ist
+  // Chat-Nachrichten nur laden, wenn Section aktiv
   if (chatSection.classList.contains('active')) {
     fetchChatMessages(chatId);
   }
@@ -2498,17 +2560,15 @@ document.querySelectorAll('#chat-section .chat-item').forEach(item => {
 });
 
 // ==========================
-// Approve / Reject Buttons (dynamisch gebunden)
+// Approve / Reject Buttons
 // ==========================
 function bindActionButtons(container = document) {
-  // Entferne vorhandene Listener (optional, nur bei Neubindung nötig)
   container.querySelectorAll('.approve-btn, .reject-btn').forEach(btn => {
     btn.removeEventListener('click', handleActionClick);
     btn.addEventListener('click', handleActionClick);
   });
 }
 
-// Klick-Handler
 async function handleActionClick(e) {
   const message = e.target.closest('.message');
   const userId = e.target.dataset.id;
@@ -2542,16 +2602,17 @@ function getCookie(name) {
   if (parts.length === 2) return parts.pop().split(';').shift();
 }
 
-// Nach jedem Chat-Nachrichten-Reload Buttons binden
+// ==========================
+// Chatnachrichten laden
+// ==========================
 async function fetchChatMessages(chatId = 'system') {
   const elems = getChatElements();
   if (!elems) return;
 
   const { chatMessages, chatSection } = elems;
-  if (!chatSection.classList.contains('active')) return;
-  if (!chatMessages) return;
+  if (!chatSection.classList.contains('active') || !chatMessages) return;
 
-  chatMessages.innerHTML = '<p style="color:gray;">Lade Nachrichten...</p>';
+  chatMessages.innerHTML = '<li style="color:gray;">Lade Nachrichten...</li>';
 
   try {
     let endpoint = chatId === 'system'
@@ -2564,7 +2625,7 @@ async function fetchChatMessages(chatId = 'system') {
 
     const res = await fetch(endpoint, { credentials: 'include' });
     if (!res.ok) {
-      chatMessages.innerHTML = '<p style="color:red;">Fehler beim Laden.</p>';
+      chatMessages.innerHTML = '<li style="color:red;">Fehler beim Laden.</li>';
       return;
     }
 
@@ -2576,46 +2637,51 @@ async function fetchChatMessages(chatId = 'system') {
         if (msg.type === 'registration_request') {
           const p = msg.payload;
           chatMessages.innerHTML += `
-            <div class="message system" data-user-id="${p.id}">
-              <p><strong>System:</strong> Neuer Registrierungsantrag</p>
-              <p>E-Mail: <em>${p.email}</em></p>
-              <p>Name: <em>${p.vorname} ${p.nachname}</em></p>
+            <li class="message system" data-user-id="${p.id}">
+              <div class="message-content">
+                <p><strong>System:</strong> Neuer Registrierungsantrag</p>
+                <p>E-Mail: <em>${p.email}</em></p>
+                <p>Name: <em>${p.vorname} ${p.nachname}</em></p>
+              </div>
               <div class="actions">
                 <button class="approve-btn" data-id="${p.id}">✅ Annehmen</button>
                 <button class="reject-btn" data-id="${p.id}">❌ Ablehnen</button>
               </div>
-            </div>
+            </li>
           `;
         } else if (msg.type === 'approval_result') {
           const p = msg.payload;
           chatMessages.innerHTML += `
-            <div class="message system">
-              <p><strong>System:</strong> Antrag von <em>${p.vorname}</em> wurde <b>${p.action}</b>.</p>
-            </div>
+            <li class="message system">
+              <div class="message-content">
+                <p><strong>System:</strong> Antrag von <em>${p.vorname}</em> wurde <b>${p.action}</b>.</p>
+              </div>
+            </li>
           `;
         }
       });
     } else {
       if (!data.length) {
-        chatMessages.innerHTML = '<p style="color:gray;">Keine Nachrichten.</p>';
+        chatMessages.innerHTML = '<li style="color:gray;">Keine Nachrichten.</li>';
       } else {
         data.forEach(msg => {
           chatMessages.innerHTML += `
-            <div class="message">
-              <p><strong>${msg.sender_name}:</strong> ${msg.text}</p>
-            </div>
+            <li class="message user">
+              <div class="message-content">
+                <p><strong>${msg.sender_name}:</strong> ${msg.text}</p>
+              </div>
+            </li>
           `;
         });
       }
     }
 
-    // Buttons nachladen
     bindActionButtons(chatMessages);
-
     chatMessages.scrollTop = chatMessages.scrollHeight;
+
   } catch (err) {
     console.error('Fehler beim Laden der Chatnachrichten:', err);
-    chatMessages.innerHTML = '<p style="color:red;">Verbindungsfehler.</p>';
+    chatMessages.innerHTML = '<li style="color:red;">Verbindungsfehler.</li>';
   }
 }
 
@@ -2633,7 +2699,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (chatSection) chatSection.classList.add('active');
   activateChat(activeChat);
 });
-  
+
 </script>
 
 </body>
