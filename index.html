@@ -948,6 +948,202 @@ themeToggle.addEventListener('click', () => {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 // ==========================
+// Chat-Management
+// ==========================
+let activeChat = 'system';
+
+// Liefert Chat-Elemente
+function getChatElements() {
+  const chatSection = document.getElementById('chat-section');
+  if (!chatSection) return null;
+
+  return {
+    chatSection,
+    chatMessages: chatSection.querySelector('#chat-messages'),
+    chatTitle: chatSection.querySelector('#chat-title'),
+    chatInput: chatSection.querySelector('#chat-text'),
+    chatSend: chatSection.querySelector('#chat-send')
+  };
+}
+
+// Aktiviert den Chat
+function activateChat(chatId) {
+  const elems = getChatElements();
+  if (!elems) return;
+
+  const { chatSection, chatTitle, chatInput, chatSend } = elems;
+
+  // Sidebar-Highlight
+  chatSection.querySelectorAll('.chat-item').forEach(i => i.classList.remove('active'));
+  const item = chatSection.querySelector(`.chat-item[data-chat-id="${chatId}"]`);
+  if (item) item.classList.add('active');
+
+  // Header-Titel
+  if (chatTitle) chatTitle.textContent = chatId === 'system' ? '🛠️ System' : chatId;
+  activeChat = chatId;
+
+  // Input aktivieren/deaktivieren
+  if (chatInput && chatSend) {
+    const disabled = chatId === 'system';
+    chatInput.disabled = disabled;
+    chatSend.disabled = disabled;
+  }
+
+  // Chat-Nachrichten nur laden, wenn Section aktiv
+  if (chatSection.classList.contains('active')) {
+    fetchChatMessages(chatId);
+  }
+}
+
+// Sidebar-Click
+document.querySelectorAll('#chat-section .chat-item').forEach(item => {
+  item.addEventListener('click', () => {
+    activateChat(item.dataset.chatId);
+  });
+});
+
+// ==========================
+// Approve / Reject Buttons
+// ==========================
+function bindActionButtons(container = document) {
+  container.querySelectorAll('.approve-btn, .reject-btn').forEach(btn => {
+    btn.removeEventListener('click', handleActionClick);
+    btn.addEventListener('click', handleActionClick);
+  });
+}
+
+async function handleActionClick(e) {
+  const message = e.target.closest('.message');
+  const userId = e.target.dataset.id;
+  const action = e.target.classList.contains('approve-btn') ? 'approve' : 'reject';
+
+  if (message) message.querySelector('.actions').innerHTML = '<p>⏳ wird verarbeitet...</p>';
+
+  try {
+    const res = await fetch(`/api/admin/users/${action}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': getCookie('csrfToken') },
+      credentials: 'include',
+      body: JSON.stringify({ userId })
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Fehler beim ' + action);
+
+    if (message) message.querySelector('.actions').innerHTML =
+      action === 'approve' ? '<p>✅ Antrag angenommen</p>' : '<p>❌ Antrag abgelehnt</p>';
+  } catch (err) {
+    console.error(err);
+    if (message) message.querySelector('.actions').innerHTML = '<p>⚠️ Fehler: ' + err.message + '</p>';
+  }
+}
+
+// Cookie-Helfer
+function getCookie(name) {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(';').shift();
+}
+
+// ==========================
+// Chatnachrichten laden
+// ==========================
+async function fetchChatMessages(chatId = 'system') {
+  const elems = getChatElements();
+  if (!elems) return;
+
+  const { chatMessages, chatSection } = elems;
+  if (!chatSection.classList.contains('active') || !chatMessages) return;
+
+  chatMessages.innerHTML = '<li style="color:gray;">Lade Nachrichten...</li>';
+
+  try {
+    let endpoint = chatId === 'system'
+      ? `${window.location.origin.includes('vercel.app') 
+          ? 'https://backend-869x.onrender.com'
+          : ''}/api/system-messages`
+      : `${window.location.origin.includes('vercel.app') 
+          ? 'https://backend-869x.onrender.com'
+          : ''}/api/chat/${chatId}`;
+
+    const res = await fetch(endpoint, { credentials: 'include' });
+    if (!res.ok) {
+      chatMessages.innerHTML = '<li style="color:red;">Fehler beim Laden.</li>';
+      return;
+    }
+
+    const data = await res.json();
+    chatMessages.innerHTML = '';
+
+    if (chatId === 'system') {
+      data.forEach(msg => {
+        if (msg.type === 'registration_request') {
+          const p = msg.payload;
+          chatMessages.innerHTML += `
+            <li class="message system" data-user-id="${p.id}">
+              <div class="message-content">
+                <p><strong>System:</strong> Neuer Registrierungsantrag</p>
+                <p>E-Mail: <em>${p.email}</em></p>
+                <p>Name: <em>${p.vorname} ${p.nachname}</em></p>
+              </div>
+              <div class="actions">
+                <button class="approve-btn" data-id="${p.id}">✅ Annehmen</button>
+                <button class="reject-btn" data-id="${p.id}">❌ Ablehnen</button>
+              </div>
+            </li>
+          `;
+        } else if (msg.type === 'approval_result') {
+          const p = msg.payload;
+          chatMessages.innerHTML += `
+            <li class="message system">
+              <div class="message-content">
+                <p><strong>System:</strong> Antrag von <em>${p.vorname}</em> wurde <b>${p.action}</b>.</p>
+              </div>
+            </li>
+          `;
+        }
+      });
+    } else {
+      if (!data.length) {
+        chatMessages.innerHTML = '<li style="color:gray;">Keine Nachrichten.</li>';
+      } else {
+        data.forEach(msg => {
+          chatMessages.innerHTML += `
+            <li class="message user">
+              <div class="message-content">
+                <p><strong>${msg.sender_name}:</strong> ${msg.text}</p>
+              </div>
+            </li>
+          `;
+        });
+      }
+    }
+
+    bindActionButtons(chatMessages);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+
+  } catch (err) {
+    console.error('Fehler beim Laden der Chatnachrichten:', err);
+    chatMessages.innerHTML = '<li style="color:red;">Verbindungsfehler.</li>';
+  }
+}
+
+// Automatisches Nachladen nur, wenn sichtbar
+setInterval(() => {
+  const elems = getChatElements();
+  if (elems && elems.chatSection.classList.contains('active')) {
+    fetchChatMessages(activeChat);
+  }
+}, 10000);
+
+// Chat beim Laden direkt aktivieren
+document.addEventListener('DOMContentLoaded', () => {
+  const chatSection = document.getElementById('chat-section');
+  if (chatSection) chatSection.classList.add('active');
+  activateChat(activeChat);
+});
+///////////////////////////////////////////////////////////////////////////////////////////////
+// ==========================
 // Section-Wechsel
 // ==========================
 function switchSection(sectionId) {
@@ -2503,203 +2699,6 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('arbeitszeiten-mehrladen').addEventListener('click', () => {
   renderArbeitszeitenChunk();
 });
-///////////////////////////////////////////////////////////////////////////////////////////////
-// ==========================
-// Chat-Management
-// ==========================
-let activeChat = 'system';
-
-// Liefert Chat-Elemente
-function getChatElements() {
-  const chatSection = document.getElementById('chat-section');
-  if (!chatSection) return null;
-
-  return {
-    chatSection,
-    chatMessages: chatSection.querySelector('#chat-messages'),
-    chatTitle: chatSection.querySelector('#chat-title'),
-    chatInput: chatSection.querySelector('#chat-text'),
-    chatSend: chatSection.querySelector('#chat-send')
-  };
-}
-
-// Aktiviert den Chat
-function activateChat(chatId) {
-  const elems = getChatElements();
-  if (!elems) return;
-
-  const { chatSection, chatTitle, chatInput, chatSend } = elems;
-
-  // Sidebar-Highlight
-  chatSection.querySelectorAll('.chat-item').forEach(i => i.classList.remove('active'));
-  const item = chatSection.querySelector(`.chat-item[data-chat-id="${chatId}"]`);
-  if (item) item.classList.add('active');
-
-  // Header-Titel
-  if (chatTitle) chatTitle.textContent = chatId === 'system' ? '🛠️ System' : chatId;
-  activeChat = chatId;
-
-  // Input aktivieren/deaktivieren
-  if (chatInput && chatSend) {
-    const disabled = chatId === 'system';
-    chatInput.disabled = disabled;
-    chatSend.disabled = disabled;
-  }
-
-  // Chat-Nachrichten nur laden, wenn Section aktiv
-  if (chatSection.classList.contains('active')) {
-    fetchChatMessages(chatId);
-  }
-}
-
-// Sidebar-Click
-document.querySelectorAll('#chat-section .chat-item').forEach(item => {
-  item.addEventListener('click', () => {
-    activateChat(item.dataset.chatId);
-  });
-});
-
-// ==========================
-// Approve / Reject Buttons
-// ==========================
-function bindActionButtons(container = document) {
-  container.querySelectorAll('.approve-btn, .reject-btn').forEach(btn => {
-    btn.removeEventListener('click', handleActionClick);
-    btn.addEventListener('click', handleActionClick);
-  });
-}
-
-async function handleActionClick(e) {
-  const message = e.target.closest('.message');
-  const userId = e.target.dataset.id;
-  const action = e.target.classList.contains('approve-btn') ? 'approve' : 'reject';
-
-  if (message) message.querySelector('.actions').innerHTML = '<p>⏳ wird verarbeitet...</p>';
-
-  try {
-    const res = await fetch(`/api/admin/users/${action}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': getCookie('csrfToken') },
-      credentials: 'include',
-      body: JSON.stringify({ userId })
-    });
-
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Fehler beim ' + action);
-
-    if (message) message.querySelector('.actions').innerHTML =
-      action === 'approve' ? '<p>✅ Antrag angenommen</p>' : '<p>❌ Antrag abgelehnt</p>';
-  } catch (err) {
-    console.error(err);
-    if (message) message.querySelector('.actions').innerHTML = '<p>⚠️ Fehler: ' + err.message + '</p>';
-  }
-}
-
-// Cookie-Helfer
-function getCookie(name) {
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) return parts.pop().split(';').shift();
-}
-
-// ==========================
-// Chatnachrichten laden
-// ==========================
-async function fetchChatMessages(chatId = 'system') {
-  const elems = getChatElements();
-  if (!elems) return;
-
-  const { chatMessages, chatSection } = elems;
-  if (!chatSection.classList.contains('active') || !chatMessages) return;
-
-  chatMessages.innerHTML = '<li style="color:gray;">Lade Nachrichten...</li>';
-
-  try {
-    let endpoint = chatId === 'system'
-      ? `${window.location.origin.includes('vercel.app') 
-          ? 'https://backend-869x.onrender.com'
-          : ''}/api/system-messages`
-      : `${window.location.origin.includes('vercel.app') 
-          ? 'https://backend-869x.onrender.com'
-          : ''}/api/chat/${chatId}`;
-
-    const res = await fetch(endpoint, { credentials: 'include' });
-    if (!res.ok) {
-      chatMessages.innerHTML = '<li style="color:red;">Fehler beim Laden.</li>';
-      return;
-    }
-
-    const data = await res.json();
-    chatMessages.innerHTML = '';
-
-    if (chatId === 'system') {
-      data.forEach(msg => {
-        if (msg.type === 'registration_request') {
-          const p = msg.payload;
-          chatMessages.innerHTML += `
-            <li class="message system" data-user-id="${p.id}">
-              <div class="message-content">
-                <p><strong>System:</strong> Neuer Registrierungsantrag</p>
-                <p>E-Mail: <em>${p.email}</em></p>
-                <p>Name: <em>${p.vorname} ${p.nachname}</em></p>
-              </div>
-              <div class="actions">
-                <button class="approve-btn" data-id="${p.id}">✅ Annehmen</button>
-                <button class="reject-btn" data-id="${p.id}">❌ Ablehnen</button>
-              </div>
-            </li>
-          `;
-        } else if (msg.type === 'approval_result') {
-          const p = msg.payload;
-          chatMessages.innerHTML += `
-            <li class="message system">
-              <div class="message-content">
-                <p><strong>System:</strong> Antrag von <em>${p.vorname}</em> wurde <b>${p.action}</b>.</p>
-              </div>
-            </li>
-          `;
-        }
-      });
-    } else {
-      if (!data.length) {
-        chatMessages.innerHTML = '<li style="color:gray;">Keine Nachrichten.</li>';
-      } else {
-        data.forEach(msg => {
-          chatMessages.innerHTML += `
-            <li class="message user">
-              <div class="message-content">
-                <p><strong>${msg.sender_name}:</strong> ${msg.text}</p>
-              </div>
-            </li>
-          `;
-        });
-      }
-    }
-
-    bindActionButtons(chatMessages);
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-
-  } catch (err) {
-    console.error('Fehler beim Laden der Chatnachrichten:', err);
-    chatMessages.innerHTML = '<li style="color:red;">Verbindungsfehler.</li>';
-  }
-}
-
-// Automatisches Nachladen nur, wenn sichtbar
-setInterval(() => {
-  const elems = getChatElements();
-  if (elems && elems.chatSection.classList.contains('active')) {
-    fetchChatMessages(activeChat);
-  }
-}, 10000);
-
-// Chat beim Laden direkt aktivieren
-document.addEventListener('DOMContentLoaded', () => {
-  const chatSection = document.getElementById('chat-section');
-  if (chatSection) chatSection.classList.add('active');
-  activateChat(activeChat);
-});
-
 </script>
 
 </body>
