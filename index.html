@@ -805,39 +805,36 @@ body.dark-mode #daten-aktualisieren {
 
 <!-- Chat Section -->
 <section id="chat-section" class="section hidden">
-  <div class="chat-container">
-    <!-- Sidebar -->
-    <aside class="chat-sidebar">
-      <h3>Chats</h3>
-      <ul id="chat-list">
-        <li class="chat-item active" data-chat-id="system">🛠️ System</li>
-        <li class="chat-item" data-chat-id="vorarbeiter">📋 Vorarbeiter</li>
-      </ul>
-    </aside>
+  <!-- Sidebar -->
+  <aside class="chat-sidebar">
+    <h3>Chats</h3>
+    <ul id="chat-list">
+      <li class="chat-item active" data-chat-id="system">🛠️ System</li>
+      <li class="chat-item" data-chat-id="vorarbeiter">📋 Vorarbeiter</li>
+    </ul>
+  </aside>
 
-    <!-- Main -->
-    <div class="chat-main">
-      <header class="chat-header">
-        <h3 id="chat-title">🛠️ System</h3>
-      </header>
+  <!-- Hauptbereich -->
+  <div class="chat-main">
+    <header class="chat-header">
+      <h3 id="chat-title">🛠️ System</h3>
+    </header>
 
-      <div id="chat-messages" class="chat-messages">
-        <!-- Beispielnachricht -->
-        <div class="message system" data-user-id="1">
-          <p><strong>System:</strong> Neuer Registrierungsantrag</p>
-          <p>E-Mail: <em>neuer.user@example.com</em></p>
-          <p>Name: <em>Max Mustermann</em></p>
-          <div class="actions">
-            <button class="approve-btn" data-id="1">✅ Annehmen</button>
-            <button class="reject-btn" data-id="1">❌ Ablehnen</button>
-          </div>
+    <div id="chat-messages" class="chat-messages">
+      <div class="message system" data-user-id="1">
+        <p><strong>System:</strong> Neuer Registrierungsantrag</p>
+        <p>E-Mail: <em>neuer.user@example.com</em></p>
+        <p>Name: <em>Max Mustermann</em></p>
+        <div class="actions">
+          <button class="approve-btn" data-id="1">✅ Annehmen</button>
+          <button class="reject-btn" data-id="1">❌ Ablehnen</button>
         </div>
       </div>
+    </div>
 
-      <div class="chat-input">
-        <input type="text" id="chat-text" placeholder="Nachricht schreiben..." disabled>
-        <button id="chat-send" disabled>📨</button>
-      </div>
+    <div class="chat-input">
+      <input type="text" id="chat-text" placeholder="Nachricht schreiben..." disabled>
+      <button id="chat-send" disabled>📨</button>
     </div>
   </div>
 </section>
