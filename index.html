@@ -1136,12 +1136,6 @@ setInterval(() => {
   }
 }, 10000);
 
-// Chat beim Laden direkt aktivieren
-document.addEventListener('DOMContentLoaded', () => {
-  const chatSection = document.getElementById('chat-section');
-  if (chatSection) chatSection.classList.add('active');
-  activateChat(activeChat);
-});
 ///////////////////////////////////////////////////////////////////////////////////////////////
 // ==========================
 // Section-Wechsel
@@ -1179,24 +1173,6 @@ document.querySelectorAll('nav button[data-target]').forEach(btn => {
     if (targetId) switchSection(targetId);
   });
 });
-///////////////////////////////////////////////////////////////////////////////////////////////
-// ==========================
-// Initialisierung beim Laden der Seite
-// ==========================
-window.addEventListener('DOMContentLoaded', () => {
-  // Theme anwenden
-  const savedTheme = localStorage.getItem('theme') || 'light';
-  applyTheme(savedTheme);
-
-  // Letzte Section laden
-  const lastSection = localStorage.getItem('lastSection') || 'arbeitszeiten-section';
-  switchSection(lastSection);
-
-  // Chat nur laden, wenn Chat-Section aktiv ist
-  const elems = getChatElements();
-  if (elems) fetchChatMessages(activeChat);
-});
-
 ///////////////////////////////////////////////////////////////////////////////////////////////
 // ==========================
 // Nach Login
@@ -2037,14 +2013,6 @@ document.addEventListener('click', e => {
   }
 });
 
-// ==========================
-// Initialisierung
-// ==========================
-window.addEventListener('DOMContentLoaded', async () => {
-  await ladeLocationsGesamt();
-  await ladeArbeitsplaene();
-});
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   
   //Zeiten durchsuchen
@@ -2614,12 +2582,6 @@ document.getElementById('zeitensuche').addEventListener('input', debounce(async 
   renderZeitenChunk();
 }, 300));
 
-// Beim Laden der Seite
-document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('login-card').style.display = 'block';
-  document.getElementById('dashboard').style.display = 'none';
-});
-
   //Aktualisieren der Tabellen
 document.getElementById('daten-aktualisieren').addEventListener('click', async () => {
   const btn = document.getElementById('daten-aktualisieren');
@@ -2680,24 +2642,52 @@ document.getElementById('delete-selected-btn').addEventListener('click', async (
   renderArbeitszeiten(gefiltert);
 });
 
-  //Mehr laden buttons
-document.addEventListener('DOMContentLoaded', () => {
-  const btn = document.getElementById('zeiten-mehrladen');
-  if (btn) {
-    btn.addEventListener('click', () => {
-      renderZeitenChunk();
-    });
-  } else {
-    console.warn('Button mit ID "zeiten-mehrladen" nicht gefunden');
+//Alle DOMContentLoaded 
+document.addEventListener('DOMContentLoaded', async () => {
+  console.log('DOM fully loaded');
+
+  // 1️⃣ Theme anwenden
+  const savedTheme = localStorage.getItem('theme') || 'light';
+  applyTheme(savedTheme);
+
+  // 2️⃣ Login & Dashboard initial
+  const loginCard = document.getElementById('login-card');
+  const dashboard = document.getElementById('dashboard');
+  if (loginCard) loginCard.style.display = 'block';
+  if (dashboard) dashboard.style.display = 'none';
+
+  // 3️⃣ Letzte Section wiederherstellen
+  const lastSection = localStorage.getItem('lastSection') || 'arbeitszeiten-section';
+  switchSection(lastSection);
+
+  // 4️⃣ Chat-Section aktivieren
+  const chatSection = document.getElementById('chat-section');
+  if (chatSection) chatSection.classList.add('active');
+  if (typeof activateChat === 'function') activateChat(activeChat);
+
+  // 5️⃣ Chat nur laden, wenn sichtbar
+  const elems = getChatElements?.();
+  if (elems) await fetchChatMessages(activeChat);
+
+  // 6️⃣ Daten vorladen
+  try {
+    await ladeLocationsGesamt();
+    await ladeArbeitsplaene();
+  } catch (err) {
+    console.error('Fehler beim Initial-Laden:', err);
   }
-});
 
-  document.getElementById('users-mehrladen').addEventListener('click', () => {
-  renderUserChunk();
-});
+  // 7️⃣ Mehrladen-Buttons
+  const btnZeiten = document.getElementById('zeiten-mehrladen');
+  if (btnZeiten) btnZeiten.addEventListener('click', renderZeitenChunk);
 
-  document.getElementById('arbeitszeiten-mehrladen').addEventListener('click', () => {
-  renderArbeitszeitenChunk();
+  const btnUsers = document.getElementById('users-mehrladen');
+  if (btnUsers) btnUsers.addEventListener('click', renderUserChunk);
+
+  const btnArbeitszeiten = document.getElementById('arbeitszeiten-mehrladen');
+  if (btnArbeitszeiten) btnArbeitszeiten.addEventListener('click', renderArbeitszeitenChunk);
+
+  console.log('Initialisierung abgeschlossen');
 });
 </script>
 
