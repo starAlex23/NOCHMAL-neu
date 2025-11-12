@@ -68,8 +68,10 @@ body {
   line-height: 1.5;
 }
 
-/* Zentrierung, Panels, Karten */
-#login-card, .panel, .section {
+/* =====================
+   Login: zentrierte Karte
+===================== */
+#login-card {
   background: var(--bg-card);
   color: var(--text-color);
   border-radius: 12px;
@@ -81,10 +83,31 @@ body {
   transition: background 0.3s ease, color 0.3s ease;
 }
 
-body.dark-mode #login-card,
+body.dark-mode #login-card {
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.8);
+}
+
+/* =====================
+   Panels und Sections: Vollbild
+===================== */
+.panel,
+.section {
+  background: var(--bg-main);
+  color: var(--text-color);
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0;
+  margin: 0;
+  max-width: none;
+  width: 100vw;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+/* Dunkelmodus-Anpassung (optional, falls Panels eigene Farben haben) */
 body.dark-mode .panel,
 body.dark-mode .section {
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.8);
+  box-shadow: none;
 }
 
 /* =======================================================
@@ -286,9 +309,6 @@ th {
 /* =======================================================
    8. Chat-Bereich (Desktop-Vollbild)
    ======================================================= */
-/* =====================
-   Chat Sektion
-===================== */
 #chat-section {
   display: none; /* Standardmäßig versteckt */
   width: 100vw;
@@ -299,10 +319,6 @@ th {
   display: flex;
   flex-direction: row; /* Sidebar links, Hauptbereich rechts */
   font-family: 'Segoe UI', sans-serif;
-}
-
-#chat-section.active {
-  display: flex;
 }
 
 /* =====================
