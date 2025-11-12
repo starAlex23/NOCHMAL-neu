@@ -2447,17 +2447,17 @@ document.addEventListener('DOMContentLoaded', () => {
 // ==========================
 let activeChat = 'system';
 
-// Liefert Chat-Elemente nur, wenn sichtbar
+// Liefert Chat-Elemente (existenzbasiert, nicht Sichtbarkeit)
 function getChatElements() {
   const chatSection = document.getElementById('chat-section');
-  if (!chatSection || getComputedStyle(chatSection).display === 'none') return null;
+  if (!chatSection) return null;
 
   return {
     chatSection,
-   chatMessages: chatSection.querySelector('#chat-messages'),
-   chatTitle: chatSection.querySelector('#chat-title'),
-   chatInput: chatSection.querySelector('#chat-text'),
-   chatSend: chatSection.querySelector('#chat-send')
+    chatMessages: chatSection.querySelector('#chat-messages'),
+    chatTitle: chatSection.querySelector('#chat-title'),
+    chatInput: chatSection.querySelector('#chat-text'),
+    chatSend: chatSection.querySelector('#chat-send')
   };
 }
 
@@ -2484,8 +2484,8 @@ function activateChat(chatId) {
     chatSend.disabled = disabled;
   }
 
-  // Chat-Nachrichten nur laden, wenn Chat sichtbar
-  if (chatSection && getComputedStyle(chatSection).display !== 'none') {
+  // Chat-Nachrichten nur laden, wenn die Section sichtbar ist
+  if (chatSection.classList.contains('active')) {
     fetchChatMessages(chatId);
   }
 }
@@ -2497,12 +2497,60 @@ document.querySelectorAll('#chat-section .chat-item').forEach(item => {
   });
 });
 
-// Nachrichten laden
+// ==========================
+// Approve / Reject Buttons (dynamisch gebunden)
+// ==========================
+function bindActionButtons(container = document) {
+  // Entferne vorhandene Listener (optional, nur bei Neubindung nötig)
+  container.querySelectorAll('.approve-btn, .reject-btn').forEach(btn => {
+    btn.removeEventListener('click', handleActionClick);
+    btn.addEventListener('click', handleActionClick);
+  });
+}
+
+// Klick-Handler
+async function handleActionClick(e) {
+  const message = e.target.closest('.message');
+  const userId = e.target.dataset.id;
+  const action = e.target.classList.contains('approve-btn') ? 'approve' : 'reject';
+
+  if (message) message.querySelector('.actions').innerHTML = '<p>⏳ wird verarbeitet...</p>';
+
+  try {
+    const res = await fetch(`/api/admin/users/${action}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': getCookie('csrfToken') },
+      credentials: 'include',
+      body: JSON.stringify({ userId })
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Fehler beim ' + action);
+
+    if (message) message.querySelector('.actions').innerHTML =
+      action === 'approve' ? '<p>✅ Antrag angenommen</p>' : '<p>❌ Antrag abgelehnt</p>';
+  } catch (err) {
+    console.error(err);
+    if (message) message.querySelector('.actions').innerHTML = '<p>⚠️ Fehler: ' + err.message + '</p>';
+  }
+}
+
+// Cookie-Helfer
+function getCookie(name) {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(';').shift();
+}
+
+// Nach jedem Chat-Nachrichten-Reload Buttons binden
 async function fetchChatMessages(chatId = 'system') {
   const elems = getChatElements();
   if (!elems) return;
 
-  const { chatMessages } = elems;
+  const { chatMessages, chatSection } = elems;
+  if (!chatSection.classList.contains('active')) return;
+  if (!chatMessages) return;
+
   chatMessages.innerHTML = '<p style="color:gray;">Lade Nachrichten...</p>';
 
   try {
@@ -2561,6 +2609,9 @@ async function fetchChatMessages(chatId = 'system') {
       }
     }
 
+    // Buttons nachladen
+    bindActionButtons(chatMessages);
+
     chatMessages.scrollTop = chatMessages.scrollHeight;
   } catch (err) {
     console.error('Fehler beim Laden der Chatnachrichten:', err);
@@ -2568,46 +2619,12 @@ async function fetchChatMessages(chatId = 'system') {
   }
 }
 
-// Approve / Reject Buttons global
-document.addEventListener('click', async (e) => {
-  if (!e.target.classList.contains('approve-btn') && !e.target.classList.contains('reject-btn')) return;
-
-  const message = e.target.closest('.message');
-  const userId = e.target.dataset.id;
-  const action = e.target.classList.contains('approve-btn') ? 'approve' : 'reject';
-
-  if (message) message.querySelector('.actions').innerHTML = '<p>⏳ wird verarbeitet...</p>';
-
-  try {
-    const res = await fetch(`/api/admin/users/${action}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': getCookie('csrfToken') },
-      credentials: 'include',
-      body: JSON.stringify({ userId })
-    });
-
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Fehler beim ' + action);
-
-    if (message) message.querySelector('.actions').innerHTML =
-      action === 'approve' ? '<p>✅ Antrag angenommen</p>' : '<p>❌ Antrag abgelehnt</p>';
-  } catch (err) {
-    console.error(err);
-    if (message) message.querySelector('.actions').innerHTML = '<p>⚠️ Fehler: ' + err.message + '</p>';
-  }
-});
-
-// Cookie-Helfer
-function getCookie(name) {
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) return parts.pop().split(';').shift();
-}
-
-// Automatisches Nachladen
+// Automatisches Nachladen nur, wenn sichtbar
 setInterval(() => {
   const elems = getChatElements();
-  if (elems) fetchChatMessages(activeChat);
+  if (elems && elems.chatSection.classList.contains('active')) {
+    fetchChatMessages(activeChat);
+  }
 }, 10000);
 
 // Chat beim Laden direkt aktivieren
