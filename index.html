@@ -311,17 +311,20 @@ th {
    ======================================================= */
 
 #chat-section {
-  display: none;
   position: fixed;
-  inset: 40; /* nimmt den gesamten Bildschirm */
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
   background: var(--bg-main);
   color: var(--text-color);
   font-family: 'Segoe UI', system-ui, sans-serif;
   display: flex;
   flex-direction: row;
   overflow: hidden;
-  z-index: 1; /* oberhalb anderer Sections */
+  z-index: 9999;
 }
+
 
 #chat-section.active {
   display: flex;
@@ -333,7 +336,7 @@ th {
 .chat-sidebar {
   width: 280px;
   min-width: 280px;
-  height: 100vh; /* Feste Höhe */
+  height: 100%; /* Feste Höhe */
   background: var(--bg-sidebar);
   border-right: 1px solid var(--border-color);
   display: flex;
