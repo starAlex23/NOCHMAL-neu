@@ -177,6 +177,11 @@ nav {
   flex-wrap: wrap;
   border-bottom: 1px solid var(--border-color);
 }
+    
+nav {
+  position: relative;
+  z-index: 10000;
+}
 
 nav button {
   width: auto;
@@ -389,14 +394,14 @@ th {
 ===================== */
 .chat-main {
   position: relative;
-  z-index: 1; /* unter Header-Elementen, aber rechts von Sidebar */
-  flex: 1;
+  z-index: 1;
+  flex: 1;          /* <-- der richtige Weg */
   display: flex;
   flex-direction: column;
-  height: 100vh;
   background: var(--bg-main);
   overflow: hidden;
 }
+
 
 /* Header oben */
 .chat-header {
