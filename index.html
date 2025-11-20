@@ -312,7 +312,7 @@ th {
 }
 
 /* =======================================================
-   8. Chat-Bereich (echtes Vollbild, App-Layout)
+   Chat-Bereich mit Sidebar links und Chat rechts
    ======================================================= */
 
 #chat-section {
@@ -322,25 +322,61 @@ th {
   width: 100vw;
   height: 100vh;
   display: flex;
-  flex-direction: row;
   background: var(--bg-main);
   color: var(--text-color);
   font-family: 'Segoe UI', system-ui, sans-serif;
-  overflow: hidden; /* wir scrollen nur in chat-main */
+  overflow: hidden; /* wir scrollen nur innerhalb von chat-messages */
   z-index: 9999;
 }
 
+/* =====================
+   Sidebar links
+===================== */
+.chat-sidebar {
+  width: 280px;
+  min-width: 280px;
+  height: 100%;
+  background: var(--bg-sidebar);
+  border-right: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+  box-sizing: border-box;
+  overflow-y: auto; /* scrollbar nur für Sidebar */
+  flex-shrink: 0; /* bleibt fix */
+}
 
+.chat-sidebar h3 {
+  margin: 0 0 1rem 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.chat-item {
+  padding: 0.7rem 1rem;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+.chat-item:hover { background: var(--hover-bg); }
+.chat-item.active { background: var(--accent); color: white; }
+
+.chat-sidebar::after {
+  content: "";
+  flex-grow: 1;
+  display: block;
+}
 
 /* =====================
-   Hauptbereich
+   Hauptbereich rechts vom Sidebar
 ===================== */
 .chat-main {
-  flex: 1;
+  flex: 1; /* nimmt den Rest des Bildschirms ein */
   display: flex;
   flex-direction: column;
   background: var(--bg-main);
-  overflow: hidden; /* Container scrollt nicht, nur chat-messages */
+  overflow: hidden; /* scroll nur im Nachrichtenbereich */
+  position: relative;
 }
 
 /* Header oben */
@@ -361,8 +397,8 @@ th {
 
 /* Nachrichtenbereich */
 .chat-messages {
-  flex: 1; /* nimmt den verfügbaren Platz zwischen Header und Input ein */
-  overflow-y: auto; /* scrollbar nur hier */
+  flex: 1; /* nimmt den Platz zwischen Header und Input ein */
+  overflow-y: auto;
   padding: 1rem 1.5rem;
   display: flex;
   flex-direction: column;
@@ -444,7 +480,6 @@ th {
 .chat-messages::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
 .chat-sidebar::-webkit-scrollbar-track,
 .chat-messages::-webkit-scrollbar-track { background: var(--bg-main); }
-
     
 /* =======================================================
    9. Modale Fenster (z. B. Create-Plan)
