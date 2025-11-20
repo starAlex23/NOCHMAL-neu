@@ -325,17 +325,18 @@ th {
   background: var(--bg-main);
   color: var(--text-color);
   font-family: 'Segoe UI', system-ui, sans-serif;
-  overflow: hidden; /* wir scrollen nur innerhalb von chat-messages */
+  overflow: hidden; /* Scroll nur innerhalb chat-messages */
   z-index: 9999;
 }
 
 /* =====================
    Sidebar links
 ===================== */
+/* Sidebar links, feststehend */
 .chat-sidebar {
   width: 280px;
   min-width: 280px;
-  height: 100%;
+  height: 100vh;
   background: var(--bg-sidebar);
   border-right: 1px solid var(--border-color);
   display: flex;
@@ -343,7 +344,8 @@ th {
   padding: 1rem;
   box-sizing: border-box;
   overflow-y: auto; /* scrollbar nur für Sidebar */
-  flex-shrink: 0; /* bleibt fix */
+  position: relative;
+  z-index: 2;
 }
 
 .chat-sidebar h3 {
@@ -351,7 +353,7 @@ th {
   font-size: 1.2rem;
   font-weight: 600;
 }
-
+    
 .chat-item {
   padding: 0.7rem 1rem;
   border-radius: 10px;
@@ -360,7 +362,6 @@ th {
 }
 .chat-item:hover { background: var(--hover-bg); }
 .chat-item.active { background: var(--accent); color: white; }
-
 .chat-sidebar::after {
   content: "";
   flex-grow: 1;
@@ -371,14 +372,13 @@ th {
    Hauptbereich rechts vom Sidebar
 ===================== */
 .chat-main {
-  flex: 1; /* nimmt den Rest des Bildschirms ein */
+  flex: 1;
   display: flex;
   flex-direction: column;
-  background: var(--bg-main);
-  overflow: hidden; /* scroll nur im Nachrichtenbereich */
-  position: relative;
+  height: 100vh; /* wichtig, damit Header/Input richtig fixiert sind */
+  overflow: hidden; /* nur chat-messages scrollt */
 }
-
+    
 /* Header oben */
 .chat-header {
   flex-shrink: 0;
@@ -392,12 +392,12 @@ th {
   justify-content: space-between;
   position: sticky;
   top: 0;
-  z-index: 2;
+  z-index: 1;
 }
 
 /* Nachrichtenbereich */
 .chat-messages {
-  flex: 1; /* nimmt den Platz zwischen Header und Input ein */
+  flex: 1; /* nimmt den ganzen Platz zwischen Header und Input */
   overflow-y: auto;
   padding: 1rem 1.5rem;
   display: flex;
@@ -406,7 +406,7 @@ th {
   scroll-behavior: smooth;
   background: var(--bg-main);
 }
-
+    
 /* Nachrichtenblasen */
 .message {
   max-width: 70%;
@@ -448,7 +448,7 @@ th {
   border-top: 1px solid var(--border-color);
   position: sticky;
   bottom: 0;
-  z-index: 2;
+  z-index: 1;
 }
 
 .chat-input input {
