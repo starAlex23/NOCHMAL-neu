@@ -325,24 +325,45 @@ th {
   background: var(--bg-main);
   color: var(--text-color);
   font-family: 'Segoe UI', system-ui, sans-serif;
-  overflow: hidden; /* Scroll nur innerhalb chat-messages */
+  overflow: hidden; /* nur chat-messages scrollt */
   z-index: 9999;
 }
 
-
+/* =====================
+   Platzhalter Sidebar links
+===================== */
+.chat-sidebar-placeholder {
+  width: 280px;         /* feste Breite für zukünftige Sidebar */
+  min-width: 280px;
+  height: 100%;
+  background: var(--bg-sidebar); /* optional hellgrau */
+  border-right: 1px solid var(--border-color);
+}
 
 /* =====================
-   Hauptbereich rechts vom Sidebar
+   Hauptbereich rechts
 ===================== */
 .chat-main {
   flex: 1;
   display: flex;
   flex-direction: column;
-  height: 100vh; /* wichtig, damit Header/Input richtig fixiert sind */
+  height: 100vh;
   overflow: hidden; /* nur chat-messages scrollt */
 }
-    
 
+/* Header oben fix */
+.chat-header {
+  flex-shrink: 0;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  padding: 1rem 1.5rem;
+  font-weight: 600;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+    
 /* Nachrichtenbereich */
 .chat-messages {
   flex: 1; /* nimmt den ganzen Platz zwischen Header und Input */
