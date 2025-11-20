@@ -315,9 +315,6 @@ th {
    8. Chat-Bereich (echtes Vollbild, App-Layout)
    ======================================================= */
 
-/* =======================================================
-   1. Chat-Bereich (Fullscreen, App-Layout)
-======================================================= */
 #chat-section {
   position: fixed;
   top: 0;
@@ -333,41 +330,7 @@ th {
   z-index: 9999;
 }
 
-/* =====================
-   Sidebar
-===================== */
-.chat-sidebar {
-  width: 280px;
-  min-width: 280px;
-  height: 100%;
-  background: var(--bg-sidebar);
-  border-right: 1px solid var(--border-color);
-  display: flex;
-  flex-direction: column;
-  padding: 1rem;
-  box-sizing: border-box;
-  overflow-y: auto; /* scrollbar nur für die Sidebar */
-}
 
-.chat-sidebar h3 {
-  margin: 0 0 1rem 0;
-  font-size: 1.2rem;
-  font-weight: 600;
-}
-
-.chat-item {
-  padding: 0.7rem 1rem;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: background 0.2s ease, color 0.2s ease;
-}
-.chat-item:hover { background: var(--hover-bg); }
-.chat-item.active { background: var(--accent); color: white; }
-.chat-sidebar::after {
-  content: "";
-  flex-grow: 1;
-  display: block;
-}
 
 /* =====================
    Hauptbereich
