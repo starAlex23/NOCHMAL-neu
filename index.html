@@ -315,41 +315,38 @@ th {
    8. Chat-Bereich (echtes Vollbild, App-Layout)
    ======================================================= */
 
+/* =======================================================
+   1. Chat-Bereich (Fullscreen, App-Layout)
+======================================================= */
 #chat-section {
   position: fixed;
   top: 0;
   left: 0;
   width: 100vw;
   height: 100vh;
+  display: flex;
+  flex-direction: row;
   background: var(--bg-main);
   color: var(--text-color);
   font-family: 'Segoe UI', system-ui, sans-serif;
-  display: flex;
-  flex-direction: row;
-  overflow: hidden;
+  overflow: hidden; /* wir scrollen nur in chat-main */
   z-index: 9999;
 }
 
-
-#chat-section.active {
-  display: flex;
-}
-
 /* =====================
-   Sidebar (fixes Layout)
+   Sidebar
 ===================== */
 .chat-sidebar {
   width: 280px;
   min-width: 280px;
-  height: 100%; /* Feste Höhe */
+  height: 100%;
   background: var(--bg-sidebar);
   border-right: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
-  justify-content: flex-start; /* Inhalte oben anordnen */
   padding: 1rem;
   box-sizing: border-box;
-  overflow-y: auto; /* nur wenn zu viele Chats */
+  overflow-y: auto; /* scrollbar nur für die Sidebar */
 }
 
 .chat-sidebar h3 {
@@ -358,31 +355,14 @@ th {
   font-weight: 600;
 }
 
-.chat-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-  flex-grow: 0; /* verhindert, dass sie sich dehnt */
-}
-
-/* Beispiel-Elemente */
 .chat-item {
   padding: 0.7rem 1rem;
   border-radius: 10px;
   cursor: pointer;
   transition: background 0.2s ease, color 0.2s ease;
 }
-
-.chat-item:hover {
-  background: var(--hover-bg);
-}
-
-.chat-item.active {
-  background: var(--accent);
-  color: white;
-}
-
-/* Damit unterhalb der letzten Chatgruppe Platz bleibt */
+.chat-item:hover { background: var(--hover-bg); }
+.chat-item.active { background: var(--accent); color: white; }
 .chat-sidebar::after {
   content: "";
   flex-grow: 1;
@@ -390,18 +370,15 @@ th {
 }
 
 /* =====================
-   Hauptbereich (Nachrichten)
+   Hauptbereich
 ===================== */
 .chat-main {
-  position: relative;
-  z-index: 1;
-  flex: 1;          /* <-- der richtige Weg */
+  flex: 1;
   display: flex;
   flex-direction: column;
   background: var(--bg-main);
-  overflow: hidden;
+  overflow: hidden; /* Container scrollt nicht, nur chat-messages */
 }
-
 
 /* Header oben */
 .chat-header {
@@ -416,20 +393,19 @@ th {
   justify-content: space-between;
   position: sticky;
   top: 0;
-  z-index: 3; /* oberhalb der Nachrichten */
+  z-index: 2;
 }
 
 /* Nachrichtenbereich */
 .chat-messages {
-  flex: 1;
-  overflow-y: auto;
+  flex: 1; /* nimmt den verfügbaren Platz zwischen Header und Input ein */
+  overflow-y: auto; /* scrollbar nur hier */
   padding: 1rem 1.5rem;
   display: flex;
   flex-direction: column;
   gap: 0.8rem;
   scroll-behavior: smooth;
   background: var(--bg-main);
-  z-index: 1;
 }
 
 /* Nachrichtenblasen */
@@ -441,34 +417,14 @@ th {
   font-size: 0.95rem;
   word-wrap: break-word;
   background: var(--bg-message);
-  align-self: flex-start;
-  transition: background 0.2s ease;
 }
 
-.message.user {
-  align-self: flex-end;
-  background: var(--accent);
-  color: white;
-}
+.message.user { align-self: flex-end; background: var(--accent); color: white; }
+.message.system { align-self: center; background: var(--bg-secondary); color: var(--text-muted); font-style: italic; }
 
-.message.system {
-  align-self: center;
-  background: var(--bg-secondary);
-  color: var(--text-muted);
-  font-style: italic;
-}
+.message .message-content p { margin: 0; }
 
-/* Nachrichtentext */
-.message .message-content p {
-  margin: 0;
-}
-
-/* Aktionen unter einer Nachricht */
-.message .actions {
-  margin-top: 0.4rem;
-  display: flex;
-  gap: 0.4rem;
-}
+.message .actions { margin-top: 0.4rem; display: flex; gap: 0.4rem; }
 
 .message button {
   border: none;
@@ -476,35 +432,21 @@ th {
   padding: 0.3rem 0.6rem;
   font-size: 0.85rem;
   cursor: pointer;
-  transition: opacity 0.2s ease;
 }
-
-.message button:hover {
-  opacity: 0.8;
-}
-
-/* Farben für Buttons */
-.approve-btn {
-  background: var(--success);
-  color: white;
-}
-.reject-btn {
-  background: var(--danger);
-  color: white;
-}
+.approve-btn { background: var(--success); color: white; }
+.reject-btn { background: var(--danger); color: white; }
 
 /* =====================
-   Eingabe unten
+   Input unten
 ===================== */
-/* Eingabe unten */
 .chat-input {
   flex-shrink: 0;
-  border-top: 1px solid var(--border-color);
-  background: var(--bg-secondary);
   display: flex;
   align-items: center;
   gap: 0.6rem;
   padding: 0.8rem 1rem;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border-color);
   position: sticky;
   bottom: 0;
   z-index: 2;
@@ -517,7 +459,6 @@ th {
   padding: 0.7rem 1rem;
   background: var(--input-bg);
   color: var(--text-color);
-  font-size: 1rem;
 }
 
 .chat-input button {
@@ -528,32 +469,20 @@ th {
   padding: 0.7rem 1.2rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s ease;
 }
-
-.chat-input button:hover {
-  background: var(--accent-hover, #005fcc);
-}
+.chat-input button:hover { background: var(--accent-hover, #005fcc); }
 
 /* =====================
-   Scrollbar modern
+   Scrollbars
 ===================== */
 .chat-sidebar::-webkit-scrollbar,
-.chat-messages::-webkit-scrollbar {
-  width: 8px;
-}
-
+.chat-messages::-webkit-scrollbar { width: 8px; }
 .chat-sidebar::-webkit-scrollbar-thumb,
-.chat-messages::-webkit-scrollbar-thumb {
-  background: var(--border-color);
-  border-radius: 4px;
-}
-
+.chat-messages::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
 .chat-sidebar::-webkit-scrollbar-track,
-.chat-messages::-webkit-scrollbar-track {
-  background: var(--bg-main);
-}
+.chat-messages::-webkit-scrollbar-track { background: var(--bg-main); }
 
+    
 /* =======================================================
    9. Modale Fenster (z. B. Create-Plan)
    ======================================================= */
