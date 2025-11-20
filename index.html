@@ -329,44 +329,7 @@ th {
   z-index: 9999;
 }
 
-/* =====================
-   Sidebar links
-===================== */
-/* Sidebar links, feststehend */
-.chat-sidebar {
-  width: 280px;
-  min-width: 280px;
-  height: 100vh;
-  background: var(--bg-sidebar);
-  border-right: 1px solid var(--border-color);
-  display: flex;
-  flex-direction: column;
-  padding: 1rem;
-  box-sizing: border-box;
-  overflow-y: auto; /* scrollbar nur für Sidebar */
-  position: relative;
-  z-index: 2;
-}
 
-.chat-sidebar h3 {
-  margin: 0 0 1rem 0;
-  font-size: 1.2rem;
-  font-weight: 600;
-}
-    
-.chat-item {
-  padding: 0.7rem 1rem;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: background 0.2s ease, color 0.2s ease;
-}
-.chat-item:hover { background: var(--hover-bg); }
-.chat-item.active { background: var(--accent); color: white; }
-.chat-sidebar::after {
-  content: "";
-  flex-grow: 1;
-  display: block;
-}
 
 /* =====================
    Hauptbereich rechts vom Sidebar
@@ -420,6 +383,41 @@ th {
 .approve-btn { background: var(--success); color: white; }
 .reject-btn { background: var(--danger); color: white; }
 
+/* =====================
+   Input unten
+===================== */
+.chat-input {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.8rem 1rem;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border-color);
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+}
+
+.chat-input input {
+  flex: 1;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 0.7rem 1rem;
+  background: var(--input-bg);
+  color: var(--text-color);
+}
+
+.chat-input button {
+  background: var(--accent);
+  border: none;
+  border-radius: 10px;
+  color: white;
+  padding: 0.7rem 1.2rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.chat-input button:hover { background: var(--accent-hover, #005fcc); }
 
 /* =====================
    Scrollbars
