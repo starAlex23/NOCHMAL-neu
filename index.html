@@ -330,15 +330,35 @@ th {
 }
 
 /* =====================
-   Platzhalter Sidebar links
+   Sidebar links
 ===================== */
 .chat-sidebar-placeholder {
-  width: 280px;         /* feste Breite für zukünftige Sidebar */
+  width: 280px;        /* feste Breite */
   min-width: 280px;
   height: 100%;
-  background: var(--bg-sidebar); /* optional hellgrau */
+  background: var(--bg-sidebar);
   border-right: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+  box-sizing: border-box;
+  overflow-y: auto;    /* scrollbar nur in Sidebar */
 }
+
+.chat-sidebar-placeholder h3 {
+  margin: 0 0 1rem 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.chat-item {
+  padding: 0.7rem 1rem;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+.chat-item:hover { background: var(--hover-bg); }
+.chat-item.active { background: var(--accent); color: white; }
 
 /* =====================
    Hauptbereich rechts
@@ -347,8 +367,8 @@ th {
   flex: 1;
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  overflow: hidden; /* nur chat-messages scrollt */
+  height: 100vh;        /* volle Höhe rechts von Sidebar */
+  overflow: hidden;      /* nur chat-messages scrollt */
 }
 
 /* Header oben fix */
@@ -362,11 +382,14 @@ th {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
 
-    
-/* Nachrichtenbereich */
+/* Nachrichtenbereich scrollt unabhängig */
 .chat-messages {
-  flex: 1; /* nimmt den ganzen Platz zwischen Header und Input */
+  flex: 1;
   overflow-y: auto;
   padding: 1rem 1.5rem;
   display: flex;
@@ -375,7 +398,7 @@ th {
   scroll-behavior: smooth;
   background: var(--bg-main);
 }
-    
+
 /* Nachrichtenblasen */
 .message {
   max-width: 70%;
@@ -386,14 +409,11 @@ th {
   word-wrap: break-word;
   background: var(--bg-message);
 }
-
 .message.user { align-self: flex-end; background: var(--accent); color: white; }
 .message.system { align-self: center; background: var(--bg-secondary); color: var(--text-muted); font-style: italic; }
 
 .message .message-content p { margin: 0; }
-
 .message .actions { margin-top: 0.4rem; display: flex; gap: 0.4rem; }
-
 .message button {
   border: none;
   border-radius: 6px;
@@ -404,9 +424,7 @@ th {
 .approve-btn { background: var(--success); color: white; }
 .reject-btn { background: var(--danger); color: white; }
 
-/* =====================
-   Input unten
-===================== */
+/* Input unten fix */
 .chat-input {
   flex-shrink: 0;
   display: flex;
@@ -417,7 +435,7 @@ th {
   border-top: 1px solid var(--border-color);
   position: sticky;
   bottom: 0;
-  z-index: 1;
+  z-index: 2;
 }
 
 .chat-input input {
@@ -440,16 +458,14 @@ th {
 }
 .chat-input button:hover { background: var(--accent-hover, #005fcc); }
 
-/* =====================
-   Scrollbars
-===================== */
-.chat-sidebar::-webkit-scrollbar,
+/* Scrollbars */
 .chat-messages::-webkit-scrollbar { width: 8px; }
-.chat-sidebar::-webkit-scrollbar-thumb,
 .chat-messages::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
-.chat-sidebar::-webkit-scrollbar-track,
 .chat-messages::-webkit-scrollbar-track { background: var(--bg-main); }
-    
+.chat-sidebar-placeholder::-webkit-scrollbar { width: 8px; }
+.chat-sidebar-placeholder::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
+.chat-sidebar-placeholder::-webkit-scrollbar-track { background: var(--bg-main); }
+
 /* =======================================================
    9. Modale Fenster (z. B. Create-Plan)
    ======================================================= */
@@ -742,10 +758,11 @@ body.dark-mode .modal-content {
   </div>
 </section>
 
+  
 <!-- Chat Section -->
 <section id="chat-section" class="section active">
-  <!-- Sidebar -->
-  <aside class="chat-sidebar">
+  <!-- Sidebar links (feststehend) -->
+  <aside class="chat-sidebar-placeholder">
     <h3>Chats</h3>
     <ul id="chat-list">
       <li class="chat-item active" data-chat-id="system">🛠️ System</li>
@@ -753,9 +770,9 @@ body.dark-mode .modal-content {
     </ul>
   </aside>
 
-  <!-- Hauptbereich -->
+  <!-- Hauptbereich rechts der Sidebar -->
   <div class="chat-main">
-    <!-- Header -->
+    <!-- Header oben fix -->
     <header class="chat-header">
       <h3 id="chat-title">🛠️ System</h3>
     </header>
@@ -775,7 +792,7 @@ body.dark-mode .modal-content {
       </li>
     </ul>
 
-    <!-- Eingabefeld -->
+    <!-- Input unten fix -->
     <div class="chat-input">
       <input type="text" id="chat-text" placeholder="Nachricht schreiben..." disabled>
       <button id="chat-send" disabled>📨</button>
