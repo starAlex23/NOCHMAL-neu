@@ -1016,7 +1016,7 @@ function getChatElements() {
   return {
     chatSection,
     chatMessages: chatSection.querySelector('#chat-messages'),
-    chatTitle: chatSection.querySelector('#chat-title'),
+    chatTitle: chatSection.querySelector('#chat-header'),
     chatInput: chatSection.querySelector('#chat-text'),
     chatSend: chatSection.querySelector('#chat-send')
   };
@@ -1031,7 +1031,7 @@ function activateChat(chatId) {
 
   // Sidebar-Highlight
   chatSection.querySelectorAll('.chat-sidebar-item').forEach(i => i.classList.remove('active'));
-  const item = chatSection.querySelector(`.chat-item[data-chat-id="${chatId}"]`);
+ const item = chatSection.querySelector(`.chat-sidebar-item[data-chat-id="${chatId}"]`);
   if (item) item.classList.add('active');
 
   // Header-Titel
@@ -1052,7 +1052,7 @@ function activateChat(chatId) {
 }
 
 // Sidebar-Click
-document.querySelectorAll('#chat-section .chat-sidebar-item').forEach(item => {
+chatSection.querySelectorAll('.chat-sidebar-item').forEach(item => {
   item.addEventListener('click', () => {
     activateChat(item.dataset.chatId);
   });
