@@ -1030,7 +1030,7 @@ function activateChat(chatId) {
   const { chatSection, chatTitle, chatInput, chatSend } = elems;
 
   // Sidebar-Highlight
-  chatSection.querySelectorAll('.chat-item').forEach(i => i.classList.remove('active'));
+  chatSection.querySelectorAll('.chat-sidebar-item').forEach(i => i.classList.remove('active'));
   const item = chatSection.querySelector(`.chat-item[data-chat-id="${chatId}"]`);
   if (item) item.classList.add('active');
 
@@ -1052,7 +1052,7 @@ function activateChat(chatId) {
 }
 
 // Sidebar-Click
-document.querySelectorAll('#chat-section .chat-item').forEach(item => {
+document.querySelectorAll('#chat-section .chat-sidebar-item').forEach(item => {
   item.addEventListener('click', () => {
     activateChat(item.dataset.chatId);
   });
