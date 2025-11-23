@@ -19,104 +19,89 @@
   --bg-secondary: #fafafa;
   --bg-sidebar: #f1f1f1;
   --bg-message: #e9ecef;
-  --bg-user: #c8e6c9;          /* sanftes Grün für User-Nachrichten */
+  --bg-user: #c8e6c9;
   --bg-system: #f8d7da;
   --border-color: #dcdfe6;
   --hover-bg: #ececec;
   --text-color: #222;
   --muted: #888;
   --input-bg: #fff;
-  --primary: #1b5e20;          /* Hauptgrün */
-  --primary-light: #2e7d32;    /* helleres Grün */
-  --accent: #388e3c;           /* für Buttons, Links, Hover */
+  --primary: #1b5e20;
+  --primary-light: #2e7d32;
+  --accent: #388e3c;
   --success: #27ae60;
   --danger: #c0392b;
 }
 
-/* ==================== */
-/* 🌙 Dark Mode (Grün) */
-/* ==================== */
+/* ====================
+   Dark Mode Variablen
+==================== */
 body.dark-mode {
   --bg-main: #0f0f0f;
   --bg-card: #1a1a1a;
   --bg-secondary: #141414;
   --bg-sidebar: #121212;
   --bg-message: #1e1e1e;
-  --bg-user: #2e7d3233;        /* leicht transparentes Grün */
+  --bg-user: #2e7d3233;
   --bg-system: #3a1a1a;
   --border-color: #333;
   --hover-bg: #1c1c1c;
   --text-color: #e5e5e5;
   --muted: #aaa;
   --input-bg: #222;
-  --primary: #1b5e20;          /* Dunkelgrün */
-  --primary-light: #2e7d32;    /* helleres Grün */
-  --accent: #43a047;           /* schönes Sättigungsgrün */
+  --primary: #1b5e20;
+  --primary-light: #2e7d32;
+  --accent: #43a047;
   --success: #2e7d32;
   --danger: #b23a3a;
 }
 
 /* =======================================================
-   2. Grundstruktur
-   ======================================================= */
+   2. Grundstruktur
+======================================================= */
 body {
-  margin: 0;
-  padding: 0;
-  font-family: system-ui, sans-serif;
-  background: var(--bg-main);
-  color: var(--text-color);
-  line-height: 1.5;
-  margin-top: 70px; /* ✅ Korrekt: Schafft Platz unter der fixierten Navigation */
+  margin: 0;
+  padding: 0;
+  font-family: system-ui, sans-serif;
+  background: var(--bg-main);
+  color: var(--text-color);
+  line-height: 1.5;
+  margin-top: 70px; /* Platz unter Navigation */
+  transition: background 0.3s ease, color 0.3s ease;
 }
-    
+
 /* =====================
-   Login: zentrierte Karte
+   Login-Karte
 ===================== */
 #login-card {
-  background: var(--bg-card);
-  color: var(--text-color);
-  border-radius: 12px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
-  padding: 2rem;
-  margin: 3rem auto;
-  max-width: 1000px;
-  box-sizing: border-box;
-  transition: background 0.3s ease, color 0.3s ease;
-}
-
-body.dark-mode #login-card {
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.8);
+  background: var(--bg-card);
+  color: var(--text-color);
+  border-radius: 12px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+  padding: 2rem;
+  margin: 3rem auto;
+  max-width: 1000px;
+  box-sizing: border-box;
+  transition: background 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
 }
 
 /* =====================
-   Panels und Sections: Vollbild
+   Panels & Sections
 ===================== */
 .panel,
 .section {
-  background: var(--bg-main);
-  color: var(--text-color);
-  border-radius: 0;
-  box-shadow: none;
-  padding: 0;
-  margin: 0;
-  max-width: none;
-  width: 100vw;
-  min-height: 100vh;
-  box-sizing: border-box;
+  background: var(--bg-main);
+  color: var(--text-color);
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0;
+  margin: 0;
+  max-width: none;
+  width: 100vw;
+  min-height: 100vh;
+  box-sizing: border-box;
+  transition: background 0.3s ease, color 0.3s ease;
 }
-
-/* Dunkelmodus-Anpassung (optional, falls Panels eigene Farben haben) */
-body.dark-mode .panel,
-body.dark-mode .section {
-  box-shadow: none;
-}
-
-/* 🌙 KORREKTUR: Erzwingt die Dark Mode Farben für Sektionen, 
-   da die .section Regel sonst die Variablen-Vererbung blockieren könnte. */
-body.dark-mode .section {
-  background: var(--bg-main) !important;
-  color: var(--text-color) !important;
-}  
     
 /* =======================================================
    3. Eingabefelder & Buttons
@@ -994,29 +979,33 @@ document.body.appendChild(loginOverlay);
 // ==========================
 // Theme-Toggle Funktion
 // ==========================
+// Darkmode Toggle Button
 const themeToggle = document.getElementById('dark-mode-toggle');
 
+// Theme anwenden
 function applyTheme(theme) {
   if (theme === 'dark') {
     document.body.classList.add('dark-mode');
-    themeToggle.textContent = '☀️ Hellmodus';
+    if(themeToggle) themeToggle.textContent = '☀️ Hellmodus';
   } else {
     document.body.classList.remove('dark-mode');
-    themeToggle.textContent = '🌙 Dark Mode';
+    if(themeToggle) themeToggle.textContent = '🌙 Dark Mode';
   }
   localStorage.setItem('theme', theme);
-
-  // ➜ Nach Theme-Wechsel: letzte Section wieder anzeigen
-  const lastSection = localStorage.getItem('lastSection');
-  if (lastSection) {
-    switchSection(lastSection);
-  }
 }
 
-// Toggle-Button Event
-themeToggle.addEventListener('click', () => {
-  const currentTheme = document.body.classList.contains('dark-mode') ? 'dark' : 'light';
-  applyTheme(currentTheme === 'dark' ? 'light' : 'dark');
+// Button Click
+if(themeToggle) {
+  themeToggle.addEventListener('click', () => {
+    const current = document.body.classList.contains('dark-mode') ? 'dark' : 'light';
+    applyTheme(current === 'dark' ? 'light' : 'dark');
+  });
+}
+
+// Beim Laden das letzte Theme setzen
+document.addEventListener('DOMContentLoaded', () => {
+  const savedTheme = localStorage.getItem('theme') || 'light';
+  applyTheme(savedTheme);
 });
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
