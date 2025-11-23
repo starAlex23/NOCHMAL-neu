@@ -315,29 +315,31 @@ th {
 }
 
 /* =======================================================
-  8. Chat-Bereich mit Sidebar links und Chat rechts
-   ======================================================= */
+  8. Chat-Bereich mit Sidebar links und Chat rechts
+   ======================================================= */
 
 #chat-section {
-  position: fixed;
-  top: 70px;
-  width: 100vw;
-  **height: calc(100vh - 70px);** /* ✅ Korrekt: Füllt Platz unter Nav aus */
-  **display: flex;** /* ✅ Korrekt: Aktiviert Flexbox für Sidebar/Main-Bereich */
-  background: var(--bg-main);
-  color: var(--text-color);
-  overflow: hidden;
-  z-index: 9999;
+  position: fixed;
+  top: 70px;
+  left: 0;
+  width: 100vw;
+  height: calc(100vh - 70px);
+  **display: flex;**
+  **flex-direction: row;** /* ⬅️ NEU HINZUFÜGEN ODER SICHERSTELLEN */
+  background: var(--bg-main);
+  color: var(--text-color);
+  overflow: hidden;
+  z-index: 9999;
 }
 
 /* =====================
    Hauptbereich rechts
 ===================== */
 .chat-main {
-  **flex: 1;** /* <- Füllt den gesamten horizontalen Platz neben der Sidebar aus */
+  flex: 1; /* ✅ Füllt den horizontalen Restplatz aus */
   display: flex;
-  flex-direction: column;
-  **height: 100%;** /* <- Muss 100% der verbleibenden Höhe von #chat-section sein */
+  flex-direction: column; /* ⚠️ Achtung: Hier MUSS column bleiben, damit Header, Messages und Input vertikal angeordnet sind */
+  height: 100%; /* ✅ Stellt sicher, dass es die volle vertikale Höhe nutzt */
   overflow: hidden;
 }
 
