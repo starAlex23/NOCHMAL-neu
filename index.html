@@ -437,6 +437,97 @@ th {
 .chat-sidebar-placeholder::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
 .chat-sidebar-placeholder::-webkit-scrollbar-track { background: var(--bg-main); }
 
+/* ============================
+  8.1 Sidebar – Chatliste links
+============================ */
+.chat-sidebar {
+  width: 300px;                            /* feste Breite */
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border-color);
+  height: 100%;                            /* volle Höhe innerhalb #chat-section */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;                        /* nur innerer Bereich scrollt */
+}
+
+/* Header der Sidebar (Titel "Chats") */
+.chat-sidebar-header {
+  padding: 1rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+/* Scrollbarer Bereich */
+.chat-sidebar-list {
+  flex: 1;                                 /* füllt alles, auch wenn leer */
+  overflow-y: auto;
+  padding: 0.5rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;                              /* fester Abstand zwischen Chats */
+}
+
+/* Einzelner Chat-Preview */
+.chat-sidebar-item {
+  padding: 0.9rem 1rem;
+  background: var(--bg-main);
+  border-bottom: 1px solid var(--border-color);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+/* Hover-Effekt */
+.chat-sidebar-item:hover {
+  background: var(--accent);
+  color: white;
+}
+
+/* letzter Chat ohne fiesen doppelten border */
+.chat-sidebar-item:last-child {
+  border-bottom: none;
+}
+
+/* Titel des Chats */
+.chat-sidebar-item .chat-title {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+/* Vorschautext */
+.chat-sidebar-item .chat-preview {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+/* Dark Mode Anpassungen */
+body.dark-mode .chat-sidebar {
+  background: #1e1e1e;
+}
+
+body.dark-mode .chat-sidebar-item {
+  background: #2b2b2b;
+  border-bottom-color: #444;
+}
+
+body.dark-mode .chat-sidebar-item:hover {
+  background: var(--accent);
+  color: white;
+}
+
+body.dark-mode .chat-sidebar-item .chat-preview {
+  color: #bbb;
+}
+
+/* Scrollbar */
+.chat-sidebar-list::-webkit-scrollbar { width: 8px; }
+.chat-sidebar-list::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
+.chat-sidebar-list::-webkit-scrollbar-track { background: var(--bg-secondary); }
+
 /* =======================================================
    9. Modale Fenster (z. B. Create-Plan)
    ======================================================= */
@@ -732,18 +823,32 @@ body.dark-mode .modal-content {
   
 <!-- Chat Section -->
 <section id="chat-section" class="section active">
-  <!-- Sidebar links (feststehend) -->
-  <aside class="chat-sidebar-placeholder">
-    <h3>Chats</h3>
-    <ul id="chat-list">
-      <li class="chat-item active" data-chat-id="system">🛠️ System</li>
-      <li class="chat-item" data-chat-id="vorarbeiter">📋 Vorarbeiter</li>
-    </ul>
+
+  <!-- SIDEBAR LINKS -->
+  <aside class="chat-sidebar">
+    <div class="chat-sidebar-header">Chats</div>
+
+    <div class="chat-sidebar-list" id="chat-list">
+      <div class="chat-sidebar-item" data-chat-id="system">
+        <div class="chat-title">🛠️ System</div>
+        <div class="chat-preview">Systemnachrichten…</div>
+      </div>
+
+      <div class="chat-sidebar-item" data-chat-id="vorarbeiter">
+        <div class="chat-title">📋 Vorarbeiter</div>
+        <div class="chat-preview">Neue Planung…</div>
+      </div>
+    </div>
   </aside>
 
-  <!-- Hauptbereich rechts der Sidebar -->
+  <!-- HAUPTBEREICH RECHTS -->
   <div class="chat-main">
-   
+
+    <!-- Header -->
+    <div class="chat-header" id="chat-header">
+      System
+    </div>
+
     <!-- Nachrichtenbereich -->
     <ul id="chat-messages" class="chat-messages">
       <li class="message system" data-user-id="1">
@@ -759,14 +864,15 @@ body.dark-mode .modal-content {
       </li>
     </ul>
 
-    <!-- Input unten fix -->
+    <!-- Eingabefeld -->
     <div class="chat-input">
-      <input type="text" id="chat-text" placeholder="Nachricht schreiben..." disabled>
+      <input type="text" id="chat-text" placeholder="Nachricht schreiben…" disabled>
       <button id="chat-send" disabled>📨</button>
     </div>
   </div>
+
 </section>
-  
+
   <!-- Benutzerverwaltung -->
   <section id="users-section" class="section hidden">
     <h2>Benutzerverwaltung
