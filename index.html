@@ -179,10 +179,13 @@ nav {
 }
     
 nav {
-  position: relative;
+  position: fixed;   /* neu */
+  top: 0;            /* neu */
+  left: 0;
+  width: 100%;
   z-index: 10000;
 }
-
+    
 nav button {
   width: auto;
   background: white;
@@ -312,20 +315,19 @@ th {
 }
 
 /* =======================================================
-   Chat-Bereich mit Sidebar links und Chat rechts
+  8. Chat-Bereich mit Sidebar links und Chat rechts
    ======================================================= */
 
 #chat-section {
   position: fixed;
-  top: 0;
+  top: 70px;                 /* <— schiebt den Chat unter die Navigation */
   left: 0;
   width: 100vw;
-  height: 100vh;
+  height: calc(100vh - 70px); /* <— passt die Höhe automatisch an */
   display: flex;
   background: var(--bg-main);
   color: var(--text-color);
-  font-family: 'Segoe UI', system-ui, sans-serif;
-  overflow: hidden; /* nur chat-messages scrollt */
+  overflow: hidden;
   z-index: 9999;
 }
 
