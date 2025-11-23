@@ -554,30 +554,36 @@ body.dark-mode .modal-content {
 }
 
 /* =======================================================
-   10. Diverse kleine Elemente
-   ======================================================= */
+   10. Diverse kleine Elemente
+   ======================================================= */
 .error { color: #c0392b; margin-top: 0.5rem; }
 .hidden { display: none !important; }
 .section.active { display: block !important; }
 
+/* 🚀 KORREKTUR: Erzwingt display: flex für die Chat-Sektion, 
+   um die Sidebar und den Hauptbereich nebeneinander anzuzeigen. 
+   Dies überschreibt die problematische 'display: block !important;' Regel oben. */
+#chat-section.active {
+    display: flex !important;
+}
+
 #daten-aktualisieren {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  background: var(--accent);
-  color: #fff;
-  font-weight: 600;
-  border-radius: 8px;
-  padding: 0.8rem 1rem;
-  z-index: 1000;
-  cursor: pointer;
-  transition: background 0.3s ease;
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 0.8rem 1rem;
+  z-index: 1000;
+  cursor: pointer;
+  transition: background 0.3s ease;
 }
 
 #daten-aktualisieren:hover {
-  background: #0059cc;
+  background: #0059cc;
 }
-
 /* =======================================================
    Ende
    ======================================================= */
@@ -847,6 +853,10 @@ body.dark-mode .modal-content {
   <!-- HAUPTBEREICH RECHTS -->
   <div class="chat-main">
 
+    <div class="chat-header" id="chat-header">
+      System 
+    </div>
+    
     <!-- Nachrichtenbereich -->
     <ul id="chat-messages" class="chat-messages">
       <li class="message system" data-user-id="1">
