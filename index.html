@@ -66,55 +66,58 @@ body {
   background: var(--bg-main);
   color: var(--text-color);
   line-height: 1.5;
-  **margin-top: 70px;** /* ⬅️ Hinzufügen, um Platz unter der Nav zu schaffen! */
+  margin-top: 70px; /* ✅ Korrekt: Schafft Platz unter der fixierten Navigation */
 }
-    
+    
 /* =====================
-   Login: zentrierte Karte
+   Login: zentrierte Karte
 ===================== */
 #login-card {
-  background: var(--bg-card);
-  color: var(--text-color);
-  border-radius: 12px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
-  padding: 2rem;
-  margin: 3rem auto;
-  max-width: 1000px;
-  box-sizing: border-box;
-  transition: background 0.3s ease, color 0.3s ease;
+  background: var(--bg-card);
+  color: var(--text-color);
+  border-radius: 12px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+  padding: 2rem;
+  margin: 3rem auto;
+  max-width: 1000px;
+  box-sizing: border-box;
+  transition: background 0.3s ease, color 0.3s ease;
 }
 
 body.dark-mode #login-card {
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.8);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.8);
 }
 
 /* =====================
-   Panels und Sections: Vollbild
+   Panels und Sections: Vollbild
 ===================== */
 .panel,
 .section {
-  background: var(--bg-main);
-  color: var(--text-color);
-  border-radius: 0;
-  box-shadow: none;
-  padding: 0;
-  margin: 0;
-  max-width: none;
-  width: 100vw;
-  min-height: 100vh;
-  box-sizing: border-box;
+  background: var(--bg-main);
+  color: var(--text-color);
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0;
+  margin: 0;
+  max-width: none;
+  width: 100vw;
+  min-height: 100vh;
+  box-sizing: border-box;
 }
 
 /* Dunkelmodus-Anpassung (optional, falls Panels eigene Farben haben) */
 body.dark-mode .panel,
 body.dark-mode .section {
-  box-shadow: none;
+  box-shadow: none;
 }
 
- body.dark-mode .section {
-  background: var(--bg-main);
-  color: var(--text-color);
-}
+/* 🌙 KORREKTUR: Erzwingt die Dark Mode Farben für Sektionen, 
+   da die .section Regel sonst die Variablen-Vererbung blockieren könnte. */
+body.dark-mode .section {
+  background: var(--bg-main) !important;
+  color: var(--text-color) !important;
+}  
+    
 /* =======================================================
    3. Eingabefelder & Buttons
    ======================================================= */
