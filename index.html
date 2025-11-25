@@ -392,19 +392,24 @@ th {
 .reject-btn { background: var(--danger); color: white; }
 
 /* =======================
-   Eingabefeld unten
+   Eingabefeld unten
 ======================= */
 .chat-input {
-  flex-shrink: 0;
-  width: 100%;
+  flex-shrink: 0;
+  width: 100%;
 
-  display: flex;
-  justify-content: center;       /* zentriert den inneren Container */
-  padding: 0.8rem 0;
+  display: flex;
+  justify-content: center;
+  padding: 0.8rem 0;
 
-  background: var(--bg-secondary);
-  border-top: 1px solid var(--border-color);
-}
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border-color);
+
+  /* 💡 Wieder eingefügt: Stellt sicher, dass das Feld
+        am unteren Rand des flexiblen .chat-main Containers klebt. */
+  **position: sticky;**
+  **bottom: 0;**
+  **z-index: 20;** }
 
 /* Container für zentrierte Inhalte */
 .chat-input-inner {
