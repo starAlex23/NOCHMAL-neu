@@ -1244,38 +1244,52 @@ function getCookie(name) {
 let currentCsrfToken = localStorage.getItem('csrfToken'); // Startet mit dem Wert aus dem Login
 
 async function ensureCsrfToken() {
-  // 1. Haben wir einen Token im Speicher oder LocalStorage?
-  if (currentCsrfToken) return currentCsrfToken;
+    // 1. Wenn Token im RAM gespeichert ist, nutze ihn.
+    if (currentCsrfToken) return currentCsrfToken;
 
-  // 2. Falls nicht (z.B. LocalStorage geleert), versuchen wir einen Refresh
-  try {
-    const API_BASE = window.location.origin.includes('vercel.app')
-      ? 'https://backend-869x.onrender.com'
-      : '';
-
-    const res = await fetch(`${API_BASE}/api/refresh`, {
-      method: 'POST',
-      credentials: 'include'
-    });
-
-    if (!res.ok) throw new Error('CSRF-Refresh fehlgeschlagen');
-
-    const data = await res.json();
-    
-    // 3. Neuen Token speichern
-    if (data.csrfToken) {
-        currentCsrfToken = data.csrfToken;
-        localStorage.setItem('csrfToken', data.csrfToken); // Update LocalStorage
+    // 2. Prüfe LocalStorage nur, falls RAM leer ist (z.B. nach Reload)
+    const storedToken = localStorage.getItem('csrfToken');
+    if (storedToken) {
+        currentCsrfToken = storedToken;
         return currentCsrfToken;
-    } 
-    
-    throw new Error('Kein CSRF-Token erhalten');
+    }
 
-  } catch (err) {
-    console.error("Auth-Fehler:", err);
-    // Hier könnte man zum Login umleiten
-    throw err;
-  }
+    // 3. Wenn immer noch leer, erzwinge Refresh
+    try {
+        const API_BASE = window.location.origin.includes('vercel.app')
+          ? 'https://backend-869x.onrender.com'
+          : '';
+
+        const res = await fetch(`${API_BASE}/api/refresh`, {
+            method: 'POST',
+            credentials: 'include'
+        });
+
+        // 4. Bei Fehler (z.B. 401 Unauthenticated), Token löschen und Fehler werfen
+        if (!res.ok) {
+            localStorage.removeItem('csrfToken');
+            currentCsrfToken = null;
+            throw new Error(`Refresh fehlgeschlagen (${res.status}). Erneute Anmeldung nötig.`);
+        }
+
+        const data = await res.json();
+        
+        // 5. Neuen Token speichern und zurückgeben
+        if (data.csrfToken) {
+            currentCsrfToken = data.csrfToken;
+            localStorage.setItem('csrfToken', data.csrfToken);
+            return currentCsrfToken;
+        }    
+        
+        throw new Error('Kein CSRF-Token im Refresh erhalten');
+
+    } catch (err) {
+        console.error("Auth-Fehler beim Refresh:", err);
+        // Auch hier den lokalen Zustand aufräumen
+        localStorage.removeItem('csrfToken');
+        currentCsrfToken = null;
+        throw err;
+    }
 }
 
 // ==========================
