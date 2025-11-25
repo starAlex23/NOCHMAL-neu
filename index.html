@@ -798,7 +798,6 @@ body.dark-mode .modal-content {
     <button id="cancel-edit-btn">Abbrechen</button>
   </div>
 </section>
-
   
 <!-- Chat Section -->
 <section id="chat-section" class="section active">
@@ -826,30 +825,17 @@ body.dark-mode .modal-content {
     <div class="chat-header" id="chat-header">System</div>
     
     <!-- Nachrichtenbereich -->
-    <ul id="chat-messages" class="chat-messages">
-      <li class="message system" data-user-id="1">
-        <div class="message-content">
-          <p><strong>System:</strong> Neuer Registrierungsantrag</p>
-          <p>E-Mail: <em>neuer.user@example.com</em></p>
-          <p>Name: <em>Max Mustermann</em></p>
-        </div>
-        <div class="actions">
-          <button class="approve-btn" data-id="1">✅ Annehmen</button>
-          <button class="reject-btn" data-id="1">❌ Ablehnen</button>
-        </div>
-      </li>
-    </ul>
+    <ul id="chat-messages" class="chat-messages"></ul>
 
     <!-- Eingabefeld -->
     <div class="chat-input">
       <div class="chat-input-inner">
-        <input type="text" id="chat-input-field" placeholder="Nachricht eingeben …">
-        <button id="chat-send-btn">➤</button>
+        <input type="text" id="chat-text" placeholder="Nachricht eingeben …">
+        <button id="chat-send">➤</button>
       </div>
     </div>
 
   </div> <!-- /chat-main -->
-
 </section>
 
   <!-- Benutzerverwaltung -->
@@ -986,75 +972,56 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
-// ==========================
-// Chat-Management (korrigiert)
-// ==========================
 let activeChat = 'system';
+let lastMessageIds = {}; // Merkt die zuletzt gerenderten Nachrichten je Chat
 
-// Liefert Chat-Elemente
 function getChatElements() {
   const chatSection = document.getElementById('chat-section');
   if (!chatSection) return null;
 
   return {
     chatSection,
-    chatMessages: chatSection.querySelector('#chat-messages'),
-    chatHeader: chatSection.querySelector('#chat-header'), // passt zur HTML
+    chatMessages: chatSection.querySelector('.chat-messages'),
+    chatHeader: chatSection.querySelector('.chat-header'),
     chatInput: chatSection.querySelector('#chat-text'),
     chatSend: chatSection.querySelector('#chat-send'),
     sidebarList: chatSection.querySelector('.chat-sidebar-list')
   };
 }
 
-// Aktiviert den Chat
-function activateChat(chatId) {
-  const elems = getChatElements();
-  if (!elems) return;
-
-  const { chatSection, chatHeader, chatInput, chatSend } = elems;
-
-  // Sidebar-Highlight: entferne von allen, setze beim gewählten
-  chatSection.querySelectorAll('.chat-sidebar-item').forEach(i => i.classList.remove('active'));
-  const item = chatSection.querySelector(`.chat-sidebar-item[data-chat-id="${chatId}"]`);
-  if (item) item.classList.add('active');
-
-  // Header-Titel setzen
-  if (chatHeader) chatHeader.textContent = chatId === 'system' ? '🛠️ System' : chatId;
-
-  // Input aktivieren/deaktivieren (z. B. system read-only)
-  if (chatInput && chatSend) {
-    const disabled = chatId === 'system';
-    chatInput.disabled = disabled;
-    chatSend.disabled = disabled;
-  }
-
-  // Merke aktiven Chat
-  activeChat = chatId;
-
-  // Nachrichten laden (nur wenn Section sichtbar/aktiv)
-  if (chatSection.classList.contains('active')) {
-    fetchChatMessages(chatId);
+function scrollToBottom(chatMessagesElement) {
+  if (chatMessagesElement) {
+    chatMessagesElement.scrollTo({ top: chatMessagesElement.scrollHeight, behavior: 'smooth' });
   }
 }
 
-// Delegiertes Click-Handling für Sidebar (funktioniert auch dynamisch)
-(function bindSidebarClicks() {
-  const elems = getChatElements();
-  if (!elems) {
-    // Falls noch nicht geladen, erneut versuchen sobald DOM ready ist
-    document.addEventListener('DOMContentLoaded', bindSidebarClicks, { once: true });
-    return;
+function addMessage(content, sender = 'user', chatMessagesElement, msgId = null, actionsHTML = '') {
+  if (!chatMessagesElement) return;
+
+  if (msgId && chatMessagesElement.querySelector(`.message[data-id="${msgId}"]`)) return;
+
+  const li = document.createElement('li');
+  li.classList.add('message', sender);
+  if (msgId) li.dataset.id = msgId;
+
+  const divContent = document.createElement('div');
+  divContent.classList.add('message-content');
+  divContent.innerHTML = `<p>${content}</p>`;
+  li.appendChild(divContent);
+
+  if (actionsHTML) {
+    const divActions = document.createElement('div');
+    divActions.classList.add('actions');
+    divActions.innerHTML = actionsHTML;
+    li.appendChild(divActions);
   }
 
-  elems.sidebarList.addEventListener('click', (ev) => {
-    // finde das nächstgelegene .chat-sidebar-item (falls inneres Element geklickt)
-    const item = ev.target.closest('.chat-sidebar-item');
-    if (!item) return;
-    const chatId = item.dataset.chatId;
-    if (!chatId) return;
-    activateChat(chatId);
-  });
-})();
+  chatMessagesElement.appendChild(li);
+  scrollToBottom(chatMessagesElement);
+
+  // Buttons binden
+  if (actionsHTML) bindActionButtons(li);
+}
 
 // ==========================
 // Approve / Reject Buttons
@@ -1086,13 +1053,114 @@ async function handleActionClick(e) {
 
     if (message) message.querySelector('.actions').innerHTML =
       action === 'approve' ? '<p>✅ Antrag angenommen</p>' : '<p>❌ Antrag abgelehnt</p>';
+
+    if (activeChat === 'system') fetchChatMessages('system');
+
   } catch (err) {
     console.error(err);
     if (message) message.querySelector('.actions').innerHTML = '<p>⚠️ Fehler: ' + err.message + '</p>';
   }
 }
 
-// Cookie-Helfer
+// ==========================
+// Senden
+// ==========================
+async function handleSendClick() {
+  const elems = getChatElements();
+  if (!elems || !activeChat || activeChat === 'system') return;
+
+  const { chatInput, chatMessages } = elems;
+  const message = chatInput.value.trim();
+  if (!message) return;
+
+  addMessage(message, 'user', chatMessages);
+  chatInput.value = '';
+  chatInput.focus();
+
+  try {
+    await fetch(`/api/chat/${activeChat}`, {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json', 
+        'X-CSRF-Token': getCookie('csrfToken') 
+      },
+      credentials: 'include',
+      body: JSON.stringify({ message })
+    });
+  } catch (error) {
+    console.error('Netzwerkfehler beim Senden:', error);
+  }
+}
+
+// ==========================
+// Chat aktivieren
+// ==========================
+function activateChat(chatId) {
+  const elems = getChatElements();
+  if (!elems) return;
+
+  const { chatSection, chatHeader, chatInput, chatSend } = elems;
+
+  chatSection.querySelectorAll('.chat-sidebar-item').forEach(i => i.classList.remove('active'));
+  const item = chatSection.querySelector(`.chat-sidebar-item[data-chat-id="${chatId}"]`);
+  if (item) item.classList.add('active');
+
+  chatHeader.textContent = chatId === 'system' ? '🛠️ System' : `Chat mit ${item.querySelector('.chat-title').textContent || chatId}`;
+  if (chatInput && chatSend) {
+    const disabled = chatId === 'system';
+    chatInput.disabled = disabled;
+    chatSend.disabled = disabled;
+  }
+
+  activeChat = chatId;
+  fetchChatMessages(chatId);
+}
+
+// ==========================
+// Sidebar Clicks
+// ==========================
+(function bindSidebarClicks() {
+  const elems = getChatElements();
+  if (!elems) {
+    document.addEventListener('DOMContentLoaded', bindSidebarClicks, { once: true });
+    return;
+  }
+
+  elems.sidebarList.addEventListener('click', (ev) => {
+    const item = ev.target.closest('.chat-sidebar-item');
+    if (!item) return;
+    const chatId = item.dataset.chatId;
+    if (!chatId) return;
+    activateChat(chatId);
+  });
+})();
+
+// ==========================
+// Send-Button & Enter
+// ==========================
+(function bindSendListeners() {
+  const elems = getChatElements();
+  if (!elems) {
+    document.addEventListener('DOMContentLoaded', bindSendListeners, { once: true });
+    return;
+  }
+  const { chatInput, chatSend } = elems;
+
+  if (chatSend) chatSend.addEventListener('click', handleSendClick);
+
+  if (chatInput) {
+    chatInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        if (chatSend) chatSend.click();
+      }
+    });
+  }
+})();
+
+// ==========================
+// Cookies
+// ==========================
 function getCookie(name) {
   const value = `; ${document.cookie}`;
   const parts = value.split(`; ${name}=`);
@@ -1100,94 +1168,57 @@ function getCookie(name) {
 }
 
 // ==========================
-// Chatnachrichten laden (bleibt im Kern gleich, kleine Robustheits-Checks)
+// Nachrichten laden (nur neue)
 // ==========================
 async function fetchChatMessages(chatId = 'system') {
   const elems = getChatElements();
   if (!elems) return;
-
   const { chatMessages, chatSection } = elems;
   if (!chatSection.classList.contains('active') || !chatMessages) return;
 
-  chatMessages.innerHTML = '<li style="color:gray;">Lade Nachrichten...</li>';
-
   try {
-    let endpoint = chatId === 'system'
-      ? `${window.location.origin.includes('vercel.app') 
-          ? 'https://backend-869x.onrender.com'
-          : ''}/api/system-messages`
-      : `${window.location.origin.includes('vercel.app') 
-          ? 'https://backend-869x.onrender.com'
-          : ''}/api/chat/${chatId}`;
-
+    const endpoint = chatId === 'system' ? `/api/system-messages` : `/api/chat/${chatId}`;
     const res = await fetch(endpoint, { credentials: 'include' });
-    if (!res.ok) {
-      chatMessages.innerHTML = '<li style="color:red;">Fehler beim Laden.</li>';
-      return;
-    }
+    if (!res.ok) return;
 
     const data = await res.json();
-    chatMessages.innerHTML = '';
+    if (!Array.isArray(data)) return;
 
-    if (chatId === 'system') {
-      if (!Array.isArray(data) || data.length === 0) {
-        chatMessages.innerHTML = '<li style="color:gray;">Keine Systemnachrichten.</li>';
-      } else {
-        data.forEach(msg => {
-          if (msg.type === 'registration_request') {
-            const p = msg.payload;
-            chatMessages.innerHTML += `
-              <li class="message system" data-user-id="${p.id}">
-                <div class="message-content">
-                  <p><strong>System:</strong> Neuer Registrierungsantrag</p>
-                  <p>E-Mail: <em>${p.email}</em></p>
-                  <p>Name: <em>${p.vorname} ${p.nachname}</em></p>
-                </div>
-                <div class="actions">
-                  <button class="approve-btn" data-id="${p.id}">✅ Annehmen</button>
-                  <button class="reject-btn" data-id="${p.id}">❌ Ablehnen</button>
-                </div>
-              </li>
-            `;
-          } else if (msg.type === 'approval_result') {
-            const p = msg.payload;
-            chatMessages.innerHTML += `
-              <li class="message system">
-                <div class="message-content">
-                  <p><strong>System:</strong> Antrag von <em>${p.vorname}</em> wurde <b>${p.action}</b>.</p>
-                </div>
-              </li>
-            `;
-          }
-        });
-      }
-    } else {
-      if (!Array.isArray(data) || data.length === 0) {
-        chatMessages.innerHTML = '<li style="color:gray;">Keine Nachrichten.</li>';
-      } else {
-        data.forEach(msg => {
-          chatMessages.innerHTML += `
-            <li class="message user">
-              <div class="message-content">
-                <p><strong>${msg.sender_name}:</strong> ${msg.text}</p>
-              </div>
-            </li>
+    lastMessageIds[chatId] = lastMessageIds[chatId] || new Set();
+
+    data.forEach(msg => {
+      if (!lastMessageIds[chatId].has(msg.id)) {
+        lastMessageIds[chatId].add(msg.id);
+
+        if (chatId === 'system' && msg.type === 'registration_request') {
+          const actions = `
+            <button class="approve-btn" data-id="${msg.payload.id}">✅ Annehmen</button>
+            <button class="reject-btn" data-id="${msg.payload.id}">❌ Ablehnen</button>
           `;
-        });
+          addMessage(
+            `🛠️ Neuer Registrierungsantrag: ${msg.payload.vorname} ${msg.payload.nachname} (${msg.payload.email})`,
+            'system',
+            chatMessages,
+            msg.id,
+            actions
+          );
+        } else if (chatId === 'system' && msg.type === 'approval_result') {
+          addMessage(`🛠️ Antrag von ${msg.payload.vorname} wurde ${msg.payload.action}`, 'system', chatMessages, msg.id);
+        } else {
+          const senderClass = msg.sender_id === 'current_admin_id' ? 'user' : 'other';
+          addMessage(`<strong>${msg.sender_name}:</strong> ${msg.text}`, senderClass, chatMessages, msg.id);
+        }
       }
-    }
-
-    bindActionButtons(chatMessages);
-    // scroll to bottom
-    chatMessages.scrollTop = chatMessages.scrollHeight;
+    });
 
   } catch (err) {
     console.error('Fehler beim Laden der Chatnachrichten:', err);
-    chatMessages.innerHTML = '<li style="color:red;">Verbindungsfehler.</li>';
   }
 }
 
-// Automatisches Nachladen nur, wenn sichtbar
+// ==========================
+// Auto-Reload
+// ==========================
 setInterval(() => {
   const elems = getChatElements();
   if (elems && elems.chatSection.classList.contains('active')) {
@@ -1195,19 +1226,12 @@ setInterval(() => {
   }
 }, 10000);
 
-// Initiales Setup: aktiviere Default-Chat sobald DOM bereit
+// ==========================
+// Initial Setup
+// ==========================
 document.addEventListener('DOMContentLoaded', () => {
-  // falls Sidebar-Items dynamisch sind, stelle sicher, dass Default existiert, sonst erstes Item
-  const elems = getChatElements();
-  if (!elems) return;
-  const defaultExists = !!elems.chatSection.querySelector(`.chat-sidebar-item[data-chat-id="${activeChat}"]`);
-  if (!defaultExists) {
-    const first = elems.chatSection.querySelector('.chat-sidebar-item');
-    if (first) activeChat = first.dataset.chatId || activeChat;
-  }
   activateChat(activeChat);
 });
-
 ///////////////////////////////////////////////////////////////////////////////////////////////
 // ==========================
 // Section-Wechsel
