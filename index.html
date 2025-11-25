@@ -401,6 +401,46 @@ th {
 }
 
 /* =========================
+   Slide-Down Animation 
+========================= */
+.chat-search-container {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+  padding: 0 1rem;
+}
+
+.chat-search-container.active {
+  /* max-height wird per JS gesetzt, keine feste Höhe nötig */
+}
+
+#chat-search-input {
+  width: 100%;
+  margin: 0.5rem 0;
+  padding: 0.4rem 0.6rem;
+  border-radius: 5px;
+  border: 1px solid var(--border-color);
+  font-size: 0.9rem;
+}
+
+#chat-search-results {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.chat-search-item {
+  padding: 0.5rem;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.chat-search-item:hover {
+  background: var(--accent);
+  color: white;
+}
+  
+/* =========================
    HAUPTBEREICH RECHTS
 ========================= */
 .chat-main {
@@ -1012,40 +1052,96 @@ const chatList = document.getElementById('chat-list');
 const searchToggle = document.getElementById('chat-search-toggle');
 const searchContainer = document.querySelector('.chat-search-container');
 const searchInput = document.getElementById('chat-search-input');
+const searchResults = document.getElementById('chat-search-results');
 
 let allChats = []; // Array aller Chats mit Nachrichten
 
-// 🔹 Suche ein-/ausblenden
+// ==========================
+// Suche ein-/ausblenden mit Animation
+// ==========================
 searchToggle.addEventListener('click', () => {
-  searchContainer.classList.toggle('active');
-  if (searchContainer.classList.contains('active')) searchInput.focus();
+  if (searchContainer.classList.contains('active')) {
+    // ausblenden
+    searchContainer.style.maxHeight = '0';
+    searchContainer.classList.remove('active');
+  } else {
+    // einblenden
+    searchContainer.classList.add('active');
+    searchContainer.style.maxHeight = searchContainer.scrollHeight + 'px';
+    setTimeout(() => searchInput.focus(), 300);
+  }
 });
 
-// 🔹 Chatliste filtern
-searchInput.addEventListener('input', () => {
-  const term = searchInput.value.toLowerCase();
-  chatList.querySelectorAll('.chat-sidebar-item').forEach(item => {
-    const title = item.querySelector('.chat-title').textContent.toLowerCase();
-    if (item.dataset.chatId === 'system' || title.includes(term)) {
-      item.style.display = '';
-    } else {
-      item.style.display = 'none';
-    }
-  });
+// ==========================
+// Chatliste filtern / neue Chats starten
+// ==========================
+searchInput.addEventListener('input', async () => {
+  const term = searchInput.value.trim().toLowerCase();
+  searchResults.innerHTML = '';
+
+  if (!term) return;
+
+  try {
+    const res = await fetch(`/api/users/search?term=${encodeURIComponent(term)}`, {
+      credentials: 'include'
+    });
+    if (!res.ok) throw new Error('Fehler beim Suchen');
+    const users = await res.json(); // [{id, vorname, nachname, email}]
+
+    users.forEach(u => {
+      const li = document.createElement('li');
+      li.classList.add('chat-search-item');
+      li.dataset.userId = u.id;
+      li.innerHTML = `${u.vorname} ${u.nachname} <span style="color:gray;">(${u.email})</span>`;
+      searchResults.appendChild(li);
+    });
+
+  } catch (err) {
+    console.error(err);
+  }
 });
 
-// 🔹 Chats mit Inhalt in Sidebar anzeigen
-function updateSidebarChats(newChats) {
-  allChats = newChats; // Speichern für Suche
+// Klick auf Suchergebnis → Chat starten/öffnen
+searchResults.addEventListener('click', async ev => {
+  const li = ev.target.closest('.chat-search-item');
+  if (!li) return;
+  const userId = li.dataset.userId;
 
-  // Alle bisherigen Items außer System entfernen
+  try {
+    const res = await fetch(`/api/chat/init/${userId}`, {
+      method: 'POST',
+      headers: { 'X-CSRF-Token': getCookie('csrfToken') },
+      credentials: 'include'
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Fehler beim Chat starten');
+
+    // Sidebar aktualisieren und Chat öffnen
+    await updateChatsSidebar(); 
+    activateChat(data.chatId);
+
+    // Suche zurücksetzen
+    searchInput.value = '';
+    searchResults.innerHTML = '';
+    searchContainer.style.maxHeight = '0';
+    searchContainer.classList.remove('active');
+
+  } catch (err) {
+    console.error(err);
+  }
+});
+
+// ==========================
+// Chats mit Nachrichten in Sidebar anzeigen
+// ==========================
+async function updateChatsSidebar() {
+  // allChats muss vorher geladen werden (z.B. fetchChatsFromBackend)
   chatList.querySelectorAll('.chat-sidebar-item').forEach(item => {
     if (item.dataset.chatId !== 'system') item.remove();
   });
 
-  // Chats hinzufügen
-  newChats.forEach(chat => {
-    if (!chat.messages || chat.messages.length === 0) return; // Nur Chats mit Nachrichten
+  allChats.forEach(chat => {
+    if (!chat.messages || chat.messages.length === 0) return;
 
     const div = document.createElement('div');
     div.classList.add('chat-sidebar-item');
@@ -1058,7 +1154,9 @@ function updateSidebarChats(newChats) {
   });
 }
 
-// 🔹 Event-Delegation für Sidebar-Klicks
+// ==========================
+// Sidebar Klicks (Event Delegation)
+// ==========================
 chatList.addEventListener('click', ev => {
   const item = ev.target.closest('.chat-sidebar-item');
   if (!item) return;
@@ -1066,7 +1164,6 @@ chatList.addEventListener('click', ev => {
   if (!chatId) return;
   activateChat(chatId);
 });
-
   
 function getChatElements() {
   const chatSection = document.getElementById('chat-section');
