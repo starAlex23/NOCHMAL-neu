@@ -6,305 +6,305 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Admin Login & Dashboard</title>
 <style>
-/* =======================================================
-   🌙 ADMIN DASHBOARD – REWORKED DARK THEME (DESKTOP)
-   ======================================================= */
+   /* =======================================================
+   🌙 ADMIN DASHBOARD – REWORKED DARK THEME (DESKTOP)
+   ======================================================= */
 
 /* =======================================================
-   1. Farbvariablen & Grunddesign
-   ======================================================= */
+   1. Farbvariablen & Grunddesign
+   ======================================================= */
 :root {
-  --bg-main: #f4f6f9;
-  --bg-card: #ffffff;
-  --bg-secondary: #fafafa;
-  --bg-sidebar: #f1f1f1;
-  --bg-message: #e9ecef;
-  --bg-user: #c8e6c9;
-  --bg-system: #f8d7da;
-  --border-color: #dcdfe6;
-  --hover-bg: #ececec;
-  --text-color: #222;
-  --muted: #888;
-  --input-bg: #fff;
-  --primary: #1b5e20;
-  --primary-light: #2e7d32;
-  --accent: #388e3c;
-  --success: #27ae60;
-  --danger: #c0392b;
+  --bg-main: #f4f6f9;
+  --bg-card: #ffffff;
+  --bg-secondary: #fafafa;
+  --bg-sidebar: #f1f1f1;
+  --bg-message: #e9ecef;
+  --bg-user: #c8e6c9;
+  --bg-system: #f8d7da;
+  --border-color: #dcdfe6;
+  --hover-bg: #ececec;
+  --text-color: #222;
+  --muted: #888;
+  --input-bg: #fff;
+  --primary: #1b5e20;
+  --primary-light: #2e7d32;
+  --accent: #388e3c;
+  --success: #27ae60;
+  --danger: #c0392b;
 }
 
 /* ====================
-   Dark Mode Variablen
+   Dark Mode Variablen
 ==================== */
 body.dark-mode {
-  --bg-main: #0f0f0f;
-  --bg-card: #1a1a1a;
-  --bg-secondary: #141414;
-  --bg-sidebar: #121212;
-  --bg-message: #1e1e1e;
-  --bg-user: #2e7d3233;
-  --bg-system: #3a1a1a;
-  --border-color: #333;
-  --hover-bg: #1c1c1c;
-  --text-color: #e5e5e5;
-  --muted: #aaa;
-  --input-bg: #222;
-  --primary: #1b5e20;
-  --primary-light: #2e7d32;
-  --accent: #43a047;
-  --success: #2e7d32;
-  --danger: #b23a3a;
+  --bg-main: #0f0f0f;
+  --bg-card: #1a1a1a;
+  --bg-secondary: #141414;
+  --bg-sidebar: #121212;
+  --bg-message: #1e1e1e;
+  --bg-user: #2e7d3233;
+  --bg-system: #3a1a1a;
+  --border-color: #333;
+  --hover-bg: #1c1c1c;
+  --text-color: #e5e5e5;
+  --muted: #aaa;
+  --input-bg: #222;
+  --primary: #1b5e20;
+  --primary-light: #2e7d32;
+  --accent: #43a047;
+  --success: #2e7d32;
+  --danger: #b23a3a;
 }
 
 /* =======================================================
-   2. Grundstruktur
+   2. Grundstruktur
 ======================================================= */
 body {
-  margin: 0;
-  padding: 0;
-  font-family: system-ui, sans-serif;
-  background: var(--bg-main);
-  color: var(--text-color);
-  line-height: 1.5;
-  margin-top: 70px; /* Platz unter Navigation */
-  transition: background 0.3s ease, color 0.3s ease;
+  margin: 0;
+  padding: 0;
+  font-family: system-ui, sans-serif;
+  background: var(--bg-main);
+  color: var(--text-color);
+  line-height: 1.5;
+  margin-top: 70px; /* Platz unter Navigation */
+  transition: background 0.3s ease, color 0.3s ease;
 }
 
 /* =====================
-   Login-Karte
+   Login-Karte
 ===================== */
 #login-card {
-  background: var(--bg-card);
-  color: var(--text-color);
-  border-radius: 12px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
-  padding: 2rem;
-  margin: 3rem auto;
-  max-width: 1000px;
-  box-sizing: border-box;
-  transition: background 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+  background: var(--bg-card);
+  color: var(--text-color);
+  border-radius: 12px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+  padding: 2rem;
+  margin: 3rem auto;
+  max-width: 1000px;
+  box-sizing: border-box;
+  transition: background 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
 }
 
 /* =====================
-   Panels & Sections
+   Panels & Sections
 ===================== */
 .panel,
 .section {
-  background: var(--bg-main);
-  color: var(--text-color);
-  border-radius: 0;
-  box-shadow: none;
-  padding: 0;
-  margin: 0;
-  max-width: none;
-  width: 100vw;
-  min-height: 100vh;
-  box-sizing: border-box;
-  transition: background 0.3s ease, color 0.3s ease;
+  background: var(--bg-main);
+  color: var(--text-color);
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0;
+  margin: 0;
+  max-width: none;
+  width: 100vw;
+  min-height: 100vh;
+  box-sizing: border-box;
+  transition: background 0.3s ease, color 0.3s ease;
 }
-    
+    
 /* =======================================================
-   3. Eingabefelder & Buttons
-   ======================================================= */
+   3. Eingabefelder & Buttons
+   ======================================================= */
 input, select, textarea {
-  width: 100%;
-  padding: 0.8rem;
-  margin: 0.5rem 0;
-  border-radius: 6px;
-  border: 1px solid var(--border-color);
-  background: var(--input-bg);
-  color: var(--text-color);
-  font-size: 1rem;
-  box-sizing: border-box;
+  width: 100%;
+  padding: 0.8rem;
+  margin: 0.5rem 0;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  background: var(--input-bg);
+  color: var(--text-color);
+  font-size: 1rem;
+  box-sizing: border-box;
 }
 
 input:focus, select:focus, textarea:focus {
-  outline: none;
-  border-color: var(--accent);
+  outline: none;
+  border-color: var(--accent);
 }
 
 button {
-  width: 100%;
-  padding: 0.8rem;
-  margin-top: 0.5rem;
-  border-radius: 6px;
-  border: none;
-  font-size: 1rem;
-  font-weight: bold;
-  cursor: pointer;
-  background: var(--accent);
-  color: #fff;
-  transition: background 0.2s ease, transform 0.1s ease;
+  width: 100%;
+  padding: 0.8rem;
+  margin-top: 0.5rem;
+  border-radius: 6px;
+  border: none;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  background: var(--accent);
+  color: #fff;
+  transition: background 0.2s ease, transform 0.1s ease;
 }
 
 button:hover {
-  background: #0059cc;
-  transform: scale(1.02);
+  background: #0059cc;
+  transform: scale(1.02);
 }
 
 button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 body.dark-mode button {
-  background: var(--accent);
-  color: white;
+  background: var(--accent);
+  color: white;
 }
 
 body.dark-mode button:hover {
-  background: var(--accent);
-  filter: brightness(1.2);
+  background: var(--accent);
+  filter: brightness(1.2);
 }
 
 /* =======================================================
-   4. Navigation & Header
-   ======================================================= */
+   4. Navigation & Header
+   ======================================================= */
 nav {
-  background: var(--accent);
-  color: white;
-  display: flex;
-  gap: 1rem;
-  justify-content: center;
-  padding: 1rem;
-  flex-wrap: wrap;
-  border-bottom: 1px solid var(--border-color);
+  background: var(--accent);
+  color: white;
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  padding: 1rem;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--border-color);
 }
-    
+    
 nav {
-  position: fixed;   /* neu */
-  top: 0;            /* neu */
-  left: 0;
-  width: 100%;
-  z-index: 10000;
+  position: fixed;   /* neu */
+  top: 0;            /* neu */
+  left: 0;
+  width: 100%;
+  z-index: 10000;
 }
-    
+    
 nav button {
-  width: auto;
-  background: white;
-  color: var(--accent);
-  font-weight: 600;
-  border-radius: 6px;
-  padding: 0.6rem 1.2rem;
-  border: none;
-  cursor: pointer;
+  width: auto;
+  background: white;
+  color: var(--accent);
+  font-weight: 600;
+  border-radius: 6px;
+  padding: 0.6rem 1.2rem;
+  border: none;
+  cursor: pointer;
 }
 
 nav button.active {
-  background: var(--accent);
-  color: white;
+  background: var(--accent);
+  color: white;
 }
 
 body.dark-mode nav {
-  background: var(--accent);
+  background: var(--accent);
 }
 
 body.dark-mode nav button {
-  background: #222;
-  color: var(--text-color);
+  background: #222;
+  color: var(--text-color);
 }
 
 body.dark-mode nav button.active {
-  background: var(--accent);
-  color: #fff;
+  background: var(--accent);
+  color: #fff;
 }
 
 /* =======================================================
-   5. Tabellen
-   ======================================================= */
+   5. Tabellen
+   ======================================================= */
 table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 1rem;
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
 }
 
 th, td {
-  padding: 0.6rem;
-  text-align: left;
-  border-bottom: 1px solid var(--border-color);
-  font-size: 0.9rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  padding: 0.6rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 0.9rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 th {
-  background: var(--bg-secondary);
-  color: var(--text-color);
-  font-weight: 600;
+  background: var(--bg-secondary);
+  color: var(--text-color);
+  font-weight: 600;
 }
 
 .table-container {
-  max-height: 450px;
-  overflow-y: auto;
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  background: var(--bg-card);
+  max-height: 450px;
+  overflow-y: auto;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--bg-card);
 }
 
 /* =======================================================
-   6. Overlay / Spinner
-   ======================================================= */
+   6. Overlay / Spinner
+   ======================================================= */
 #login-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.6);
-  display: none;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  color: white;
-  flex-direction: column;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  color: white;
+  flex-direction: column;
 }
 
 #login-overlay .spinner {
-  width: 50px;
-  height: 50px;
-  border: 5px solid rgba(255,255,255,0.3);
-  border-top-color: white;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin-bottom: 1rem;
+  width: 50px;
+  height: 50px;
+  border: 5px solid rgba(255,255,255,0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to { transform: rotate(360deg); }
 }
 
 /* =======================================================
-   7. Dropdown-Menüs
-   ======================================================= */
+   7. Dropdown-Menüs
+   ======================================================= */
 .dropdown {
-  position: relative;
-  display: inline-block;
+  position: relative;
+  display: inline-block;
 }
 
 .dropdown-content {
-  display: none;
-  position: absolute;
-  right: 0;
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.15);
-  z-index: 100;
-  min-width: 140px;
-  overflow: hidden;
+  display: none;
+  position: absolute;
+  right: 0;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+  z-index: 100;
+  min-width: 140px;
+  overflow: hidden;
 }
 
 .dropdown-content a {
-  display: block;
-  padding: 0.6rem 1rem;
-  text-decoration: none;
-  color: var(--text-color);
+  display: block;
+  padding: 0.6rem 1rem;
+  text-decoration: none;
+  color: var(--text-color);
 }
 
 .dropdown-content a:hover {
-  background: var(--hover-bg);
+  background: var(--hover-bg);
 }
 
 .dropdown:hover .dropdown-content {
-  display: block;
+  display: block;
 }
 
 /* =======================================================
@@ -317,8 +317,8 @@ th {
   left: 0;
   width: 100vw;
   height: calc(100vh - 70px);
-  display: flex;
-  flex-direction: row; /* ⬅️ WICHTIG */
+  **display: flex;**
+  **flex-direction: row;** /* ⬅️ NEU HINZUFÜGEN ODER SICHERSTELLEN */
   background: var(--bg-main);
   color: var(--text-color);
   overflow: hidden;
@@ -326,55 +326,55 @@ th {
 }
 
 /* =====================
-   Hauptbereich rechts
+   Hauptbereich rechts
 ===================== */
 .chat-main {
-  flex: 1; /* ✅ Füllt den horizontalen Restplatz aus */
-  display: flex;
-  flex-direction: column; /* ⚠️ Achtung: Hier MUSS column bleiben, damit Header, Messages und Input vertikal angeordnet sind */
-  height: 100%; /* ✅ Stellt sicher, dass es die volle vertikale Höhe nutzt */
-  overflow: hidden;
-  position: relative;
+  flex: 1; /* ✅ Füllt den horizontalen Restplatz aus */
+  display: flex;
+  flex-direction: column; /* ⚠️ Achtung: Hier MUSS column bleiben, damit Header, Messages und Input vertikal angeordnet sind */
+  height: 100%; /* ✅ Stellt sicher, dass es die volle vertikale Höhe nutzt */
+  overflow: hidden;
+  position: relative;
 }
 
 /* Header oben fix */
 .chat-header {
-  flex-shrink: 0;
-  background: var(--bg-secondary);
-  border-bottom: 1px solid var(--border-color);
-  padding: 1rem 1.5rem;
-  font-weight: 600;
-  font-size: 1.1rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  position: sticky;
-  top: 0;
-  z-index: 2;
+  flex-shrink: 0;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  padding: 1rem 1.5rem;
+  font-weight: 600;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 2;
 }
 
 /* Nachrichtenbereich scrollt unabhängig */
 .chat-messages {
-  flex: 1;
-  overflow-y: auto;
-  padding: 1rem 1.5rem;
-  padding-bottom: 90px; /* Platz für Inputfeld */
-  display: flex;
-  flex-direction: column;
-  gap: 0.8rem;
-  scroll-behavior: smooth;
-  background: var(--bg-main);
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem 1.5rem;
+  padding-bottom: 90px; /* Platz für Inputfeld */
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  scroll-behavior: smooth;
+  background: var(--bg-main);
 }
 
 /* Nachrichtenblasen */
 .message {
-  max-width: 70%;
-  border-radius: 12px;
-  padding: 0.7rem 1rem;
-  line-height: 1.4;
-  font-size: 0.95rem;
-  word-wrap: break-word;
-  background: var(--bg-message);
+  max-width: 70%;
+  border-radius: 12px;
+  padding: 0.7rem 1rem;
+  line-height: 1.4;
+  font-size: 0.95rem;
+  word-wrap: break-word;
+  background: var(--bg-message);
 }
 .message.user { align-self: flex-end; background: var(--accent); color: white; }
 .message.system { align-self: center; background: var(--bg-secondary); color: var(--text-muted); font-style: italic; }
@@ -382,76 +382,72 @@ th {
 .message .message-content p { margin: 0; }
 .message .actions { margin-top: 0.4rem; display: flex; gap: 0.4rem; }
 .message button {
-  border: none;
-  border-radius: 6px;
-  padding: 0.3rem 0.6rem;
-  font-size: 0.85rem;
-  cursor: pointer;
+  border: none;
+  border-radius: 6px;
+  padding: 0.3rem 0.6rem;
+  font-size: 0.85rem;
+  cursor: pointer;
 }
 .approve-btn { background: var(--success); color: white; }
 .reject-btn { background: var(--danger); color: white; }
 
 /* =======================
-   Eingabefeld unten
+   Eingabefeld unten
 ======================= */
 .chat-input {
-  flex-shrink: 0;
-  width: 100%;
+  flex-shrink: 0;
+  width: 100%;
 
-  display: flex;
-  justify-content: center;       /* zentriert den inneren Container */
-  padding: 0.8rem 0;
+  display: flex;
+  justify-content: center;       /* zentriert den inneren Container */
+  padding: 0.8rem 0;
 
-  background: var(--bg-secondary);
-  border-top: 1px solid var(--border-color);
-
-  /* HIER WURDEN position: sticky; bottom: 0; und z-index: 20; ENTFERNT,
-     damit es als normales, nicht-flexibles Element am Ende des
-     flex-column Containers (.chat-main) bleibt. */
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border-color);
 }
 
 /* Container für zentrierte Inhalte */
 .chat-input-inner {
-  width: 100%;
-  max-width: 700px;              /* zentrale feste Breite */
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  padding: 0 1rem;
+  width: 100%;
+  max-width: 700px;              /* zentrale feste Breite */
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0 1rem;
 }
 
 /* Eingabefeld */
 .chat-input-inner input {
-  flex: 1;
-  border: 1px solid var(--border-color);
-  border-radius: 18px;
-  padding: 0.75rem 1rem;
-  background: var(--input-bg);
-  color: var(--text-color);
-  font-size: 1rem;
+  flex: 1;
+  border: 1px solid var(--border-color);
+  border-radius: 18px;
+  padding: 0.75rem 1rem;
+  background: var(--input-bg);
+  color: var(--text-color);
+  font-size: 1rem;
 }
 
 .chat-input-inner button {
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  border: none;
-  background: var(--accent);
-  color: white;
-  font-size: 1.2rem;
-  cursor: pointer;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: none;
+  background: var(--accent);
+  color: white;
+  font-size: 1.2rem;
+  cursor: pointer;
 
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .chat-input-inner button:hover {
-  background: var(--primary-light);
+  background: var(--primary-light);
 }
 
 .chat-input-inner button:active {
-  transform: scale(0.92);
+  transform: scale(0.92);
 }
 
 /* Scrollbars */
@@ -464,91 +460,91 @@ th {
 
 /* ============================
 
-  8.1 Sidebar – Chatliste links
+  8.1 Sidebar – Chatliste links
 
 ============================ */
 
 .chat-sidebar {
-  width: 300px;
-  background: var(--bg-secondary);
-  border-right: 1px solid var(--border-color);
-  height: 100%; /* <- Muss 100% der Höhe von #chat-section sein */
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
+  width: 300px;
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border-color);
+  **height: 100%;** /* <- Muss 100% der Höhe von #chat-section sein */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 /* Header der Sidebar (Titel "Chats") */
 .chat-sidebar-header {
-  padding: 1rem;
-  font-size: 1.1rem;
-  font-weight: 600;
-  background: var(--bg-secondary);
-  border-bottom: 1px solid var(--border-color);
-  flex-shrink: 0;
+  padding: 1rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
 }
 
 /* Scrollbarer Bereich */
 .chat-sidebar-list {
-  flex: 1;                                 /* füllt alles, auch wenn leer */
-  overflow-y: auto;
-  padding: 0.5rem 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;                              /* fester Abstand zwischen Chats */
+  flex: 1;                                 /* füllt alles, auch wenn leer */
+  overflow-y: auto;
+  padding: 0.5rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;                              /* fester Abstand zwischen Chats */
 }
 
 /* Einzelner Chat-Preview */
 .chat-sidebar-item {
-  padding: 0.9rem 1rem;
-  background: var(--bg-main);
-  border-bottom: 1px solid var(--border-color);
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
+  padding: 0.9rem 1rem;
+  background: var(--bg-main);
+  border-bottom: 1px solid var(--border-color);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
 }
 
 /* Hover-Effekt */
 .chat-sidebar-item:hover {
-  background: var(--accent);
-  color: white;
+  background: var(--accent);
+  color: white;
 }
 
 /* letzter Chat ohne fiesen doppelten border */
 .chat-sidebar-item:last-child {
-  border-bottom: none;
+  border-bottom: none;
 }
 
 /* Titel des Chats */
 .chat-sidebar-item .chat-title {
-  font-weight: 600;
-  font-size: 0.95rem;
+  font-weight: 600;
+  font-size: 0.95rem;
 }
 
 /* Vorschautext */
 .chat-sidebar-item .chat-preview {
-  font-size: 0.85rem;
-  color: var(--text-muted);
+  font-size: 0.85rem;
+  color: var(--text-muted);
 }
 
 /* Dark Mode Anpassungen */
 body.dark-mode .chat-sidebar {
-  background: #1e1e1e;
+  background: #1e1e1e;
 }
 
 body.dark-mode .chat-sidebar-item {
-  background: #2b2b2b;
-  border-bottom-color: #444;
+  background: #2b2b2b;
+  border-bottom-color: #444;
 }
 
 body.dark-mode .chat-sidebar-item:hover {
-  background: var(--accent);
-  color: white;
+  background: var(--accent);
+  color: white;
 }
 
 body.dark-mode .chat-sidebar-item .chat-preview {
-  color: #bbb;
+  color: #bbb;
 }
 /* Scrollbar */
 .chat-sidebar-list::-webkit-scrollbar { width: 8px; }
@@ -556,25 +552,25 @@ body.dark-mode .chat-sidebar-item .chat-preview {
 .chat-sidebar-list::-webkit-scrollbar-track { background: var(--bg-secondary); }
 
 /* =======================================================
-   9. Modale Fenster (z. B. Create-Plan)
-   ======================================================= */
+   9. Modale Fenster (z. B. Create-Plan)
+   ======================================================= */
 .modal-content {
-  background: var(--bg-card);
-  padding: 1.5rem;
-  border-radius: 10px;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+  background: var(--bg-card);
+  padding: 1.5rem;
+  border-radius: 10px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.3);
 }
 
 body.dark-mode .modal-content {
-  background: var(--bg-card);
+  background: var(--bg-card);
 }
 
 .modal-content input,
 .modal-content select,
 .modal-content textarea {
-  background: var(--input-bg);
-  border: 1px solid var(--border-color);
-  color: var(--text-color);
+  background: var(--input-bg);
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
 }
 
 /* =======================================================
@@ -584,11 +580,11 @@ body.dark-mode .modal-content {
 .hidden { display: none !important; }
 .section.active { display: block !important; }
 
-/* 🚀 KORREKTUR: Erzwingt display: flex für die Chat-Sektion, 
-   um die Sidebar und den Hauptbereich nebeneinander anzuzeigen. 
-   Dies überschreibt die problematische 'display: block !important;' Regel oben. */
+/* 🚀 KORREKTUR: Erzwingt display: flex für die Chat-Sektion, 
+   um die Sidebar und den Hauptbereich nebeneinander anzuzeigen. 
+   Dies überschreibt die problematische 'display: block !important;' Regel oben. */
 #chat-section.active {
-    display: flex !important;
+    display: flex !important;
 }
 
 #daten-aktualisieren {
@@ -609,8 +605,8 @@ body.dark-mode .modal-content {
   background: #0059cc;
 }
 /* =======================================================
-   Ende
-   ======================================================= */
+   Ende
+   ======================================================= */
 </style>
 </head>
 
