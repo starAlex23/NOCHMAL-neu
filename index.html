@@ -1046,14 +1046,19 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
+// ==========================
+// 1. Globale Variablen
+// ==========================
 let activeChat = 'system';
-let lastMessageIds = {}; // Merkt die zuletzt gerenderten Nachrichten je Chat
-let renderedSystemMessageIds = new Set();
-let allChats = []; // muss vorher vom Backend geladen werden
+let lastMessageIds = {}; // Merkt die zuletzt gerenderten Nachrichten je Chat (User-Chats)
+let renderedSystemMessageIds = new Set(); // Merkt IDs für System-Nachrichten
+let allChats = []; // Hinweis: Diese Variable muss normalerweise via API befüllt werden (z.B. GET /api/chats)
 
 // ==========================
-// Globale Helper-Funktionen
+// 2. Helper-Funktionen
 // ==========================
+
+// Holt Referenzen zu allen wichtigen DOM-Elementen
 function getChatElements() {
   const chatSection = document.getElementById('chat-section');
   if (!chatSection) return null;
@@ -1062,20 +1067,31 @@ function getChatElements() {
     chatSection,
     chatMessages: chatSection.querySelector('.chat-messages'),
     chatHeader: chatSection.querySelector('.chat-header'),
-    chatInput: chatSection.querySelector('#chat-text'),
-    chatSend: chatSection.querySelector('#chat-send'),
+    chatInput: chatSection.querySelector('#chat-text'), // oder #chat-input-field je nach HTML
+    chatSend: chatSection.querySelector('#chat-send'),   // oder #chat-send-btn je nach HTML
     sidebarList: chatSection.querySelector('.chat-sidebar-list')
   };
 }
 
+// Scrollt den Chat nach unten
 function scrollToBottom(chatMessagesElement) {
   if (chatMessagesElement) {
     chatMessagesElement.scrollTo({ top: chatMessagesElement.scrollHeight, behavior: 'smooth' });
   }
 }
 
+// Cookie auslesen (für CSRF)
+function getCookie(name) {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(';').shift();
+}
+
+// Nachricht ins DOM einfügen
 function addMessage(content, sender = 'user', chatMessagesElement, msgId = null, actionsHTML = '') {
   if (!chatMessagesElement) return;
+
+  // Duplikate vermeiden
   if (msgId && chatMessagesElement.querySelector(`.message[data-id="${msgId}"]`)) return;
 
   const li = document.createElement('li');
@@ -1087,6 +1103,7 @@ function addMessage(content, sender = 'user', chatMessagesElement, msgId = null,
   divContent.innerHTML = `<p>${content}</p>`;
   li.appendChild(divContent);
 
+  // Aktions-Buttons (z.B. für System-Nachrichten)
   if (actionsHTML) {
     const divActions = document.createElement('div');
     divActions.classList.add('actions');
@@ -1097,53 +1114,28 @@ function addMessage(content, sender = 'user', chatMessagesElement, msgId = null,
   chatMessagesElement.appendChild(li);
   scrollToBottom(chatMessagesElement);
 
+  // Event Listener für die neuen Buttons binden
   if (actionsHTML) bindActionButtons(li);
 }
 
-function getCookie(name) {
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) return parts.pop().split(';').shift();
-}
-
 // ==========================
-// Chat aktivieren
+// 3. API & Logik (Fetch, Send, Actions)
 // ==========================
-function activateChat(chatId) {
-  const elems = getChatElements();
-  if (!elems) return;
 
-  const { chatSection, chatHeader, chatInput, chatSend } = elems;
-
-  chatSection.querySelectorAll('.chat-sidebar-item').forEach(i => i.classList.remove('active'));
-  const item = chatSection.querySelector(`.chat-sidebar-item[data-chat-id="${chatId}"]`);
-  if (item) item.classList.add('active');
-
-  chatHeader.textContent = chatId === 'system' ? '🛠️ System' : `Chat mit ${item?.querySelector('.chat-title')?.textContent || chatId}`;
-  if (chatInput && chatSend) {
-    const disabled = chatId === 'system';
-    chatInput.disabled = disabled;
-    chatSend.disabled = disabled;
-  }
-
-  activeChat = chatId;
-  fetchChatMessages(chatId);
-}
-
-// ==========================
-// Nachrichten laden
-// ==========================
+// Nachrichten laden (System & User)
 async function fetchChatMessages(chatId = 'system') {
   const elems = getChatElements();
   if (!elems) return;
 
   const { chatMessages, chatSection } = elems;
+  // Nur laden, wenn Chat-Sektion aktiv ist
   if (!chatSection.classList.contains('active') || !chatMessages) return;
 
   try {
+    // Backend-URL bestimmen
     const API_BASE = window.location.origin.includes('vercel.app')
       ? 'https://backend-869x.onrender.com'
-      : '';
+      : ''; 
 
     const endpoint = chatId === 'system'
       ? `${API_BASE}/api/system-messages`
@@ -1154,6 +1146,7 @@ async function fetchChatMessages(chatId = 'system') {
 
     const data = await res.json();
 
+    // A) System-Chat Logik
     if (chatId === 'system') {
       data.forEach(msg => {
         if (renderedSystemMessageIds.has(msg.id)) return;
@@ -1179,11 +1172,16 @@ async function fetchChatMessages(chatId = 'system') {
           );
         }
       });
-    } else {
+    } 
+    // B) User-Chat Logik
+    else {
       if (!lastMessageIds[chatId]) lastMessageIds[chatId] = new Set();
+      
       data.forEach(msg => {
         if (lastMessageIds[chatId].has(msg.id)) return;
         lastMessageIds[chatId].add(msg.id);
+        
+        // Unterscheidung: Eigene Nachricht vs. Fremde
         const senderClass = msg.sender_id === 'current_admin_id' ? 'user' : 'other';
         addMessage(`<strong>${msg.sender_name}:</strong> ${msg.text}`, senderClass, chatMessages, msg.id);
       });
@@ -1191,73 +1189,202 @@ async function fetchChatMessages(chatId = 'system') {
 
   } catch (err) {
     console.error('Fehler beim Laden der Chatnachrichten:', err);
-    chatMessages.innerHTML += '<li style="color:red;">Verbindungsfehler.</li>';
+    // Fehler nur anzeigen, wenn noch keine Nachrichten da sind, um Spam zu vermeiden
+    if(chatMessages.children.length === 0) {
+        chatMessages.innerHTML += '<li style="color:red;">Verbindungsfehler.</li>';
+    }
   }
 }
 
+// Nachricht senden
+async function handleSendClick() {
+  const elems = getChatElements();
+  if (!elems || !activeChat || activeChat === 'system') return;
+
+  const { chatInput, chatMessages } = elems;
+  const message = chatInput.value.trim();
+  if (!message) return;
+
+  // Optimistisches Update (sofort anzeigen)
+  addMessage(message, 'user', chatMessages);
+  chatInput.value = '';
+  chatInput.focus();
+
+  try {
+    await fetch(`/api/chat/${activeChat}`, {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json', 
+        'X-CSRF-Token': getCookie('csrfToken') 
+      },
+      credentials: 'include',
+      body: JSON.stringify({ message })
+    });
+    // Nach erfolgreichem Senden könnte man fetchChatMessages aufrufen, 
+    // aber das Intervall erledigt das meistens schnell genug.
+  } catch (error) {
+    console.error('Netzwerkfehler beim Senden:', error);
+  }
+}
+
+// Admin-Aktionen (Approve/Reject) binden
+function bindActionButtons(container = document) {
+  container.querySelectorAll('.approve-btn, .reject-btn').forEach(btn => {
+    btn.removeEventListener('click', handleActionClick);
+    btn.addEventListener('click', handleActionClick);
+  });
+}
+
+// Handler für Approve/Reject Klicks
+async function handleActionClick(e) {
+  const message = e.target.closest('.message');
+  const userId = e.target.dataset.id;
+  const action = e.target.classList.contains('approve-btn') ? 'approve' : 'reject';
+
+  if (message) message.querySelector('.actions').innerHTML = '<p>⏳ wird verarbeitet...</p>';
+
+  try {
+    const res = await fetch(`/api/admin/users/${action}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': getCookie('csrfToken') },
+      credentials: 'include',
+      body: JSON.stringify({ userId })
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Fehler beim ' + action);
+
+    if (message) message.querySelector('.actions').innerHTML =
+      action === 'approve' ? '<p>✅ Antrag angenommen</p>' : '<p>❌ Antrag abgelehnt</p>';
+
+    // System-Chat aktualisieren, um Bestätigungsnachricht zu sehen
+    if (activeChat === 'system') fetchChatMessages('system');
+
+  } catch (err) {
+    console.error(err);
+    if (message) message.querySelector('.actions').innerHTML = '<p>⚠️ Fehler: ' + err.message + '</p>';
+  }
+}
+
+// Chat wechseln / aktivieren
+function activateChat(chatId) {
+  const elems = getChatElements();
+  if (!elems) return;
+
+  const { chatSection, chatHeader, chatInput, chatSend } = elems;
+
+  // Sidebar Highlight setzen
+  chatSection.querySelectorAll('.chat-sidebar-item').forEach(i => i.classList.remove('active'));
+  const item = chatSection.querySelector(`.chat-sidebar-item[data-chat-id="${chatId}"]`);
+  if (item) item.classList.add('active');
+
+  // Header Text setzen
+  let title = chatId;
+  if (chatId === 'system') {
+    title = '🛠️ System';
+  } else if (item) {
+    const titleEl = item.querySelector('.chat-title');
+    if (titleEl) title = titleEl.textContent;
+  }
+  chatHeader.textContent = title.startsWith('Chat mit') ? title : `Chat mit ${title}`;
+  if (chatId === 'system') chatHeader.textContent = '🛠️ System';
+
+  // Input deaktivieren für System-Chat
+  if (chatInput && chatSend) {
+    const disabled = chatId === 'system';
+    chatInput.disabled = disabled;
+    chatSend.disabled = disabled;
+  }
+
+  activeChat = chatId;
+  
+  // Nachrichtenbereich leeren (optional, aber sauberer beim Wechsel)
+  // elems.chatMessages.innerHTML = ''; 
+  // HINWEIS: Wenn du nicht willst, dass es beim Wechsel kurz leer ist, lass das innerHTML = '' weg.
+  // Das fetchChatMessages kümmert sich um das Anhängen neuer Nachrichten. 
+  // Für sauberen State-Reset wäre ein Leeren + lastMessageIds[chatId].clear() aber besser.
+  
+  fetchChatMessages(chatId);
+}
+
 // ==========================
-// Auto-Reload
+// 4. Auto-Reload Intervall
 // ==========================
 setInterval(() => {
   const elems = getChatElements();
-  if (elems?.chatSection.classList.contains('active')) {
+  if (elems && elems.chatSection.classList.contains('active')) {
     fetchChatMessages(activeChat);
   }
 }, 10000);
 
+
 // ==========================
-// EventListener & DOM-Initialisierung
+// 5. DOM Ready & Event Listeners
 // ==========================
 document.addEventListener('DOMContentLoaded', () => {
-  const chatList = document.getElementById('chat-list');
+  const chatList = document.getElementById('chat-list'); // Container für Sidebar-Items
   const searchToggle = document.getElementById('chat-search-toggle');
   const searchContainer = document.querySelector('.chat-search-container');
   const searchInput = document.getElementById('chat-search-input');
   const searchResults = document.getElementById('chat-search-results');
+  
+  // Elemente aus Helper holen für Listener
+  const elems = getChatElements();
 
-  // Sidebar aktualisieren
+  // --- Sidebar Update Funktion ---
   async function updateChatsSidebar() {
     if (!chatList) return;
+    // Alte Items entfernen (außer System)
     chatList.querySelectorAll('.chat-sidebar-item').forEach(item => {
       if (item.dataset.chatId !== 'system') item.remove();
     });
 
+    // Neue Items rendern (allChats muss gefüllt sein!)
     allChats.forEach(chat => {
       if (!chat.messages || chat.messages.length === 0) return;
+      
+      const lastMsg = chat.messages[chat.messages.length-1];
+      const previewText = lastMsg ? (lastMsg.text.slice(0,50) + (lastMsg.text.length > 50 ? '…' : '')) : '';
 
       const div = document.createElement('div');
       div.classList.add('chat-sidebar-item');
       div.dataset.chatId = chat.id;
       div.innerHTML = `
         <div class="chat-title">${chat.icon || '💬'} ${chat.name}</div>
-        <div class="chat-preview">${chat.messages[chat.messages.length-1].text.slice(0,50)}${chat.messages[chat.messages.length-1].text.length > 50 ? '…' : ''}</div>
+        <div class="chat-preview">${previewText}</div>
       `;
       chatList.appendChild(div);
     });
   }
 
-  // Sidebar Klick
-  chatList?.addEventListener('click', ev => {
-    const item = ev.target.closest('.chat-sidebar-item');
-    if (!item) return;
-    activateChat(item.dataset.chatId);
-  });
+  // --- Event Listener: Sidebar Klicks ---
+  if (chatList) {
+    chatList.addEventListener('click', ev => {
+      const item = ev.target.closest('.chat-sidebar-item');
+      if (!item) return;
+      const chatId = item.dataset.chatId;
+      if (!chatId) return;
+      activateChat(chatId);
+    });
+  }
 
-  // Suche ein-/ausblenden
-  searchToggle?.addEventListener('click', () => {
-    if (!searchContainer || !searchInput) return;
-    if (searchContainer.classList.contains('active')) {
-      searchContainer.style.maxHeight = '0';
-      searchContainer.classList.remove('active');
-    } else {
-      searchContainer.classList.add('active');
-      searchContainer.style.maxHeight = searchContainer.scrollHeight + 'px';
-      setTimeout(() => searchInput.focus(), 300);
-    }
-  });
+  // --- Event Listener: Suche Toggle ---
+  if (searchToggle && searchContainer && searchInput) {
+    searchToggle.addEventListener('click', () => {
+      if (searchContainer.classList.contains('active')) {
+        searchContainer.style.maxHeight = '0';
+        searchContainer.classList.remove('active');
+      } else {
+        searchContainer.classList.add('active');
+        searchContainer.style.maxHeight = searchContainer.scrollHeight + 'px';
+        setTimeout(() => searchInput.focus(), 300);
+      }
+    });
+  }
 
-  // Suche / neue Chats starten
+  // --- Event Listener: Suche Input & Ergebnis Klick ---
   if (searchInput && searchResults) {
+    // Input Handler
     searchInput.addEventListener('input', async () => {
       const term = searchInput.value.trim().toLowerCase();
       searchResults.innerHTML = '';
@@ -1275,10 +1402,10 @@ document.addEventListener('DOMContentLoaded', () => {
           li.innerHTML = `${u.vorname} ${u.nachname} <span style="color:gray;">(${u.email})</span>`;
           searchResults.appendChild(li);
         });
-
       } catch (err) { console.error(err); }
     });
 
+    // Klick auf Suchergebnis (Neuen Chat starten)
     searchResults.addEventListener('click', async ev => {
       const li = ev.target.closest('.chat-search-item');
       if (!li) return;
@@ -1293,9 +1420,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Fehler beim Chat starten');
 
+        // Sidebar aktualisieren (hier müsste man allChats auch neu laden, falls API vorhanden)
+        // await fetchAllChats(); <--- Hier hypothetisch einfügen
         await updateChatsSidebar();
+        
         activateChat(data.chatId);
 
+        // Suche zurücksetzen
         searchInput.value = '';
         searchResults.innerHTML = '';
         searchContainer.style.maxHeight = '0';
@@ -1304,7 +1435,23 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Initial Chat öffnen
+  // --- Event Listener: Nachricht Senden ---
+  if (elems) {
+    const { chatInput, chatSend } = elems;
+    if (chatSend) {
+        chatSend.addEventListener('click', handleSendClick);
+    }
+    if (chatInput) {
+      chatInput.addEventListener('keydown', e => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          if (chatSend) chatSend.click();
+        }
+      });
+    }
+  }
+
+  // --- Initial Start ---
   activateChat(activeChat);
 });
   
