@@ -1240,27 +1240,41 @@ function getCookie(name) {
 // ==========================
 // CSRF-Token sicherstellen
 // ==========================
-async function ensureCsrfToken() {
-  let token = getCookie('csrfToken');
-  if (token) return token;
+// Globale Variable
+let currentCsrfToken = localStorage.getItem('csrfToken'); // Startet mit dem Wert aus dem Login
 
+async function ensureCsrfToken() {
+  // 1. Haben wir einen Token im Speicher oder LocalStorage?
+  if (currentCsrfToken) return currentCsrfToken;
+
+  // 2. Falls nicht (z.B. LocalStorage geleert), versuchen wir einen Refresh
   try {
     const API_BASE = window.location.origin.includes('vercel.app')
       ? 'https://backend-869x.onrender.com'
       : '';
+
     const res = await fetch(`${API_BASE}/api/refresh`, {
       method: 'POST',
       credentials: 'include'
     });
+
     if (!res.ok) throw new Error('CSRF-Refresh fehlgeschlagen');
 
-    token = getCookie('csrfToken');
-    if (!token) throw new Error('CSRF-Token nach Refresh fehlt');
-    return token;
+    const data = await res.json();
+    
+    // 3. Neuen Token speichern
+    if (data.csrfToken) {
+        currentCsrfToken = data.csrfToken;
+        localStorage.setItem('csrfToken', data.csrfToken); // Update LocalStorage
+        return currentCsrfToken;
+    } 
+    
+    throw new Error('Kein CSRF-Token erhalten');
 
   } catch (err) {
-    console.error(err);
-    throw new Error('CSRF-Token konnte nicht gesetzt werden');
+    console.error("Auth-Fehler:", err);
+    // Hier könnte man zum Login umleiten
+    throw err;
   }
 }
 
