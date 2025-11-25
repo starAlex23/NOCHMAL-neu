@@ -1048,122 +1048,12 @@ document.addEventListener('DOMContentLoaded', () => {
 ///////////////////////////////////////////////////////////////////////////////////////////////
 let activeChat = 'system';
 let lastMessageIds = {}; // Merkt die zuletzt gerenderten Nachrichten je Chat
-  
-document.addEventListener('DOMContentLoaded', () => {
-  const chatList = document.getElementById('chat-list');
-  const searchToggle = document.getElementById('chat-search-toggle');
-  const searchContainer = document.querySelector('.chat-search-container');
-  const searchInput = document.getElementById('chat-search-input');
-  const searchResults = document.getElementById('chat-search-results');
+let renderedSystemMessageIds = new Set();
+let allChats = []; // muss vorher vom Backend geladen werden
 
-  // ==========================
-  // Chats mit Nachrichten in Sidebar anzeigen
-  // ==========================
-  async function updateChatsSidebar() {
-    if (!chatList) return;
-    chatList.querySelectorAll('.chat-sidebar-item').forEach(item => {
-      if (item.dataset.chatId !== 'system') item.remove();
-    });
-
-    allChats.forEach(chat => {
-      if (!chat.messages || chat.messages.length === 0) return;
-
-      const div = document.createElement('div');
-      div.classList.add('chat-sidebar-item');
-      div.dataset.chatId = chat.id;
-      div.innerHTML = `
-        <div class="chat-title">${chat.icon || '💬'} ${chat.name}</div>
-        <div class="chat-preview">${chat.messages[chat.messages.length-1].text.slice(0,50)}${chat.messages[chat.messages.length-1].text.length > 50 ? '…' : ''}</div>
-      `;
-      chatList.appendChild(div);
-    });
-  }
-
-  // ==========================
-  // Sidebar Klicks (Event Delegation)
-  // ==========================
-  if (chatList) {
-    chatList.addEventListener('click', ev => {
-      const item = ev.target.closest('.chat-sidebar-item');
-      if (!item) return;
-      const chatId = item.dataset.chatId;
-      if (!chatId) return;
-      activateChat(chatId);
-    });
-  }
-
-  // ==========================
-  // Suche ein-/ausblenden mit Animation
-  // ==========================
-  if (searchToggle && searchContainer && searchInput) {
-    searchToggle.addEventListener('click', () => {
-      if (searchContainer.classList.contains('active')) {
-        searchContainer.style.maxHeight = '0';
-        searchContainer.classList.remove('active');
-      } else {
-        searchContainer.classList.add('active');
-        searchContainer.style.maxHeight = searchContainer.scrollHeight + 'px';
-        setTimeout(() => searchInput.focus(), 300);
-      }
-    });
-  }
-
-  // ==========================
-  // Chatliste filtern / neue Chats starten
-  // ==========================
-  if (searchInput && searchResults) {
-    searchInput.addEventListener('input', async () => {
-      const term = searchInput.value.trim().toLowerCase();
-      searchResults.innerHTML = '';
-
-      if (!term) return;
-
-      try {
-        const res = await fetch(`/api/users/search?term=${encodeURIComponent(term)}`, { credentials: 'include' });
-        if (!res.ok) throw new Error('Fehler beim Suchen');
-        const users = await res.json();
-
-        users.forEach(u => {
-          const li = document.createElement('li');
-          li.classList.add('chat-search-item');
-          li.dataset.userId = u.id;
-          li.innerHTML = `${u.vorname} ${u.nachname} <span style="color:gray;">(${u.email})</span>`;
-          searchResults.appendChild(li);
-        });
-
-      } catch (err) {
-        console.error(err);
-      }
-    });
-
-    searchResults.addEventListener('click', async ev => {
-      const li = ev.target.closest('.chat-search-item');
-      if (!li) return;
-      const userId = li.dataset.userId;
-
-      try {
-        const res = await fetch(`/api/chat/init/${userId}`, {
-          method: 'POST',
-          headers: { 'X-CSRF-Token': getCookie('csrfToken') },
-          credentials: 'include'
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Fehler beim Chat starten');
-
-        await updateChatsSidebar();
-        activateChat(data.chatId);
-
-        searchInput.value = '';
-        searchResults.innerHTML = '';
-        searchContainer.style.maxHeight = '0';
-        searchContainer.classList.remove('active');
-      } catch (err) {
-        console.error(err);
-      }
-    });
-  }
-
-  
+// ==========================
+// Globale Helper-Funktionen
+// ==========================
 function getChatElements() {
   const chatSection = document.getElementById('chat-section');
   if (!chatSection) return null;
@@ -1186,7 +1076,6 @@ function scrollToBottom(chatMessagesElement) {
 
 function addMessage(content, sender = 'user', chatMessagesElement, msgId = null, actionsHTML = '') {
   if (!chatMessagesElement) return;
-
   if (msgId && chatMessagesElement.querySelector(`.message[data-id="${msgId}"]`)) return;
 
   const li = document.createElement('li');
@@ -1208,77 +1097,13 @@ function addMessage(content, sender = 'user', chatMessagesElement, msgId = null,
   chatMessagesElement.appendChild(li);
   scrollToBottom(chatMessagesElement);
 
-  // Buttons binden
   if (actionsHTML) bindActionButtons(li);
 }
 
-// ==========================
-// Approve / Reject Buttons
-// ==========================
-function bindActionButtons(container = document) {
-  container.querySelectorAll('.approve-btn, .reject-btn').forEach(btn => {
-    btn.removeEventListener('click', handleActionClick);
-    btn.addEventListener('click', handleActionClick);
-  });
-}
-
-async function handleActionClick(e) {
-  const message = e.target.closest('.message');
-  const userId = e.target.dataset.id;
-  const action = e.target.classList.contains('approve-btn') ? 'approve' : 'reject';
-
-  if (message) message.querySelector('.actions').innerHTML = '<p>⏳ wird verarbeitet...</p>';
-
-  try {
-    const res = await fetch(`/api/admin/users/${action}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': getCookie('csrfToken') },
-      credentials: 'include',
-      body: JSON.stringify({ userId })
-    });
-
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Fehler beim ' + action);
-
-    if (message) message.querySelector('.actions').innerHTML =
-      action === 'approve' ? '<p>✅ Antrag angenommen</p>' : '<p>❌ Antrag abgelehnt</p>';
-
-    if (activeChat === 'system') fetchChatMessages('system');
-
-  } catch (err) {
-    console.error(err);
-    if (message) message.querySelector('.actions').innerHTML = '<p>⚠️ Fehler: ' + err.message + '</p>';
-  }
-}
-
-// ==========================
-// Senden
-// ==========================
-async function handleSendClick() {
-  const elems = getChatElements();
-  if (!elems || !activeChat || activeChat === 'system') return;
-
-  const { chatInput, chatMessages } = elems;
-  const message = chatInput.value.trim();
-  if (!message) return;
-
-  addMessage(message, 'user', chatMessages);
-  chatInput.value = '';
-  chatInput.focus();
-
-  try {
-    await fetch(`/api/chat/${activeChat}`, {
-      method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json', 
-        'X-CSRF-Token': getCookie('csrfToken') 
-      },
-      credentials: 'include',
-      body: JSON.stringify({ message })
-    });
-  } catch (error) {
-    console.error('Netzwerkfehler beim Senden:', error);
-  }
+function getCookie(name) {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(';').shift();
 }
 
 // ==========================
@@ -1294,7 +1119,7 @@ function activateChat(chatId) {
   const item = chatSection.querySelector(`.chat-sidebar-item[data-chat-id="${chatId}"]`);
   if (item) item.classList.add('active');
 
-  chatHeader.textContent = chatId === 'system' ? '🛠️ System' : `Chat mit ${item.querySelector('.chat-title').textContent || chatId}`;
+  chatHeader.textContent = chatId === 'system' ? '🛠️ System' : `Chat mit ${item?.querySelector('.chat-title')?.textContent || chatId}`;
   if (chatInput && chatSend) {
     const disabled = chatId === 'system';
     chatInput.disabled = disabled;
@@ -1306,61 +1131,8 @@ function activateChat(chatId) {
 }
 
 // ==========================
-// Sidebar Clicks
+// Nachrichten laden
 // ==========================
-(function bindSidebarClicks() {
-  const elems = getChatElements();
-  if (!elems) {
-    document.addEventListener('DOMContentLoaded', bindSidebarClicks, { once: true });
-    return;
-  }
-
-  elems.sidebarList.addEventListener('click', (ev) => {
-    const item = ev.target.closest('.chat-sidebar-item');
-    if (!item) return;
-    const chatId = item.dataset.chatId;
-    if (!chatId) return;
-    activateChat(chatId);
-  });
-})();
-
-// ==========================
-// Send-Button & Enter
-// ==========================
-(function bindSendListeners() {
-  const elems = getChatElements();
-  if (!elems) {
-    document.addEventListener('DOMContentLoaded', bindSendListeners, { once: true });
-    return;
-  }
-  const { chatInput, chatSend } = elems;
-
-  if (chatSend) chatSend.addEventListener('click', handleSendClick);
-
-  if (chatInput) {
-    chatInput.addEventListener('keydown', e => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        if (chatSend) chatSend.click();
-      }
-    });
-  }
-})();
-
-// ==========================
-// Cookies
-// ==========================
-function getCookie(name) {
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) return parts.pop().split(';').shift();
-}
-
-// ==========================
-// Nachrichten laden (nur neue)
-// ==========================
-let renderedSystemMessageIds = new Set();
-
 async function fetchChatMessages(chatId = 'system') {
   const elems = getChatElements();
   if (!elems) return;
@@ -1369,10 +1141,9 @@ async function fetchChatMessages(chatId = 'system') {
   if (!chatSection.classList.contains('active') || !chatMessages) return;
 
   try {
-    // 🔹 Backend-URL bestimmen
     const API_BASE = window.location.origin.includes('vercel.app')
-      ? 'https://backend-869x.onrender.com' // Backend-URL auf Render
-      : ''; // lokal gleiche Domain
+      ? 'https://backend-869x.onrender.com'
+      : '';
 
     const endpoint = chatId === 'system'
       ? `${API_BASE}/api/system-messages`
@@ -1383,10 +1154,9 @@ async function fetchChatMessages(chatId = 'system') {
 
     const data = await res.json();
 
-    // System-Chat
     if (chatId === 'system') {
       data.forEach(msg => {
-        if (renderedSystemMessageIds.has(msg.id)) return; // schon gerendert
+        if (renderedSystemMessageIds.has(msg.id)) return;
         renderedSystemMessageIds.add(msg.id);
 
         if (msg.type === 'registration_request') {
@@ -1410,7 +1180,6 @@ async function fetchChatMessages(chatId = 'system') {
         }
       });
     } else {
-      // User-Chats
       if (!lastMessageIds[chatId]) lastMessageIds[chatId] = new Set();
       data.forEach(msg => {
         if (lastMessageIds[chatId].has(msg.id)) return;
@@ -1425,21 +1194,120 @@ async function fetchChatMessages(chatId = 'system') {
     chatMessages.innerHTML += '<li style="color:red;">Verbindungsfehler.</li>';
   }
 }
+
 // ==========================
 // Auto-Reload
 // ==========================
 setInterval(() => {
   const elems = getChatElements();
-  if (elems && elems.chatSection.classList.contains('active')) {
+  if (elems?.chatSection.classList.contains('active')) {
     fetchChatMessages(activeChat);
   }
 }, 10000);
 
 // ==========================
-// Initial Setup
+// EventListener & DOM-Initialisierung
 // ==========================
+document.addEventListener('DOMContentLoaded', () => {
+  const chatList = document.getElementById('chat-list');
+  const searchToggle = document.getElementById('chat-search-toggle');
+  const searchContainer = document.querySelector('.chat-search-container');
+  const searchInput = document.getElementById('chat-search-input');
+  const searchResults = document.getElementById('chat-search-results');
+
+  // Sidebar aktualisieren
+  async function updateChatsSidebar() {
+    if (!chatList) return;
+    chatList.querySelectorAll('.chat-sidebar-item').forEach(item => {
+      if (item.dataset.chatId !== 'system') item.remove();
+    });
+
+    allChats.forEach(chat => {
+      if (!chat.messages || chat.messages.length === 0) return;
+
+      const div = document.createElement('div');
+      div.classList.add('chat-sidebar-item');
+      div.dataset.chatId = chat.id;
+      div.innerHTML = `
+        <div class="chat-title">${chat.icon || '💬'} ${chat.name}</div>
+        <div class="chat-preview">${chat.messages[chat.messages.length-1].text.slice(0,50)}${chat.messages[chat.messages.length-1].text.length > 50 ? '…' : ''}</div>
+      `;
+      chatList.appendChild(div);
+    });
+  }
+
+  // Sidebar Klick
+  chatList?.addEventListener('click', ev => {
+    const item = ev.target.closest('.chat-sidebar-item');
+    if (!item) return;
+    activateChat(item.dataset.chatId);
+  });
+
+  // Suche ein-/ausblenden
+  searchToggle?.addEventListener('click', () => {
+    if (!searchContainer || !searchInput) return;
+    if (searchContainer.classList.contains('active')) {
+      searchContainer.style.maxHeight = '0';
+      searchContainer.classList.remove('active');
+    } else {
+      searchContainer.classList.add('active');
+      searchContainer.style.maxHeight = searchContainer.scrollHeight + 'px';
+      setTimeout(() => searchInput.focus(), 300);
+    }
+  });
+
+  // Suche / neue Chats starten
+  if (searchInput && searchResults) {
+    searchInput.addEventListener('input', async () => {
+      const term = searchInput.value.trim().toLowerCase();
+      searchResults.innerHTML = '';
+      if (!term) return;
+
+      try {
+        const res = await fetch(`/api/users/search?term=${encodeURIComponent(term)}`, { credentials: 'include' });
+        if (!res.ok) throw new Error('Fehler beim Suchen');
+        const users = await res.json();
+
+        users.forEach(u => {
+          const li = document.createElement('li');
+          li.classList.add('chat-search-item');
+          li.dataset.userId = u.id;
+          li.innerHTML = `${u.vorname} ${u.nachname} <span style="color:gray;">(${u.email})</span>`;
+          searchResults.appendChild(li);
+        });
+
+      } catch (err) { console.error(err); }
+    });
+
+    searchResults.addEventListener('click', async ev => {
+      const li = ev.target.closest('.chat-search-item');
+      if (!li) return;
+      const userId = li.dataset.userId;
+
+      try {
+        const res = await fetch(`/api/chat/init/${userId}`, {
+          method: 'POST',
+          headers: { 'X-CSRF-Token': getCookie('csrfToken') },
+          credentials: 'include'
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Fehler beim Chat starten');
+
+        await updateChatsSidebar();
+        activateChat(data.chatId);
+
+        searchInput.value = '';
+        searchResults.innerHTML = '';
+        searchContainer.style.maxHeight = '0';
+        searchContainer.classList.remove('active');
+      } catch (err) { console.error(err); }
+    });
+  }
+
+  // Initial Chat öffnen
   activateChat(activeChat);
 });
+  
 ///////////////////////////////////////////////////////////////////////////////////////////////
 // ==========================
 // Section-Wechsel
