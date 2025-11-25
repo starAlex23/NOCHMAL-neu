@@ -1227,29 +1227,52 @@ async function handleSendClick() {
   }
 }
 
-// Admin-Aktionen (Approve/Reject) binden
-function bindActionButtons(container = document) {
-  container.querySelectorAll('.approve-btn, .reject-btn').forEach(btn => {
-    btn.removeEventListener('click', handleActionClick);
-    btn.addEventListener('click', handleActionClick);
-  });
-}
-
-// Handler für Approve/Reject Klicks
+// ==========================
+// Cookie auslesen
+// ==========================
 function getCookie(name) {
   const value = `; ${document.cookie}`;
   const parts = value.split(`; ${name}=`);
   if (parts.length === 2) return parts.pop().split(';').shift();
-  return null; // Token fehlt
+  return null;
 }
 
+// ==========================
+// CSRF-Token sicherstellen
+// ==========================
+async function ensureCsrfToken() {
+  let token = getCookie('csrfToken');
+  if (token) return token;
+
+  try {
+    const API_BASE = window.location.origin.includes('vercel.app')
+      ? 'https://backend-869x.onrender.com'
+      : '';
+    const res = await fetch(`${API_BASE}/api/refresh`, {
+      method: 'POST',
+      credentials: 'include'
+    });
+    if (!res.ok) throw new Error('CSRF-Refresh fehlgeschlagen');
+
+    token = getCookie('csrfToken');
+    if (!token) throw new Error('CSRF-Token nach Refresh fehlt');
+    return token;
+
+  } catch (err) {
+    console.error(err);
+    throw new Error('CSRF-Token konnte nicht gesetzt werden');
+  }
+}
+
+// ==========================
+// Approve/Reject Handler
+// ==========================
 async function handleActionClick(e) {
   const message = e.target.closest('.message');
   const userId = e.target.dataset.id;
   const action = e.target.classList.contains('approve-btn') ? 'approve' : 'reject';
 
   if (!userId) return;
-
   if (message) message.querySelector('.actions').innerHTML = '<p>⏳ wird verarbeitet...</p>';
 
   try {
@@ -1257,17 +1280,19 @@ async function handleActionClick(e) {
       ? 'https://backend-869x.onrender.com'
       : '';
 
-    const csrfToken = getCookie('csrfToken');
-    if (!csrfToken) throw new Error('CSRF-Token fehlt!');
+    const csrfToken = await ensureCsrfToken();
 
     const res = await fetch(`${API_BASE}/api/admin/approve-user`, {
       method: 'POST',
       headers: { 
-        'Content-Type': 'application/json', 
+        'Content-Type': 'application/json',
         'X-CSRF-Token': csrfToken
       },
       credentials: 'include',
-      body: JSON.stringify({ id: userId, action: action === 'approve' ? 'genehmigt' : 'abgelehnt' })
+      body: JSON.stringify({
+        id: userId,
+        action: action === 'approve' ? 'genehmigt' : 'abgelehnt'
+      })
     });
 
     if (!res.ok) {
@@ -1280,12 +1305,23 @@ async function handleActionClick(e) {
     if (message) message.querySelector('.actions').innerHTML =
       action === 'approve' ? '<p>✅ Antrag angenommen</p>' : '<p>❌ Antrag abgelehnt</p>';
 
+    // System-Chat neu laden, um Bestätigungsnachricht zu sehen
     if (activeChat === 'system') fetchChatMessages('system');
 
   } catch (err) {
     console.error(err);
-    if (message) message.querySelector('.actions').innerHTML = '<p>⚠️ Fehler: ' + err.message + '</p>';
+    if (message) message.querySelector('.actions').innerHTML = `<p>⚠️ Fehler: ${err.message}</p>`;
   }
+}
+
+// ==========================
+// Buttons binden
+// ==========================
+function bindActionButtons(container = document) {
+  container.querySelectorAll('.approve-btn, .reject-btn').forEach(btn => {
+    btn.removeEventListener('click', handleActionClick);
+    btn.addEventListener('click', handleActionClick);
+  });
 }
 
 // Chat wechseln / aktivieren
