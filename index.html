@@ -1236,6 +1236,13 @@ function bindActionButtons(container = document) {
 }
 
 // Handler für Approve/Reject Klicks
+function getCookie(name) {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(';').shift();
+  return null; // Token fehlt
+}
+
 async function handleActionClick(e) {
   const message = e.target.closest('.message');
   const userId = e.target.dataset.id;
@@ -1246,23 +1253,25 @@ async function handleActionClick(e) {
   if (message) message.querySelector('.actions').innerHTML = '<p>⏳ wird verarbeitet...</p>';
 
   try {
-    // 🔹 Backend-URL bestimmen
     const API_BASE = window.location.origin.includes('vercel.app')
-      ? 'https://backend-869x.onrender.com' // Render Backend
-      : ''; // lokal gleiche Domain
+      ? 'https://backend-869x.onrender.com'
+      : '';
+
+    const csrfToken = getCookie('csrfToken');
+    if (!csrfToken) throw new Error('CSRF-Token fehlt!');
 
     const res = await fetch(`${API_BASE}/api/admin/approve-user`, {
       method: 'POST',
       headers: { 
         'Content-Type': 'application/json', 
-        'X-CSRF-Token': getCookie('csrfToken') 
+        'X-CSRF-Token': csrfToken
       },
       credentials: 'include',
       body: JSON.stringify({ id: userId, action: action === 'approve' ? 'genehmigt' : 'abgelehnt' })
     });
 
     if (!res.ok) {
-      const text = await res.text(); // HTML oder Fehlertext abfangen
+      const text = await res.text();
       throw new Error(`Serverfehler ${res.status}: ${text}`);
     }
 
@@ -1271,7 +1280,6 @@ async function handleActionClick(e) {
     if (message) message.querySelector('.actions').innerHTML =
       action === 'approve' ? '<p>✅ Antrag angenommen</p>' : '<p>❌ Antrag abgelehnt</p>';
 
-    // System-Chat aktualisieren, um Bestätigungsnachricht zu sehen
     if (activeChat === 'system') fetchChatMessages('system');
 
   } catch (err) {
