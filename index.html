@@ -326,7 +326,7 @@ th {
 }
 
 /* =====================
-   Hauptbereich rechts
+   Hauptbereich rechts
 ===================== */
 .chat-main {
   flex: 1; 
@@ -334,37 +334,38 @@ th {
   flex-direction: column; 
   height: 100%; 
   overflow: hidden;
-  **position: relative;** /* ✅ Wichtig: Ankerpunkt für absolute Positionierung */
+  position: relative; /* ✅ Ankerpunkt für absolute Positionierung */
 }
 
 /* Header oben fix */
 .chat-header {
-  flex-shrink: 0;
-  background: var(--bg-secondary);
-  border-bottom: 1px solid var(--border-color);
-  padding: 1rem 1.5rem;
-  font-weight: 600;
-  font-size: 1.1rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  position: sticky;
-  top: 0;
-  z-index: 2;
+  flex-shrink: 0;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  padding: 1rem 1.5rem;
+  font-weight: 600;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 2;
 }
 
-/* Nachrichtenbereich scrollt unabhängig */
+/* Nachrichtenbereich scrollt unabhängig - KORRIGIERT */
 .chat-messages {
-  flex: 1; /* ✅ Füllt den verfügbaren Platz im Flex-Container aus */
+  /* flex: 1; WIRD ENTFERNT */
+  **height: calc(100% - 130px);** /* 🚀 NEU: Platz für Header (~70px) + Input (~60px) abziehen */
   overflow-y: auto;
   padding: 1rem 1.5rem;
-  padding-bottom: 90px; /* ✅ Lässt Platz für das absolut positionierte Inputfeld */
+  padding-bottom: 90px; /* Platz für Inputfeld */
   display: flex;
   flex-direction: column;
   gap: 0.8rem;
   scroll-behavior: smooth;
   background: var(--bg-main);
-  **z-index: 1;** /* Stellt sicher, dass die Nachrichten unter dem Inputfeld liegen */
+  z-index: 1;
 }
 
 /* Nachrichtenblasen */
@@ -405,14 +406,9 @@ th {
   background: var(--bg-secondary);
   border-top: 1px solid var(--border-color);
 
-  **position: absolute;** /* 🚀 Fixiert relativ zu .chat-main */
-  **bottom: 0;** /* 🚀 Sitzt fest am unteren Rand */
-  **left: 0;** /* Stellt sicher, dass es die volle Breite einnimmt */
-  **right: 0;**
-  **z-index: 20;** /* Liegt über den Nachrichten */
-
-  /* flex-shrink: 0 wird hier nicht mehr benötigt, da absolute Positionierung */
-}
+  **position: absolute;** /* ✅ Fixiert relativ zu .chat-main */
+  **bottom: 0;**   **left: 0;**   **right: 0;**
+  **z-index: 20;** }
 
 /* Container für zentrierte Inhalte */
 .chat-input-inner {
