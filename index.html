@@ -1239,23 +1239,26 @@ function bindActionButtons(container = document) {
 async function handleActionClick(e) {
   const message = e.target.closest('.message');
   const userId = e.target.dataset.id;
-  const action = e.target.classList.contains('approve-btn') ? 'approve' : 'reject';
+  const action = e.target.classList.contains('approve-btn') ? 'genehmigt' : 'abgelehnt';
 
   if (message) message.querySelector('.actions').innerHTML = '<p>⏳ wird verarbeitet...</p>';
 
   try {
-    const res = await fetch(`/api/admin/users/${action}`, {
+    const res = await fetch('/api/admin/approve-user', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': getCookie('csrfToken') },
+      headers: { 
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': getCookie('csrfToken')
+      },
       credentials: 'include',
-      body: JSON.stringify({ userId })
+      body: JSON.stringify({ id: userId, action })
     });
 
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Fehler beim ' + action);
 
     if (message) message.querySelector('.actions').innerHTML =
-      action === 'approve' ? '<p>✅ Antrag angenommen</p>' : '<p>❌ Antrag abgelehnt</p>';
+      action === 'genehmigt' ? '<p>✅ Antrag angenommen</p>' : '<p>❌ Antrag abgelehnt</p>';
 
     // System-Chat aktualisieren, um Bestätigungsnachricht zu sehen
     if (activeChat === 'system') fetchChatMessages('system');
