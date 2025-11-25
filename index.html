@@ -334,6 +334,7 @@ th {
   flex-direction: column; /* ⚠️ Achtung: Hier MUSS column bleiben, damit Header, Messages und Input vertikal angeordnet sind */
   height: 100%; /* ✅ Stellt sicher, dass es die volle vertikale Höhe nutzt */
   overflow: hidden;
+  position: relative;
 }
 
 /* Header oben fix */
@@ -398,21 +399,21 @@ th {
   width: 100%;
 
   display: flex;
-  justify-content: center;     /* zentriert horizontal */
-  padding: 0.8rem 0;           /* oben/unten etwas Abstand */
+  justify-content: center;       /* zentriert den inneren Container */
+  padding: 0.8rem 0;
 
   background: var(--bg-secondary);
   border-top: 1px solid var(--border-color);
-  
+
   position: sticky;
-  bottom: 0;
+  bottom: 0;                     /* sitzt am unteren Rand von .chat-main */
   z-index: 20;
 }
 
 /* Container für zentrierte Inhalte */
 .chat-input-inner {
   width: 100%;
-  max-width: 700px;            /* <- feste Breite, anpassen wie du willst */
+  max-width: 700px;              /* zentrale feste Breite */
   display: flex;
   align-items: center;
   gap: 0.6rem;
@@ -430,7 +431,6 @@ th {
   font-size: 1rem;
 }
 
-/* Runder Senden-Button rechts */
 .chat-input-inner button {
   width: 42px;
   height: 42px;
