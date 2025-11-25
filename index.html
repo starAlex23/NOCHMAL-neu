@@ -1240,55 +1240,83 @@ function getCookie(name) {
 // ==========================
 // CSRF-Token sicherstellen
 // ==========================
-// Globale Variable
-let currentCsrfToken = localStorage.getItem('csrfToken'); // Startet mit dem Wert aus dem Login
+// Globale Variable (sollte wie bisher beim Laden aus localStorage befüllt werden)
+let currentCsrfToken = localStorage.getItem('csrfToken'); 
 
-async function ensureCsrfToken() {
-    // 1. Wenn Token im RAM gespeichert ist, nutze ihn.
-    if (currentCsrfToken) return currentCsrfToken;
+// (Die Funktion ensureCsrfToken bleibt wie in der letzten Antwort)
 
-    // 2. Prüfe LocalStorage nur, falls RAM leer ist (z.B. nach Reload)
-    const storedToken = localStorage.getItem('csrfToken');
-    if (storedToken) {
-        currentCsrfToken = storedToken;
-        return currentCsrfToken;
-    }
+async function handleActionClick(e) {
+    const message = e.target.closest('.message');
+    const userId = e.target.dataset.id;
+    const action = e.target.classList.contains('approve-btn') ? 'approve' : 'reject';
 
-    // 3. Wenn immer noch leer, erzwinge Refresh
-    try {
-        const API_BASE = window.location.origin.includes('vercel.app')
-          ? 'https://backend-869x.onrender.com'
-          : '';
+    if (!userId) return;
+    if (message) message.querySelector('.actions').innerHTML = '<p>⏳ wird verarbeitet...</p>';
 
-        const res = await fetch(`${API_BASE}/api/refresh`, {
-            method: 'POST',
-            credentials: 'include'
-        });
+    const API_BASE = window.location.origin.includes('vercel.app')
+        ? 'https://backend-869x.onrender.com'
+        : '';
+    
+    // Konfiguration für die Fetch-Anfrage
+    const fetchConfig = (token) => ({
+        method: 'POST',
+        headers: { 
+            'Content-Type': 'application/json',
+            // Wichtig: Der aktuellste Token
+            'X-CSRF-Token': token 
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+            id: userId,
+            action: action === 'approve' ? 'genehmigt' : 'abgelehnt'
+        })
+    });
 
-        // 4. Bei Fehler (z.B. 401 Unauthenticated), Token löschen und Fehler werfen
-        if (!res.ok) {
-            localStorage.removeItem('csrfToken');
-            currentCsrfToken = null;
-            throw new Error(`Refresh fehlgeschlagen (${res.status}). Erneute Anmeldung nötig.`);
+    let maxRetries = 2; // Ein initialer Versuch + ein Retry
+    let lastError;
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+            const csrfToken = await ensureCsrfToken(); // Holt den besten verfügbaren Token
+            
+            // Anfrage senden
+            const res = await fetch(`${API_BASE}/api/admin/approve-user`, fetchConfig(csrfToken));
+
+            if (res.ok) {
+                // Erfolg! Break Loop und beende Funktion
+                const data = await res.json();
+                if (message) message.querySelector('.actions').innerHTML = 
+                    action === 'approve' ? '<p>✅ Antrag angenommen</p>' : '<p>❌ Antrag abgelehnt</p>';
+                if (activeChat === 'system') fetchChatMessages('system');
+                return; 
+            }
+
+            // Fehler 403: CSRF Problem erkannt
+            if (res.status === 403 && attempt < maxRetries) {
+                const text = await res.text();
+                lastError = new Error(`Retry-Grund: ${text}`);
+                console.warn(`CSRF 403 erkannt (Versuch ${attempt}). Token wird verworfen und neu geholt...`);
+                
+                // Aggressives Aufräumen des Tokens, um Refresh zu erzwingen
+                currentCsrfToken = null;
+                localStorage.removeItem('csrfToken');
+                continue; // Gehe zur nächsten Iteration (Retry)
+            } 
+            
+            // Anderer Fehler (oder 403 im letzten Versuch)
+            const text = await res.text();
+            throw new Error(`Serverfehler ${res.status}: ${text}`);
+
+        } catch (err) {
+            lastError = err;
+            if (attempt === maxRetries) throw err; // Fehler werfen, wenn kein Retry mehr möglich
         }
-
-        const data = await res.json();
-        
-        // 5. Neuen Token speichern und zurückgeben
-        if (data.csrfToken) {
-            currentCsrfToken = data.csrfToken;
-            localStorage.setItem('csrfToken', data.csrfToken);
-            return currentCsrfToken;
-        }    
-        
-        throw new Error('Kein CSRF-Token im Refresh erhalten');
-
-    } catch (err) {
-        console.error("Auth-Fehler beim Refresh:", err);
-        // Auch hier den lokalen Zustand aufräumen
-        localStorage.removeItem('csrfToken');
-        currentCsrfToken = null;
-        throw err;
+    }
+    
+    // Fehlerbehandlung nach Retries
+    if (lastError) {
+        console.error(lastError);
+        if (message) message.querySelector('.actions').innerHTML = `<p>⚠️ Fehler: ${lastError.message}</p>`;
     }
 }
 
