@@ -1180,16 +1180,21 @@ async function fetchChatMessages(chatId = 'system') {
   if (!chatSection.classList.contains('active') || !chatMessages) return;
 
   try {
+    // 🔹 Backend-URL bestimmen
+    const API_BASE = window.location.origin.includes('vercel.app')
+      ? 'https://backend-869x.onrender.com' // Backend-URL auf Render
+      : ''; // lokal gleiche Domain
+
     const endpoint = chatId === 'system'
-      ? `/api/system-messages`
-      : `/api/chat/${chatId}`;
+      ? `${API_BASE}/api/system-messages`
+      : `${API_BASE}/api/chat/${chatId}`;
 
     const res = await fetch(endpoint, { credentials: 'include' });
     if (!res.ok) throw new Error('Fehler beim Laden');
 
     const data = await res.json();
 
-    // Für System-Chat
+    // System-Chat
     if (chatId === 'system') {
       data.forEach(msg => {
         if (renderedSystemMessageIds.has(msg.id)) return; // schon gerendert
@@ -1197,39 +1202,34 @@ async function fetchChatMessages(chatId = 'system') {
 
         if (msg.type === 'registration_request') {
           const p = msg.payload;
-          const li = document.createElement('li');
-          li.classList.add('message', 'system');
-          li.dataset.userId = p.id;
-          li.innerHTML = `
-            <div class="message-content">
-              <p><strong>System:</strong> Neuer Registrierungsantrag</p>
-              <p>E-Mail: <em>${p.email}</em></p>
-              <p>Name: <em>${p.vorname} ${p.nachname}</em></p>
-            </div>
-            <div class="actions">
-              <button class="approve-btn" data-id="${p.id}">✅ Annehmen</button>
-              <button class="reject-btn" data-id="${p.id}">❌ Ablehnen</button>
-            </div>
-          `;
-          chatMessages.appendChild(li);
+          addMessage(
+            `<strong>System:</strong> Neuer Registrierungsantrag<br>E-Mail: <em>${p.email}</em><br>Name: <em>${p.vorname} ${p.nachname}</em>`,
+            'system',
+            chatMessages,
+            msg.id,
+            `<button class="approve-btn" data-id="${p.id}">✅ Annehmen</button>
+             <button class="reject-btn" data-id="${p.id}">❌ Ablehnen</button>`
+          );
         } else if (msg.type === 'approval_result') {
           const p = msg.payload;
-          const li = document.createElement('li');
-          li.classList.add('message', 'system');
-          li.innerHTML = `
-            <div class="message-content">
-              <p><strong>System:</strong> Antrag von <em>${p.vorname}</em> wurde <b>${p.action}</b>.</p>
-            </div>
-          `;
-          chatMessages.appendChild(li);
+          addMessage(
+            `<strong>System:</strong> Antrag von <em>${p.vorname}</em> wurde <b>${p.action}</b>.`,
+            'system',
+            chatMessages,
+            msg.id
+          );
         }
       });
     } else {
-      // User-Chats können ähnlich behandelt werden
+      // User-Chats
+      if (!lastMessageIds[chatId]) lastMessageIds[chatId] = new Set();
+      data.forEach(msg => {
+        if (lastMessageIds[chatId].has(msg.id)) return;
+        lastMessageIds[chatId].add(msg.id);
+        const senderClass = msg.sender_id === 'current_admin_id' ? 'user' : 'other';
+        addMessage(`<strong>${msg.sender_name}:</strong> ${msg.text}`, senderClass, chatMessages, msg.id);
+      });
     }
-
-    bindActionButtons(chatMessages);
-    scrollToBottom(chatMessages);
 
   } catch (err) {
     console.error('Fehler beim Laden der Chatnachrichten:', err);
