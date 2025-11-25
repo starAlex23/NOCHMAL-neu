@@ -394,31 +394,33 @@ th {
    Eingabefeld unten
 ======================= */
 .chat-input {
-  position: fixed;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);   /* ➜ zentriert */
-  
-  width: 70vw;                    /* ➜ feste Breite (anpassbar: 50–80vw gehen gut) */
-  max-width: 900px;               /* ➜ maximale Breite */
-  min-width: 380px;               /* ➜ damit es nicht zu klein wird */
+  flex-shrink: 0;
+  width: 100%;
 
+  display: flex;
+  justify-content: center;     /* zentriert horizontal */
+  padding: 0.8rem 0;           /* oben/unten etwas Abstand */
+
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border-color);
+  
+  position: sticky;
+  bottom: 0;
+  z-index: 20;
+}
+
+/* Container für zentrierte Inhalte */
+.chat-input-inner {
+  width: 100%;
+  max-width: 700px;            /* <- feste Breite, anpassen wie du willst */
   display: flex;
   align-items: center;
   gap: 0.6rem;
-
-  padding: 0.9rem 1rem;
-  background: var(--bg-secondary);
-  border-top: 1px solid var(--border-color);
-  border-left: 1px solid var(--border-color);
-  border-right: 1px solid var(--border-color);
-
-  border-radius: 18px 18px 0 0;   /* leichte Rundung oben */
-  z-index: 9999;
+  padding: 0 1rem;
 }
 
 /* Eingabefeld */
-.chat-input input {
+.chat-input-inner input {
   flex: 1;
   border: 1px solid var(--border-color);
   border-radius: 18px;
@@ -426,38 +428,29 @@ th {
   background: var(--input-bg);
   color: var(--text-color);
   font-size: 1rem;
-  transition: border 0.2s ease, background 0.2s ease;
 }
 
-.chat-input input:focus {
-  border-color: var(--accent);
-  outline: none;
-}
-
-/* Kompakter, runder Senden-Button */
-.chat-input button {
+/* Runder Senden-Button rechts */
+.chat-input-inner button {
   width: 42px;
   height: 42px;
-  
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  background: var(--accent);
-  border: none;
   border-radius: 50%;
+  border: none;
+  background: var(--accent);
   color: white;
   font-size: 1.2rem;
   cursor: pointer;
 
-  transition: background 0.15s ease, transform 0.1s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.chat-input button:hover {
+.chat-input-inner button:hover {
   background: var(--primary-light);
 }
 
-.chat-input button:active {
+.chat-input-inner button:active {
   transform: scale(0.92);
 }
 
@@ -905,9 +898,11 @@ body.dark-mode .modal-content {
 
     <!-- Eingabefeld -->
     <div class="chat-input">
-      <input type="text" id="chat-text" placeholder="Nachricht schreiben…" disabled>
-      <button id="chat-send" disabled>📨</button>
-    </div>
+  <div class="chat-input-inner">
+    <input type="text" id="chat-input-field" placeholder="Nachricht eingeben …">
+    <button id="chat-send-btn">➤</button>
+  </div>
+</div>
 
   </div> <!-- /chat-main -->
 
