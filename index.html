@@ -390,35 +390,43 @@ th {
 .approve-btn { background: var(--success); color: white; }
 .reject-btn { background: var(--danger); color: white; }
 
-/* ================
-   Input unten
-   ================ */
+/* =======================
+   Eingabefeld unten
+======================= */
 .chat-input {
-  position: fixed;         /* fixiert es am Bildschirm */
-  bottom: 0;               /* ganz unten */
-  left: 300px;             /* Platz für Sidebar! (Falls Sidebar ausgeblendet -> auf 0 setzen) */
-  width: calc(100vw - 300px); /* restliche Breite */
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);   /* ➜ zentriert */
   
+  width: 70vw;                    /* ➜ feste Breite (anpassbar: 50–80vw gehen gut) */
+  max-width: 900px;               /* ➜ maximale Breite */
+  min-width: 380px;               /* ➜ damit es nicht zu klein wird */
+
   display: flex;
   align-items: center;
   gap: 0.6rem;
 
-  padding: 0.8rem 1rem;
+  padding: 0.9rem 1rem;
   background: var(--bg-secondary);
   border-top: 1px solid var(--border-color);
-  z-index: 99999;          /* über allem */
+  border-left: 1px solid var(--border-color);
+  border-right: 1px solid var(--border-color);
+
+  border-radius: 18px 18px 0 0;   /* leichte Rundung oben */
+  z-index: 9999;
 }
 
-/* Größeres Eingabefeld */
+/* Eingabefeld */
 .chat-input input {
   flex: 1;
   border: 1px solid var(--border-color);
-  border-radius: 20px;
+  border-radius: 18px;
   padding: 0.75rem 1rem;
   background: var(--input-bg);
   color: var(--text-color);
   font-size: 1rem;
-  transition: border 0.2s ease;
+  transition: border 0.2s ease, background 0.2s ease;
 }
 
 .chat-input input:focus {
@@ -426,12 +434,11 @@ th {
   outline: none;
 }
 
-/* Kompakter runder Senden-Button */
+/* Kompakter, runder Senden-Button */
 .chat-input button {
   width: 42px;
   height: 42px;
-  min-width: 42px;
-  min-height: 42px;
+  
   display: flex;
   align-items: center;
   justify-content: center;
@@ -439,15 +446,13 @@ th {
   background: var(--accent);
   border: none;
   border-radius: 50%;
-
-  font-size: 1.2rem;
   color: white;
+  font-size: 1.2rem;
   cursor: pointer;
 
-  transition: background 0.2s ease, transform 0.1s ease;
+  transition: background 0.15s ease, transform 0.1s ease;
 }
 
-/* Hover + klick Animation */
 .chat-input button:hover {
   background: var(--primary-light);
 }
