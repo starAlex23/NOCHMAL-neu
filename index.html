@@ -357,6 +357,7 @@ th {
   flex: 1;
   overflow-y: auto;
   padding: 1rem 1.5rem;
+  padding-bottom: 90px; /* Platz für Inputfeld */
   display: flex;
   flex-direction: column;
   gap: 0.8rem;
@@ -393,16 +394,19 @@ th {
    Input unten
    ================ */
 .chat-input {
-  flex-shrink: 0;
+  position: fixed;         /* fixiert es am Bildschirm */
+  bottom: 0;               /* ganz unten */
+  left: 300px;             /* Platz für Sidebar! (Falls Sidebar ausgeblendet -> auf 0 setzen) */
+  width: calc(100vw - 300px); /* restliche Breite */
+  
   display: flex;
   align-items: center;
   gap: 0.6rem;
+
   padding: 0.8rem 1rem;
   background: var(--bg-secondary);
   border-top: 1px solid var(--border-color);
-  position: sticky;
-  bottom: 0;
-  z-index: 2;
+  z-index: 99999;          /* über allem */
 }
 
 /* Größeres Eingabefeld */
