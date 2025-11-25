@@ -308,64 +308,134 @@ th {
 }
 
 /* =======================================================
-  8. Chat-Bereich mit Sidebar links und Chat rechts
-   ======================================================= */
+   8. Chat-Bereich mit Sidebar links und Chat rechts
+   ======================================================= */
 
 #chat-section {
-  position: fixed;
-  top: 70px;
-  left: 0;
-  width: 100vw;
-  height: calc(100vh - 70px);
-  **display: flex;**
-  **flex-direction: row;** /* ⬅️ NEU HINZUFÜGEN ODER SICHERSTELLEN */
-  background: var(--bg-main);
-  color: var(--text-color);
-  overflow: hidden;
-  z-index: 9999;
+  position: fixed;
+  top: 70px;
+  left: 0;
+  width: 100vw;
+  height: calc(100vh - 70px);
+  display: flex;
+  flex-direction: row; /* Sidebar links, Chat rechts */
+  background: var(--bg-main);
+  color: var(--text-color);
+  overflow: hidden; /* Verhindert Page-Scroll unter dem Chat */
+  z-index: 9999;
 }
 
 /* =====================
-   Hauptbereich rechts
-===================== */
+   Sidebar – Chatliste links
+   ==================== */
+
+.chat-sidebar {
+  width: 300px;
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border-color);
+  height: 100%; /* Füllt die gesamte Höhe von #chat-section */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Header der Sidebar (Titel "Chats") */
+.chat-sidebar-header {
+  padding: 1rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+/* Scrollbarer Bereich */
+.chat-sidebar-list {
+  flex: 1;                                 /* füllt alles, auch wenn leer */
+  overflow-y: auto;
+  padding: 0.5rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+/* Einzelner Chat-Preview */
+.chat-sidebar-item {
+  padding: 0.9rem 1rem;
+  background: var(--bg-main);
+  border-bottom: 1px solid var(--border-color);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+/* Hover-Effekt */
+.chat-sidebar-item:hover {
+  background: var(--accent);
+  color: white;
+}
+
+.chat-sidebar-item:last-child {
+  border-bottom: none;
+}
+
+.chat-sidebar-item .chat-title { font-weight: 600; font-size: 0.95rem; }
+.chat-sidebar-item .chat-preview { font-size: 0.85rem; color: var(--text-muted); }
+
+/* Dark Mode Anpassungen */
+body.dark-mode .chat-sidebar { background: #1e1e1e; }
+body.dark-mode .chat-sidebar-item { background: #2b2b2b; border-bottom-color: #444; }
+body.dark-mode .chat-sidebar-item:hover { background: var(--accent); color: white; }
+body.dark-mode .chat-sidebar-item .chat-preview { color: #bbb; }
+
+/* Scrollbars Sidebar */
+.chat-sidebar-list::-webkit-scrollbar { width: 8px; }
+.chat-sidebar-list::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
+.chat-sidebar-list::-webkit-scrollbar-track { background: var(--bg-secondary); }
+
+/* =====================
+   Hauptbereich rechts
+   ==================== */
+
 .chat-main {
-  flex: 1; 
-  display: flex;
-  flex-direction: column; 
-  height: 100%; 
-  overflow: hidden;
-  position: relative; /* ✅ Ankerpunkt für absolute Positionierung */
+  flex: 1;                      /* Nimmt verbleibende Breite ein */
+  display: flex;
+  flex-direction: column;       /* Header oben, Messages in der Mitte, Input fix unten */
+  height: 100%;
+  overflow: hidden;
+  position: relative;           /* Ankerpunkt für absolut positioniertes Input */
 }
 
 /* Header oben fix */
 .chat-header {
-  flex-shrink: 0;
-  background: var(--bg-secondary);
-  border-bottom: 1px solid var(--border-color);
-  padding: 1rem 1.5rem;
-  font-weight: 600;
-  font-size: 1.1rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  position: sticky;
-  top: 0;
-  z-index: 2;
+  flex-shrink: 0;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  padding: 1rem 1.5rem;
+  font-weight: 600;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 2;
 }
 
-/* Nachrichtenbereich scrollt unabhängig - KORRIGIERT */
+/* Nachrichtenbereich scrollt unabhängig */
 .chat-messages {
-  /* flex: 1; WIRD ENTFERNT */
-  **height: calc(100% - 130px);** /* 🚀 NEU: Platz für Header (~70px) + Input (~60px) abziehen */
-  overflow-y: auto;
-  padding: 1rem 1.5rem;
-  padding-bottom: 90px; /* Platz für Inputfeld */
-  display: flex;
-  flex-direction: column;
-  gap: 0.8rem;
-  scroll-behavior: smooth;
-  background: var(--bg-main);
-  z-index: 1;
+  flex: 1;                       /* Füllt den Zwischenraum zwischen Header und Input */
+  overflow-y: auto;
+  padding: 1rem 1.5rem;
+  padding-bottom: 90px;         /* Platz für das fixierte Inputfeld (mind. Input-Höhe + Abstand) */
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  scroll-behavior: smooth;
+  background: var(--bg-main);
+  z-index: 1;
+  -webkit-overflow-scrolling: touch; /* smoother scroll auf iOS */
 }
 
 /* Nachrichtenblasen */
@@ -394,26 +464,28 @@ th {
 .reject-btn { background: var(--danger); color: white; }
 
 /* =======================
-   Eingabefeld unten
-======================= */
+   Eingabefeld unten (fixiert)
+   ======================= */
+
 .chat-input {
-  width: 100%;
-  
-  display: flex;
-  justify-content: center;
-  padding: 0.8rem 0;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 0.8rem 0;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border-color);
 
-  background: var(--bg-secondary);
-  border-top: 1px solid var(--border-color);
-
-  **position: absolute;** /* ✅ Fixiert relativ zu .chat-main */
-  **bottom: 0;**   **left: 0;**   **right: 0;**
-  **z-index: 20;** }
+  position: absolute; /* Fixiert innerhalb von .chat-main */
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
+}
 
 /* Container für zentrierte Inhalte */
 .chat-input-inner {
   width: 100%;
-  max-width: 700px;              /* zentrale feste Breite */
+  max-width: 700px;              /* zentrale Breite */
   display: flex;
   align-items: center;
   gap: 0.6rem;
@@ -431,6 +503,7 @@ th {
   font-size: 1rem;
 }
 
+/* Senden-Button */
 .chat-input-inner button {
   width: 42px;
   height: 42px;
@@ -440,120 +513,28 @@ th {
   color: white;
   font-size: 1.2rem;
   cursor: pointer;
-
   display: flex;
   align-items: center;
   justify-content: center;
 }
+.chat-input-inner button:hover { background: var(--primary-light); }
+.chat-input-inner button:active { transform: scale(0.92); }
 
-.chat-input-inner button:hover {
-  background: var(--primary-light);
-}
-
-.chat-input-inner button:active {
-  transform: scale(0.92);
-}
-
-/* Scrollbars */
+/* Scrollbars Nachrichten */
 .chat-messages::-webkit-scrollbar { width: 8px; }
 .chat-messages::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
 .chat-messages::-webkit-scrollbar-track { background: var(--bg-main); }
-.chat-sidebar-placeholder::-webkit-scrollbar { width: 8px; }
-.chat-sidebar-placeholder::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
-.chat-sidebar-placeholder::-webkit-scrollbar-track { background: var(--bg-main); }
 
-/* ============================
-
-  8.1 Sidebar – Chatliste links
-
-============================ */
-
-.chat-sidebar {
-  width: 300px;
-  background: var(--bg-secondary);
-  border-right: 1px solid var(--border-color);
-  **height: 100%;** /* <- Muss 100% der Höhe von #chat-section sein */
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
+/* kleine responsive Verbesserungen */
+@media (max-width: 900px) {
+  .chat-sidebar { width: 240px; }
+  .chat-input-inner { padding: 0 0.6rem; max-width: calc(100% - 16px); }
+  .chat-messages { padding: 0.8rem 1rem; padding-bottom: 110px; } /* mehr Platz auf kleinen Bildschirmen */
 }
 
-/* Header der Sidebar (Titel "Chats") */
-.chat-sidebar-header {
-  padding: 1rem;
-  font-size: 1.1rem;
-  font-weight: 600;
-  background: var(--bg-secondary);
-  border-bottom: 1px solid var(--border-color);
-  flex-shrink: 0;
+@media (max-width: 600px) {
+  .chat-sidebar { display: none; } /* bei sehr kleinen Bildschirmen ausblenden, falls gewünscht */
 }
-
-/* Scrollbarer Bereich */
-.chat-sidebar-list {
-  flex: 1;                                 /* füllt alles, auch wenn leer */
-  overflow-y: auto;
-  padding: 0.5rem 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;                              /* fester Abstand zwischen Chats */
-}
-
-/* Einzelner Chat-Preview */
-.chat-sidebar-item {
-  padding: 0.9rem 1rem;
-  background: var(--bg-main);
-  border-bottom: 1px solid var(--border-color);
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-}
-
-/* Hover-Effekt */
-.chat-sidebar-item:hover {
-  background: var(--accent);
-  color: white;
-}
-
-/* letzter Chat ohne fiesen doppelten border */
-.chat-sidebar-item:last-child {
-  border-bottom: none;
-}
-
-/* Titel des Chats */
-.chat-sidebar-item .chat-title {
-  font-weight: 600;
-  font-size: 0.95rem;
-}
-
-/* Vorschautext */
-.chat-sidebar-item .chat-preview {
-  font-size: 0.85rem;
-  color: var(--text-muted);
-}
-
-/* Dark Mode Anpassungen */
-body.dark-mode .chat-sidebar {
-  background: #1e1e1e;
-}
-
-body.dark-mode .chat-sidebar-item {
-  background: #2b2b2b;
-  border-bottom-color: #444;
-}
-
-body.dark-mode .chat-sidebar-item:hover {
-  background: var(--accent);
-  color: white;
-}
-
-body.dark-mode .chat-sidebar-item .chat-preview {
-  color: #bbb;
-}
-/* Scrollbar */
-.chat-sidebar-list::-webkit-scrollbar { width: 8px; }
-.chat-sidebar-list::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
-.chat-sidebar-list::-webkit-scrollbar-track { background: var(--bg-secondary); }
 
 /* =======================================================
    9. Modale Fenster (z. B. Create-Plan)
