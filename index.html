@@ -307,10 +307,9 @@ th {
   display: block;
 }
 
-/* =======================================================
-   8. Chat-Bereich mit Sidebar links und Chat rechts
-   ======================================================= */
-
+/* =========================
+   CHAT-SECTION
+========================= */
 #chat-section {
   position: fixed;
   top: 70px;
@@ -321,37 +320,34 @@ th {
   flex-direction: row; /* Sidebar links, Chat rechts */
   background: var(--bg-main);
   color: var(--text-color);
-  overflow: hidden; /* Verhindert Page-Scroll unter dem Chat */
+  overflow: hidden;
   z-index: 9999;
+  min-height: 0; /* wichtig für Flexbox */
 }
 
-/* =====================
-   Sidebar – Chatliste links
-   ==================== */
-
+/* =========================
+   SIDEBAR
+========================= */
 .chat-sidebar {
   width: 300px;
   background: var(--bg-secondary);
   border-right: 1px solid var(--border-color);
-  height: 100%; /* Füllt die gesamte Höhe von #chat-section */
+  height: 100%;
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
 
-/* Header der Sidebar (Titel "Chats") */
 .chat-sidebar-header {
   padding: 1rem;
   font-size: 1.1rem;
   font-weight: 600;
-  background: var(--bg-secondary);
   border-bottom: 1px solid var(--border-color);
   flex-shrink: 0;
 }
 
-/* Scrollbarer Bereich */
 .chat-sidebar-list {
-  flex: 1;                                 /* füllt alles, auch wenn leer */
+  flex: 1;
   overflow-y: auto;
   padding: 0.5rem 0;
   display: flex;
@@ -359,7 +355,6 @@ th {
   gap: 0.6rem;
 }
 
-/* Einzelner Chat-Preview */
 .chat-sidebar-item {
   padding: 0.9rem 1rem;
   background: var(--bg-main);
@@ -370,44 +365,22 @@ th {
   gap: 0.2rem;
 }
 
-/* Hover-Effekt */
-.chat-sidebar-item:hover {
-  background: var(--accent);
-  color: white;
-}
-
-.chat-sidebar-item:last-child {
-  border-bottom: none;
-}
-
+.chat-sidebar-item:hover { background: var(--accent); color: white; }
+.chat-sidebar-item:last-child { border-bottom: none; }
 .chat-sidebar-item .chat-title { font-weight: 600; font-size: 0.95rem; }
 .chat-sidebar-item .chat-preview { font-size: 0.85rem; color: var(--text-muted); }
 
-/* Dark Mode Anpassungen */
-body.dark-mode .chat-sidebar { background: #1e1e1e; }
-body.dark-mode .chat-sidebar-item { background: #2b2b2b; border-bottom-color: #444; }
-body.dark-mode .chat-sidebar-item:hover { background: var(--accent); color: white; }
-body.dark-mode .chat-sidebar-item .chat-preview { color: #bbb; }
-
-/* Scrollbars Sidebar */
-.chat-sidebar-list::-webkit-scrollbar { width: 8px; }
-.chat-sidebar-list::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
-.chat-sidebar-list::-webkit-scrollbar-track { background: var(--bg-secondary); }
-
-/* =====================
-   Hauptbereich rechts
-   ==================== */
-
+/* =========================
+   HAUPTBEREICH RECHTS
+========================= */
 .chat-main {
-  flex: 1;                      /* Nimmt verbleibende Breite ein */
+  flex: 1;
   display: flex;
-  flex-direction: column;       /* Header oben, Messages in der Mitte, Input fix unten */
+  flex-direction: column; /* Header oben, Nachrichten mittig, Input unten */
   height: 100%;
-  overflow: hidden;
-  position: relative;           /* Ankerpunkt für absolut positioniertes Input */
+  min-height: 0; /* wichtig für Flexbox */
 }
 
-/* Header oben fix */
 .chat-header {
   flex-shrink: 0;
   background: var(--bg-secondary);
@@ -423,22 +396,18 @@ body.dark-mode .chat-sidebar-item .chat-preview { color: #bbb; }
   z-index: 2;
 }
 
-/* Nachrichtenbereich scrollt unabhängig */
 .chat-messages {
-  flex: 1;                       /* Füllt den Zwischenraum zwischen Header und Input */
+  flex: 1; /* füllt den Raum zwischen Header und Input */
   overflow-y: auto;
   padding: 1rem 1.5rem;
-  padding-bottom: 90px;         /* Platz für das fixierte Inputfeld (mind. Input-Höhe + Abstand) */
   display: flex;
   flex-direction: column;
   gap: 0.8rem;
   scroll-behavior: smooth;
-  background: var(--bg-main);
-  z-index: 1;
-  -webkit-overflow-scrolling: touch; /* smoother scroll auf iOS */
+  -webkit-overflow-scrolling: touch;
+  min-height: 0; /* Flexbox fix für Scroll */
 }
 
-/* Nachrichtenblasen */
 .message {
   max-width: 70%;
   border-radius: 12px;
@@ -463,36 +432,27 @@ body.dark-mode .chat-sidebar-item .chat-preview { color: #bbb; }
 .approve-btn { background: var(--success); color: white; }
 .reject-btn { background: var(--danger); color: white; }
 
-/* =======================
-   Eingabefeld unten (fixiert)
-   ======================= */
-
+/* =========================
+   INPUT-FELD Unten
+========================= */
 .chat-input {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  padding: 0.8rem 0;
+  flex-shrink: 0; /* bleibt immer sichtbar */
   background: var(--bg-secondary);
   border-top: 1px solid var(--border-color);
-
-  position: absolute; /* Fixiert innerhalb von .chat-main */
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 20;
+  padding: 0.8rem 0;
+  display: flex;
+  justify-content: center;
 }
 
-/* Container für zentrierte Inhalte */
 .chat-input-inner {
   width: 100%;
-  max-width: 700px;              /* zentrale Breite */
+  max-width: 700px;
   display: flex;
   align-items: center;
   gap: 0.6rem;
   padding: 0 1rem;
 }
 
-/* Eingabefeld */
 .chat-input-inner input {
   flex: 1;
   border: 1px solid var(--border-color);
@@ -503,7 +463,6 @@ body.dark-mode .chat-sidebar-item .chat-preview { color: #bbb; }
   font-size: 1rem;
 }
 
-/* Senden-Button */
 .chat-input-inner button {
   width: 42px;
   height: 42px;
@@ -520,20 +479,26 @@ body.dark-mode .chat-sidebar-item .chat-preview { color: #bbb; }
 .chat-input-inner button:hover { background: var(--primary-light); }
 .chat-input-inner button:active { transform: scale(0.92); }
 
-/* Scrollbars Nachrichten */
+/* =========================
+   SCROLLBARS
+========================= */
 .chat-messages::-webkit-scrollbar { width: 8px; }
 .chat-messages::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
 .chat-messages::-webkit-scrollbar-track { background: var(--bg-main); }
+.chat-sidebar-list::-webkit-scrollbar { width: 8px; }
+.chat-sidebar-list::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
+.chat-sidebar-list::-webkit-scrollbar-track { background: var(--bg-secondary); }
 
-/* kleine responsive Verbesserungen */
+/* =========================
+   RESPONSIVE
+========================= */
 @media (max-width: 900px) {
   .chat-sidebar { width: 240px; }
   .chat-input-inner { padding: 0 0.6rem; max-width: calc(100% - 16px); }
-  .chat-messages { padding: 0.8rem 1rem; padding-bottom: 110px; } /* mehr Platz auf kleinen Bildschirmen */
 }
 
 @media (max-width: 600px) {
-  .chat-sidebar { display: none; } /* bei sehr kleinen Bildschirmen ausblenden, falls gewünscht */
+  .chat-sidebar { display: none; }
 }
 
 /* =======================================================
@@ -858,9 +823,7 @@ body.dark-mode .modal-content {
   <!-- HAUPTBEREICH RECHTS -->
   <div class="chat-main">
 
-    <div class="chat-header" id="chat-header">
-      System 
-    </div>
+    <div class="chat-header" id="chat-header">System</div>
     
     <!-- Nachrichtenbereich -->
     <ul id="chat-messages" class="chat-messages">
@@ -879,11 +842,11 @@ body.dark-mode .modal-content {
 
     <!-- Eingabefeld -->
     <div class="chat-input">
-  <div class="chat-input-inner">
-    <input type="text" id="chat-input-field" placeholder="Nachricht eingeben …">
-    <button id="chat-send-btn">➤</button>
-  </div>
-</div>
+      <div class="chat-input-inner">
+        <input type="text" id="chat-input-field" placeholder="Nachricht eingeben …">
+        <button id="chat-send-btn">➤</button>
+      </div>
+    </div>
 
   </div> <!-- /chat-main -->
 
