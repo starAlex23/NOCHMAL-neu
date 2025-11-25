@@ -1048,86 +1048,90 @@ document.addEventListener('DOMContentLoaded', () => {
 ///////////////////////////////////////////////////////////////////////////////////////////////
 let activeChat = 'system';
 let lastMessageIds = {}; // Merkt die zuletzt gerenderten Nachrichten je Chat
-const chatList = document.getElementById('chat-list');
-const searchToggle = document.getElementById('chat-search-toggle');
-const searchContainer = document.querySelector('.chat-search-container');
-const searchInput = document.getElementById('chat-search-input');
-const searchResults = document.getElementById('chat-search-results');
+document.addEventListener('DOMContentLoaded', () => {
+  const chatList = document.getElementById('chat-list');
+  const searchToggle = document.getElementById('chat-search-toggle');
+  const searchContainer = document.querySelector('.chat-search-container');
+  const searchInput = document.getElementById('chat-search-input');
+  const searchResults = document.getElementById('chat-search-results');
 
-let allChats = []; // Array aller Chats mit Nachrichten
-
-// ==========================
-// Suche ein-/ausblenden mit Animation
-// ==========================
-searchToggle.addEventListener('click', () => {
-  if (searchContainer.classList.contains('active')) {
-    // ausblenden
-    searchContainer.style.maxHeight = '0';
-    searchContainer.classList.remove('active');
-  } else {
-    // einblenden
-    searchContainer.classList.add('active');
-    searchContainer.style.maxHeight = searchContainer.scrollHeight + 'px';
-    setTimeout(() => searchInput.focus(), 300);
+  // ==========================
+  // Suche ein-/ausblenden mit Animation
+  // ==========================
+  if (searchToggle && searchContainer && searchInput) {
+    searchToggle.addEventListener('click', () => {
+      if (searchContainer.classList.contains('active')) {
+        // ausblenden
+        searchContainer.style.maxHeight = '0';
+        searchContainer.classList.remove('active');
+      } else {
+        // einblenden
+        searchContainer.classList.add('active');
+        searchContainer.style.maxHeight = searchContainer.scrollHeight + 'px';
+        setTimeout(() => searchInput.focus(), 300);
+      }
+    });
   }
-});
 
-// ==========================
-// Chatliste filtern / neue Chats starten
-// ==========================
-searchInput.addEventListener('input', async () => {
-  const term = searchInput.value.trim().toLowerCase();
-  searchResults.innerHTML = '';
+  // ==========================
+  // Chatliste filtern / neue Chats starten
+  // ==========================
+  if (searchInput && searchResults) {
+    searchInput.addEventListener('input', async () => {
+      const term = searchInput.value.trim().toLowerCase();
+      searchResults.innerHTML = '';
 
-  if (!term) return;
+      if (!term) return;
 
-  try {
-    const res = await fetch(`/api/users/search?term=${encodeURIComponent(term)}`, {
-      credentials: 'include'
+      try {
+        const res = await fetch(`/api/users/search?term=${encodeURIComponent(term)}`, {
+          credentials: 'include'
+        });
+        if (!res.ok) throw new Error('Fehler beim Suchen');
+        const users = await res.json(); // [{id, vorname, nachname, email}]
+
+        users.forEach(u => {
+          const li = document.createElement('li');
+          li.classList.add('chat-search-item');
+          li.dataset.userId = u.id;
+          li.innerHTML = `${u.vorname} ${u.nachname} <span style="color:gray;">(${u.email})</span>`;
+          searchResults.appendChild(li);
+        });
+
+      } catch (err) {
+        console.error(err);
+      }
     });
-    if (!res.ok) throw new Error('Fehler beim Suchen');
-    const users = await res.json(); // [{id, vorname, nachname, email}]
 
-    users.forEach(u => {
-      const li = document.createElement('li');
-      li.classList.add('chat-search-item');
-      li.dataset.userId = u.id;
-      li.innerHTML = `${u.vorname} ${u.nachname} <span style="color:gray;">(${u.email})</span>`;
-      searchResults.appendChild(li);
+    // Klick auf Suchergebnis → Chat starten/öffnen
+    searchResults.addEventListener('click', async ev => {
+      const li = ev.target.closest('.chat-search-item');
+      if (!li) return;
+      const userId = li.dataset.userId;
+
+      try {
+        const res = await fetch(`/api/chat/init/${userId}`, {
+          method: 'POST',
+          headers: { 'X-CSRF-Token': getCookie('csrfToken') },
+          credentials: 'include'
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Fehler beim Chat starten');
+
+        // Sidebar aktualisieren und Chat öffnen
+        await updateChatsSidebar(); 
+        activateChat(data.chatId);
+
+        // Suche zurücksetzen
+        searchInput.value = '';
+        searchResults.innerHTML = '';
+        searchContainer.style.maxHeight = '0';
+        searchContainer.classList.remove('active');
+
+      } catch (err) {
+        console.error(err);
+      }
     });
-
-  } catch (err) {
-    console.error(err);
-  }
-});
-
-// Klick auf Suchergebnis → Chat starten/öffnen
-searchResults.addEventListener('click', async ev => {
-  const li = ev.target.closest('.chat-search-item');
-  if (!li) return;
-  const userId = li.dataset.userId;
-
-  try {
-    const res = await fetch(`/api/chat/init/${userId}`, {
-      method: 'POST',
-      headers: { 'X-CSRF-Token': getCookie('csrfToken') },
-      credentials: 'include'
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Fehler beim Chat starten');
-
-    // Sidebar aktualisieren und Chat öffnen
-    await updateChatsSidebar(); 
-    activateChat(data.chatId);
-
-    // Suche zurücksetzen
-    searchInput.value = '';
-    searchResults.innerHTML = '';
-    searchContainer.style.maxHeight = '0';
-    searchContainer.classList.remove('active');
-
-  } catch (err) {
-    console.error(err);
   }
 });
 
