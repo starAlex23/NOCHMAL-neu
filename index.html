@@ -1119,53 +1119,6 @@ function addMessage(content, sender = 'user', chatMessagesElement, msgId = null,
 }
 
 // ==========================
-// Eingabe im Chat je nach Chat aktivieren/deaktivieren
-// ==========================
-function updateChatInputState() {
-    const inputField = document.querySelector('#chat-input'); // Textfeld
-    const sendButton = document.querySelector('#chat-send-btn'); // Senden-Button
-
-    if (activeChat === 'system') {
-        inputField.value = '⚠️ Systemnachrichten können hier nicht geschrieben werden.';
-        inputField.disabled = true;
-        sendButton.disabled = true;
-    } else {
-        inputField.value = '';
-        inputField.disabled = false;
-        sendButton.disabled = false;
-    }
-}
-
-// ==========================
-// Chat wechseln
-// ==========================
-function switchChat(chatId) {
-    activeChat = chatId;
-    fetchChatMessages(chatId);
-    updateChatInputState();
-}
-
-// ==========================
-// Absenden blockieren im Systemchat
-// ==========================
-const chatForm = document.querySelector('#chat-form');
-chatForm.addEventListener('submit', (e) => {
-    if (activeChat === 'system') {
-        e.preventDefault();
-        return false;
-    }
-});
-
-// Enter-Taste im Systemchat blockieren
-const chatInput = document.querySelector('#chat-input');
-chatInput.addEventListener('keydown', (e) => {
-    if (activeChat === 'system' && e.key === 'Enter') {
-        e.preventDefault();
-        return false;
-    }
-});
-
-// ==========================
 // 3. API & Logik (Fetch, Send, Actions)
 // ==========================
 
@@ -3169,7 +3122,52 @@ document.addEventListener('DOMContentLoaded', async () => {
   const elems = getChatElements?.();
   if (elems) await fetchChatMessages(activeChat);
 
-  // 6️⃣ Daten vorladen
+  // 6️⃣ Systemchat-Eingabe sperren
+  const chatForm = document.querySelector('#chat-form');
+  const chatInput = document.querySelector('#chat-input');
+  const chatSendBtn = document.querySelector('#chat-send-btn');
+
+  function updateChatInputState() {
+    if (!chatInput || !chatSendBtn) return;
+    if (activeChat === 'system') {
+      chatInput.value = '⚠️ Systemnachrichten können hier nicht geschrieben werden.';
+      chatInput.disabled = true;
+      chatSendBtn.disabled = true;
+    } else {
+      chatInput.value = '';
+      chatInput.disabled = false;
+      chatSendBtn.disabled = false;
+    }
+  }
+
+  // Absenden blockieren im Systemchat
+  if (chatForm) {
+    chatForm.addEventListener('submit', (e) => {
+      if (activeChat === 'system') {
+        e.preventDefault();
+        return false;
+      }
+    });
+  }
+
+  // Enter-Taste blockieren
+  if (chatInput) {
+    chatInput.addEventListener('keydown', (e) => {
+      if (activeChat === 'system' && e.key === 'Enter') {
+        e.preventDefault();
+        return false;
+      }
+    });
+  }
+
+  // Call beim Chat-Wechsel
+  window.switchChat = (chatId) => {
+    activeChat = chatId;
+    fetchChatMessages(chatId);
+    updateChatInputState();
+  };
+
+  // 7️⃣ Daten vorladen
   try {
     await ladeLocationsGesamt();
     await ladeArbeitsplaene();
@@ -3177,7 +3175,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.error('Fehler beim Initial-Laden:', err);
   }
 
-  // 7️⃣ Mehrladen-Buttons
+  // 8️⃣ Mehrladen-Buttons
   const btnZeiten = document.getElementById('zeiten-mehrladen');
   if (btnZeiten) btnZeiten.addEventListener('click', renderZeitenChunk);
 
@@ -3186,6 +3184,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const btnArbeitszeiten = document.getElementById('arbeitszeiten-mehrladen');
   if (btnArbeitszeiten) btnArbeitszeiten.addEventListener('click', renderArbeitszeitenChunk);
+
+  // 9️⃣ Initialer Chat-Input-Status
+  updateChatInputState();
 
   console.log('Initialisierung abgeschlossen');
 });
