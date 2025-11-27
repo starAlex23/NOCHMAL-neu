@@ -1119,6 +1119,53 @@ function addMessage(content, sender = 'user', chatMessagesElement, msgId = null,
 }
 
 // ==========================
+// Eingabe im Chat je nach Chat aktivieren/deaktivieren
+// ==========================
+function updateChatInputState() {
+    const inputField = document.querySelector('#chat-input'); // Textfeld
+    const sendButton = document.querySelector('#chat-send-btn'); // Senden-Button
+
+    if (activeChat === 'system') {
+        inputField.value = '⚠️ Systemnachrichten können hier nicht geschrieben werden.';
+        inputField.disabled = true;
+        sendButton.disabled = true;
+    } else {
+        inputField.value = '';
+        inputField.disabled = false;
+        sendButton.disabled = false;
+    }
+}
+
+// ==========================
+// Chat wechseln
+// ==========================
+function switchChat(chatId) {
+    activeChat = chatId;
+    fetchChatMessages(chatId);
+    updateChatInputState();
+}
+
+// ==========================
+// Absenden blockieren im Systemchat
+// ==========================
+const chatForm = document.querySelector('#chat-form');
+chatForm.addEventListener('submit', (e) => {
+    if (activeChat === 'system') {
+        e.preventDefault();
+        return false;
+    }
+});
+
+// Enter-Taste im Systemchat blockieren
+const chatInput = document.querySelector('#chat-input');
+chatInput.addEventListener('keydown', (e) => {
+    if (activeChat === 'system' && e.key === 'Enter') {
+        e.preventDefault();
+        return false;
+    }
+});
+
+// ==========================
 // 3. API & Logik (Fetch, Send, Actions)
 // ==========================
 
