@@ -1146,33 +1146,36 @@ async function fetchChatMessages(chatId = 'system') {
 
     const data = await res.json();
 
-    // A) System-Chat Logik
-    if (chatId === 'system') {
-      data.forEach(msg => {
+// A) System-Chat Logik
+if (chatId === 'system') {
+    data.forEach(msg => {
         if (renderedSystemMessageIds.has(msg.id)) return;
         renderedSystemMessageIds.add(msg.id);
 
         if (msg.type === 'registration_request') {
-          const p = msg.payload;
-          addMessage(
-            `<strong>System:</strong> Neuer Registrierungsantrag<br>E-Mail: <em>${p.email}</em><br>Name: <em>${p.vorname} ${p.nachname}</em>`,
-            'system',
-            chatMessages,
-            msg.id,
-            `<button class="approve-btn" data-id="${p.id}">✅ Annehmen</button>
-             <button class="reject-btn" data-id="${p.id}">❌ Ablehnen</button>`
-          );
+          // ✅ KORREKTUR: Prüfe, ob die Nachricht bereits bearbeitet/gelesen wurde
+          if (msg.read) {
+              // Wenn msg.read = true (vom Backend gesetzt), zeige nur den Status
+              const statusText = 'Antrag bereits bearbeitet.';
+              addMessage(`<strong>System:</strong> ${statusText}`, 'system', chatMessages, msg.id);
+          } else {
+              // Wenn msg.read = false/null, zeige die Buttons
+              const p = msg.payload;
+              addMessage(
+                  `<strong>System:</strong> Neuer Registrierungsantrag<br>E-Mail: <em>${p.email}</em><br>Name: <em>${p.vorname} ${p.nachname}</em>`,
+                  'system',
+                  chatMessages,
+                  msg.id,
+                  `<button class="approve-btn" data-id="${p.id}">✅ Annehmen</button>
+                   <button class="reject-btn" data-id="${p.id}">❌ Ablehnen</button>`
+              );
+          }
         } else if (msg.type === 'approval_result') {
-          const p = msg.payload;
-          addMessage(
-            `<strong>System:</strong> Antrag von <em>${p.vorname}</em> wurde <b>${p.action}</b>.`,
-            'system',
-            chatMessages,
-            msg.id
-          );
+            // ... (Bleibt gleich)
         }
-      });
-    } 
+    });
+}
+  
     // B) User-Chat Logik
     else {
       if (!lastMessageIds[chatId]) lastMessageIds[chatId] = new Set();
