@@ -1526,9 +1526,9 @@ document.addEventListener('DOMContentLoaded', () => {
       searchResults.innerHTML = '';
       if (!term) return;
 
-      try {
-        const res = await fetch(`/api/users/search?term=${encodeURIComponent(term)}`, { credentials: 'include' });
-        if (!res.ok) throw new Error('Fehler beim Suchen');
+    try {
+            const res = await fetch(`${API_BASE}/api/users/search?term=${encodeURIComponent(term)}`, { credentials: 'include' });
+            if (!res.ok) throw new Error('Fehler beim Suchen');
         const users = await res.json();
 
         users.forEach(u => {
@@ -1548,7 +1548,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const userId = li.dataset.userId;
 
       try {
-        const res = await fetch(`/api/chat/init/${userId}`, {
+        const res = await fetch(`${API_BASE}/api/chat/init/${userId}`, {
           method: 'POST',
           headers: { 'X-CSRF-Token': getCookie('csrfToken') },
           credentials: 'include'
