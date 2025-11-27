@@ -3101,6 +3101,10 @@ document.getElementById('delete-selected-btn').addEventListener('click', async (
 document.addEventListener('DOMContentLoaded', async () => {
   console.log('DOM fully loaded');
 
+  const API_BASE = window.location.origin.includes('vercel.app')
+        ? 'https://backend-869x.onrender.com'
+        : '';
+  
   // 1️⃣ Theme anwenden
   const savedTheme = localStorage.getItem('theme') || 'light';
   applyTheme(savedTheme);
