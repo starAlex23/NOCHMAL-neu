@@ -1244,11 +1244,16 @@ async function ensureCsrfToken() {
         const data = await res.json();
         
         // 5. Neuen Token speichern und zurückgeben
-        if (data.csrfToken) {
-            currentCsrfToken = data.csrfToken;
-            localStorage.setItem('csrfToken', data.csrfToken);
-            return currentCsrfToken;
-        }    
+        if (data.csrfToken && data.accessToken) { // Prüfe beide
+        currentCsrfToken = data.csrfToken;
+        localStorage.setItem('csrfToken', data.csrfToken);
+        
+        // ✅ WICHTIG: Access Token speichern
+        currentAccessToken = data.accessToken; 
+        
+        // Gebe beides zurück
+        return { csrfToken: currentCsrfToken, accessToken: currentAccessToken };
+    }
         
         throw new Error('Kein CSRF-Token im Refresh erhalten');
 
@@ -1303,8 +1308,6 @@ async function handleSendClick() {
 // Approve/Reject Handler (MIT RETRY LOGIK)
 // ==========================
 async function handleActionClick(e) {
-    // 🚨 ACHTUNG: Die zweite, einfache handleActionClick wurde entfernt. 
-    // Wir behalten NUR die Retry-Logik.
     const message = e.target.closest('.message');
     const userId = e.target.dataset.id;
     const action = e.target.classList.contains('approve-btn') ? 'approve' : 'reject';
@@ -1317,11 +1320,15 @@ async function handleActionClick(e) {
         : '';
     
     // Konfiguration für die Fetch-Anfrage
-    const fetchConfig = (token) => ({
+    // Akzeptiert jetzt ein Objekt { csrfToken, accessToken }
+    const fetchConfig = (tokens) => ({
         method: 'POST',
         headers: { 
             'Content-Type': 'application/json',
-            'X-CSRF-Token': token 
+            // CSRF-Token für die CSRF-Middleware
+            'X-CSRF-Token': tokens.csrfToken, 
+            // Access Token für die Auth-Middleware (behebt Cookie-Timing)
+            'Authorization': `Bearer ${tokens.accessToken}`
         },
         credentials: 'include',
         body: JSON.stringify({
@@ -1335,8 +1342,11 @@ async function handleActionClick(e) {
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
-            const csrfToken = await ensureCsrfToken();
-            const res = await fetch(`${API_BASE}/api/admin/approve-user`, fetchConfig(csrfToken));
+            // 🚨 KORRIGIERT: Erhalte Tokens-Objekt { csrfToken, accessToken }
+            const tokens = await ensureCsrfToken(); 
+
+            // Anfrage senden mit beiden Tokens
+            const res = await fetch(`${API_BASE}/api/admin/approve-user`, fetchConfig(tokens));
 
             if (res.ok) {
                 // Erfolg!
@@ -1355,11 +1365,12 @@ async function handleActionClick(e) {
                 
                 // Aggressives Aufräumen, um Refresh zu erzwingen
                 currentCsrfToken = null;
+                // Optional: currentAccessToken = null; falls du ihn global speichern willst
                 localStorage.removeItem('csrfToken');
                 continue;
             } 
             
-            // Anderer Fehler
+            // Anderer Fehler (z.B. 401, 500)
             const text = await res.text();
             throw new Error(`Serverfehler ${res.status}: ${text}`);
 
